@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stability Test — Notification Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f6f4ee; --surface:#ffffff; --ink:#1f2a24; --line:#dcd6c6; --muted:#8a8578;
+  --brand:#1d4e42; --brand-soft:#e4ede9;
+  --done:#2f6f4f; --today:#c1440e; --overdue:#b3261e; --upcoming:#8a8578;
+  --serif:'Noto Sans','Noto Sans Thai',sans-serif;
+  --sans:'Noto Sans','Noto Sans Thai',sans-serif;
+  --mono:'Noto Sans','Noto Sans Thai',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:var(--sans); background:var(--paper); color:var(--ink);
+  min-height:100vh; padding-bottom:60px; font-variant-numeric:tabular-nums;
+}
+.topbar{
+  padding:22px 32px 16px; border-bottom:2px solid var(--ink);
+  display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;
+}
+.brand{display:flex;flex-direction:column;gap:4px;}
+.brand .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--brand);}
+.brand h1{font-family:var(--serif);font-size:24px;font-weight:700;letter-spacing:-0.3px;}
+.brand .sub{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--done);display:inline-block;}
+.sync-dot.busy{background:var(--today);animation:pulse 1s infinite;}
+.sync-dot.err{background:var(--overdue);}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.topbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.btn{
+  font-family:var(--sans);font-weight:600;font-size:12.5px;padding:9px 16px;border-radius:8px;
+  border:1px solid var(--ink);background:var(--surface);color:var(--ink);cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap;
+}
+.btn:hover{background:var(--ink);color:var(--paper);}
+.btn-brand{background:var(--brand);color:#fff;border-color:var(--brand);}
+.btn-brand:hover{background:#153a31;}
+.btn-ghost{background:transparent;border-color:var(--line);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink);background:transparent;}
+.btn-danger{border-color:var(--overdue);color:var(--overdue);background:transparent;}
+.btn-danger:hover{background:var(--overdue);color:#fff;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-xs{padding:5px 10px;font-size:11px;border-radius:6px;}
+
+.main{max-width:1220px;margin:0 auto;padding:22px 32px;}
+
+/* tabs */
+.tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+.tab{
+  font-family:var(--sans);font-weight:600;font-size:13px;padding:10px 18px;cursor:pointer;
+  color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.tab.active{color:var(--brand);border-bottom-color:var(--brand);}
+.view{display:none;}
+.view.active{display:block;}
+
+/* banner */
+.banner{
+  border:1px solid var(--line);border-left:4px solid var(--today);background:var(--surface);
+  border-radius:10px;padding:16px 20px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.banner.calm{border-left-color:var(--done);}
+.banner-num{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--today);}
+.banner.calm .banner-num{color:var(--done);}
+.banner-label{font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.4px;}
+
+/* calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-title{font-family:var(--serif);font-size:20px;font-weight:700;}
+.cal-nav{display:flex;gap:8px;}
+.cal-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);
+  border-radius:10px;overflow:hidden;background:var(--line);gap:1px;
+}
+.cal-dow{background:var(--surface2,#f1efe8);padding:8px 0;text-align:center;font-family:var(--mono);
+  font-size:10.5px;color:var(--muted);letter-spacing:1px;background:var(--surface);}
+.cal-cell{
+  background:var(--surface);height:100px;padding:6px 7px;display:flex;flex-direction:column;gap:3px;
+  cursor:pointer;transition:background .12s;overflow:hidden;
+}
+.cal-cell:hover{background:var(--brand-soft);}
+.cal-cell.empty{background:var(--paper);cursor:default;}
+.cal-cell.empty:hover{background:var(--paper);}
+.cal-cell.is-today{outline:2px solid var(--today);outline-offset:-2px;}
+.cal-daynum{font-family:var(--mono);font-size:12px;color:var(--muted);}
+.cal-cell.is-today .cal-daynum{color:var(--today);font-weight:700;}
+.cal-chip{
+  font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:4px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.cal-chip.overdue{background:rgba(179,38,30,.13);color:var(--overdue);}
+.cal-chip.today{background:rgba(193,68,14,.15);color:var(--today);}
+.cal-chip.upcoming{background:rgba(138,133,120,.12);color:var(--muted);}
+.cal-more{font-family:var(--mono);font-size:9.5px;color:var(--muted);}
+
+/* search + table */
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.search-input{
+  flex:1;min-width:200px;font-family:var(--mono);font-size:13px;padding:9px 12px;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);outline:none;
+}
+.search-input:focus{border-color:var(--brand);}
+
+.entry-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.entry-table th{
+  font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+  text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:#efece2;
+}
+.entry-table td{padding:10px 12px;font-size:12.5px;border-bottom:1px solid var(--line);vertical-align:middle;}
+.entry-table tr:last-child td{border-bottom:none;}
+.entry-row{cursor:pointer;}
+.entry-row:hover{background:var(--brand-soft);}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:600;}
+.status-pill.done{background:rgba(47,111,79,.12);color:var(--done);}
+.status-pill.today{background:rgba(193,68,14,.13);color:var(--today);}
+.status-pill.overdue{background:rgba(179,38,30,.13);color:var(--overdue);}
+.status-pill.upcoming{background:rgba(138,133,120,.12);color:var(--muted);}
+.detail-row td{background:var(--paper);padding:14px 18px;}
+.mini-table{width:100%;border-collapse:collapse;font-size:11.5px;font-family:var(--mono);}
+.mini-table th{text-align:left;padding:5px 8px;color:var(--muted);font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;}
+.mini-table td{padding:5px 8px;border-top:1px solid var(--line);}
+.mark-btn{font-family:var(--sans);font-size:10.5px;padding:3px 9px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;}
+.mark-btn:hover{border-color:var(--brand);color:var(--brand);}
+.mark-btn.marked{border-color:var(--done);color:var(--done);background:rgba(47,111,79,.08);}
+
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted);border:1px dashed var(--line);border-radius:12px;background:var(--surface);}
+.empty-state .emoji{font-size:28px;margin-bottom:10px;}
+
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--paper);padding:11px 20px;border-radius:8px;font-size:13px;
+  max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:all .25s;z-index:60;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(31,42,36,.45);display:none;align-items:center;justify-content:center;z-index:70;padding:20px;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--surface);border-radius:14px;max-width:560px;width:100%;padding:24px 24px 20px;max-height:88vh;overflow-y:auto;position:relative;}
+.modal h3{font-family:var(--serif);font-size:17px;margin-bottom:14px;}
+.modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.record-modal .modal-header{position:sticky;top:-24px;margin:-24px -24px 14px -24px;padding:20px 24px 12px;background:var(--surface);z-index:20;border-radius:14px 14px 0 0;}
+.modal-header h3{margin-bottom:0;}
+.modal-close{
+  flex-shrink:0;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--paper);
+  color:var(--muted);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.modal-close:hover{background:var(--overdue);color:#fff;border-color:var(--overdue);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:11px;}
+.field-row.single{grid-template-columns:1fr;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11px;font-weight:600;color:var(--muted);}
+.field input{font-family:var(--mono);font-size:13px;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);outline:none;}
+.field input:focus{border-color:var(--brand);}
+.helptext{font-size:11px;color:var(--muted);line-height:1.6;margin-top:2px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}
+.modal-actions.spread{justify-content:space-between;}
+
+.day-list-item{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;}
+.day-list-item .dli-head{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.day-list-item .dli-conds{font-family:var(--mono);font-size:10.5px;color:var(--brand);margin-top:4px;}
+
+/* Banner note */
+.banner-note{font-size:10.5px;color:var(--muted);margin-top:3px;}
+
+/* Sequence column */
+.seq-badge{
+  font-family:var(--mono);font-weight:700;color:var(--brand);background:var(--brand-soft);
+  padding:2px 9px;border-radius:6px;font-size:11.5px;display:inline-block;min-width:34px;text-align:center;
+}
+.cond-chip{
+  font-family:var(--mono);font-size:10px;background:var(--brand-soft);color:var(--brand);
+  padding:1px 7px;border-radius:5px;margin-right:4px;display:inline-block;
+}
+
+/* Record results — wide modal, one section per checkpoint, horizontal table of conditions */
+.record-modal .modal{max-width:96vw;width:1400px;max-height:92vh;}
+.cp-section{border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+.cp-section-body{padding:0 16px 14px;}
+.cp-section-head{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  padding:12px 16px;cursor:pointer;list-style:none;background:var(--paper);
+}
+.cp-section-head::-webkit-details-marker{display:none;}
+.cp-chevron{display:inline-block;font-size:9px;color:var(--muted);transition:transform .15s;margin-right:2px;}
+.cp-section[open] .cp-chevron{transform:rotate(90deg);}
+.cp-section-title{font-family:var(--serif);font-size:15px;font-weight:700;}
+.cp-section-date{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px;}
+.result-table-wrap{overflow-x:auto;}
+.result-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.result-table th{background:#efece2;font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:6px 7px;text-align:left;border:1px solid var(--line);}
+.result-table td{padding:5px 6px;border:1px solid var(--line);vertical-align:middle;}
+.result-table select, .result-table input{font-family:var(--mono);font-size:11.5px;padding:5px 6px;border:1px solid var(--line);border-radius:5px;background:var(--paper);color:var(--ink);width:100%;outline:none;min-width:64px;}
+.result-table select:focus, .result-table input:focus{border-color:var(--brand);}
+.result-table td.cond-label{font-weight:700;color:var(--brand);white-space:nowrap;}
+.cp-no-cond{color:var(--muted);font-size:11.5px;font-style:italic;}
+.add-row-btn{font-family:var(--mono);font-size:10.5px;padding:3px 10px;border-radius:5px;border:1px dashed var(--line);background:transparent;color:var(--brand);cursor:pointer;margin-top:4px;}
+.add-row-btn:hover{border-style:solid;background:var(--brand-soft);}
+.remove-row-btn{font-size:12px;padding:3px 7px;border-radius:5px;border:1px solid var(--line);background:transparent;color:var(--overdue);cursor:pointer;}
+.remove-row-btn:hover{background:var(--overdue);color:#fff;}
+.remark-box{width:100%;font-family:var(--sans);font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);outline:none;resize:vertical;min-height:44px;margin-top:8px;}
+.remark-box:focus{border-color:var(--brand);}
+.legend-box{font-size:10.5px;color:var(--muted);background:#efece2;border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.6;}
+.legend-box b{color:var(--ink);}
+.save-status{font-size:11px;color:var(--done);margin-left:8px;opacity:0;transition:opacity .2s;}
+.save-status.show{opacity:1;}
+
+/* People management */
+.people-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.people-row input{flex:1;}
+
+/* Report choice modal */
+.report-choice{display:flex;gap:12px;margin-top:6px;}
+.report-choice .btn{flex:1;justify-content:center;padding:16px;flex-direction:column;gap:6px;}
+.report-choice .btn .rc-title{font-weight:700;font-size:13px;}
+.report-choice .btn .rc-sub{font-size:10.5px;color:var(--muted);font-weight:400;}
+
+@media (max-width: 780px){
+  .topbar,.main{padding-left:16px;padding-right:16px;}
+  .field-row{grid-template-columns:1fr;}
+  .cal-cell{height:74px;font-size:10px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="eyebrow">R&amp;D · Personal Care Bulk</span>
+    <h1>Stability Test Notification Tracker</h1>
+    <span class="sub"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">พร้อมใช้งาน</span></span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" onclick="openSettings()">⚙ ตั้งค่า</button>
+    <button class="btn btn-ghost" onclick="openPeopleModal()">👤 จัดการรายชื่อ</button>
+    <button class="btn btn-ghost" onclick="downloadBackup()">⬇ สำรองข้อมูล</button>
+    <button class="btn btn-ghost" onclick="refreshAll()">🔄 รีเฟรช</button>
+    <button class="btn btn-brand" onclick="openProductModal()">+ เพิ่มสินค้า/สูตรใหม่</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="banner" id="banner">
+    <div>
+      <div><span class="banner-num" id="bannerNum">0</span> <span class="banner-label">รายการถึงกำหนด/เลยกำหนดวันนี้</span></div>
+      <div class="banner-note">ระบบส่งแจ้งเตือนเข้า Teams/LINE ให้อัตโนมัติทุกวันอยู่แล้ว — ปุ่มนี้มีไว้เผื่ออยากส่งทันที ไม่กดก็ได้ ไม่มีผลอะไร</div>
+    </div>
+    <button class="btn btn-brand btn-xs" id="sendDueBtn" onclick="sendNotifyNow()">➤ ส่งเข้า Teams/LINE ตอนนี้ (ไม่บังคับ)</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="cal" onclick="switchTab('cal')">📅 มุมมองปฏิทิน</div>
+    <div class="tab" data-tab="list" onclick="switchTab('list')">📋 รายการทั้งหมด</div>
+  </div>
+
+  <!-- Calendar view -->
+  <div class="view active" id="view-cal">
+    <div class="cal-wrap" id="calWrap">
+      <div class="cal-head">
+        <div class="cal-title" id="calTitle"></div>
+        <div class="cal-nav">
+          <button class="btn btn-ghost btn-xs" onclick="calShift(-1)">‹ เดือนก่อนหน้า</button>
+          <button class="btn btn-ghost btn-xs" onclick="calToday()">วันนี้</button>
+          <button class="btn btn-ghost btn-xs" onclick="calShift(1)">เดือนถัดไป ›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- List view -->
+  <div class="view" id="view-list">
+    <div class="toolbar">
+      <input class="search-input" id="searchBox" placeholder="ค้นหาชื่อสินค้า / สูตร / ลูกค้า…" oninput="renderList()">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer;">
+        <input type="checkbox" id="showArchivedBox" onchange="renderList()"> แสดงรายการที่เก็บเข้าคลังแล้ว
+      </label>
+    </div>
+    <div id="listWrap"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="emoji">🧪</div>
+      <div>ยังไม่มีข้อมูลในระบบ กด "+ เพิ่มสินค้า/สูตรใหม่" มุมบนขวาเพื่อเริ่มบันทึก</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Product Modal -->
+<div class="modal-backdrop" id="productModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="productModalTitle">เพิ่มสินค้า/สูตรใหม่</h3><button class="modal-close" onclick="closeModal('productModal')">✕</button></div>
+    <input type="hidden" id="editId">
+    <div class="field-row">
+      <div class="field"><label>ลำดับ (Seq. No.)</label><input type="number" id="f_seq" placeholder="อัตโนมัติ — แก้ไขเองได้"></div>
+      <div class="field"></div>
+    </div>
+    <div class="field-row single">
+      <div class="field"><label>PRODUCT NAME</label><input id="f_productName" placeholder="เช่น Sunscreen SPF50 200ml"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>FORMULATION NO. (สูตร)</label><input id="f_formNo" placeholder="เช่น F-2601 — สินค้าเดียวกันมีได้หลายสูตร"></div>
+      <div class="field"><label>CUSTOMER</label><input id="f_customer" placeholder="ชื่อลูกค้า"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>MIXING DATE</label><input type="date" id="f_mixDate"></div>
+      <div class="field"><label>DAY 0 (วันเริ่มเก็บ stability)</label><input type="date" id="f_day0"></div>
+    </div>
+    <div class="helptext">ระบบจะคำนวณ Day 1, Day 3, Week 1/2/4/8/12/20, 12 เดือน และ 20 เดือน ให้อัตโนมัติจากวันที่ Day 0 — ลำดับจะรันต่อจากตัวล่าสุดในระบบให้อัตโนมัติ แต่แก้ไขเป็นเลขอื่นเองได้ (เช่น ตอนย้ายข้อมูลเก่าเข้าระบบ)</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('productModal')">ยกเลิก</button>
+      <button class="btn btn-brand" onclick="saveProduct()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Record results modal — shows ALL checkpoints for one product, each with only its applicable conditions -->
+<div class="modal-backdrop record-modal" id="resultModal">
+  <div class="modal" id="resultModalInner">
+    <div class="modal-header">
+      <h3 id="resultModalTitle">บันทึกผลทดสอบ</h3>
+      <button class="modal-close" onclick="closeResultModal()" title="ปิด (จะบันทึกข้อมูลที่แก้ไว้ให้อัตโนมัติ)">✕</button>
+    </div>
+    <div class="legend-box">
+      <b>เกณฑ์การอ่านผล Texture/Color/Odor:</b> เปรียบเทียบกับ reference ที่เก็บที่อุณหภูมิห้อง —
+      0 = ไม่เปลี่ยนแปลง &nbsp;|&nbsp; -1 = ลดลงเล็กน้อย, -2 = ลดลงปานกลาง, -3 = ลดลงมาก &nbsp;|&nbsp; +1 = เพิ่มขึ้นเล็กน้อย, +2 = เพิ่มขึ้นปานกลาง, +3 = เพิ่มขึ้นมาก
+    </div>
+    <div class="helptext" style="margin-bottom:12px;">แต่ละ checkpoint แสดงเฉพาะเงื่อนไขที่ต้องทดสอบจริงตามแผนงาน — กด "บันทึก" ในแต่ละช่วงเพื่อบันทึกทีละ checkpoint ได้เลย หรือกด ✕ มุมบนขวาเพื่อบันทึกทั้งหมดแล้วปิดในทีเดียว</div>
+    <div id="resultModalBody"></div>
+  </div>
+</div>
+
+<!-- Report choice modal -->
+<div class="modal-backdrop" id="reportModal">
+  <div class="modal">
+    <div class="modal-header"><h3>สร้างรายงาน</h3><button class="modal-close" onclick="closeModal('reportModal')">✕</button></div>
+    <div class="helptext" style="margin-bottom:10px;">เลือกรูปแบบรายงานที่ต้องการ — จะเปิดเป็นแท็บใหม่ พร้อมปุ่มพิมพ์/บันทึกเป็น PDF</div>
+    <input type="hidden" id="reportEntryId">
+    <div class="report-choice">
+      <button class="btn btn-ghost" onclick="generateReport('form')">
+        <span class="rc-title">📄 รายงานแบบฟอร์ม</span>
+        <span class="rc-sub">รายวัน/สัปดาห์ ตามเงื่อนไข — แบบฟอร์มบันทึกผลละเอียด</span>
+      </button>
+      <button class="btn btn-ghost" onclick="generateReport('summary')">
+        <span class="rc-title">📊 ตารางสรุป</span>
+        <span class="rc-sub">สรุปรายการทดสอบ x ช่วงเวลา ในตารางเดียว</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- People management modal -->
+<div class="modal-backdrop" id="peopleModal">
+  <div class="modal">
+    <div class="modal-header"><h3>👤 จัดการรายชื่อผู้บันทึก / ผู้พัฒนาสูตร</h3><button class="modal-close" onclick="closeModal('peopleModal')">✕</button></div>
+    <div class="helptext" style="margin-bottom:12px;">รายชื่อในนี้ใช้เป็นตัวเลือกในช่อง "ผู้บันทึก" และ "ผู้พัฒนาสูตร" ตอนบันทึกผลทดสอบ — เพิ่ม/แก้ไข/ลบได้ตลอด และเก็บไว้กลางให้ทุกคนเห็นชุดเดียวกัน</div>
+    <div id="peopleListWrap"></div>
+    <div class="people-row" style="margin-top:10px;">
+      <input id="f_newPersonName" placeholder="ชื่อคนใหม่…">
+      <button class="btn btn-brand btn-xs" onclick="addPersonUI()">+ เพิ่ม</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail / day list modal -->
+<div class="modal-backdrop" id="dayModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="dayModalTitle">รายการที่ถึงกำหนด</h3><button class="modal-close" onclick="closeModal('dayModal')">✕</button></div>
+    <div id="dayModalBody"></div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header"><h3>⚙ ตั้งค่า Backend</h3><button class="modal-close" onclick="closeModal('settingsModal')">✕</button></div>
+    <div class="helptext" style="margin-bottom:14px;">
+      วาง URL ของ Google Apps Script Web App (ไฟล์ stability_test_backend.gs ที่แนบให้) —
+      ตัวนี้เก็บข้อมูลสินค้า/สูตรทั้งหมดไว้ใน Google Sheet กลาง ทุกคนที่ตั้งค่า URL เดียวกัน
+      จะเห็นข้อมูลชุดเดียวกันเสมอไม่ว่าจะเปิดจากเครื่องไหน และเป็นตัวส่งแจ้งเตือนเข้า Teams ด้วย
+    </div>
+    <div class="field-row single">
+      <div class="field"><label>BACKEND URL (จาก Apps Script)</label><input id="f_backend" placeholder="https://script.google.com/macros/s/xxxxx/exec"></div>
+    </div>
+    <div class="modal-actions spread">
+      <button class="btn btn-ghost" onclick="testBackend()">ทดสอบส่ง</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" onclick="closeModal('settingsModal')">ยกเลิก</button>
+        <button class="btn btn-brand" onclick="saveSettings()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<datalist id="spindleList"></datalist>
+<datalist id="rpmList"></datalist>
+
+<div id="toast"></div>
+
+<script>
+/* ───────────────────────── Schedule definition ───────────────────────── */
+const CHECKPOINTS = [
+  {key:'day0',   label:'Day 0',    unit:'day',   value:0},
+  {key:'day1',   label:'Day 1',    unit:'day',   value:1},
+  {key:'day3',   label:'Day 3',    unit:'day',   value:3},
+  {key:'week1',  label:'Week 1',   unit:'day',   value:7},
+  {key:'week2',  label:'Week 2',   unit:'day',   value:14},
+  {key:'week4',  label:'Week 4',   unit:'day',   value:28},
+  {key:'week8',  label:'Week 8',   unit:'day',   value:56},
+  {key:'week12', label:'Week 12',  unit:'day',   value:84},
+  {key:'week20', label:'Week 20',  unit:'day',   value:140},
+  {key:'m12',    label:'12 Months',unit:'month', value:12},
+  {key:'m20',    label:'20 Months',unit:'month', value:20},
+];
+
+const CONDITIONS = [
+  {key:'c4',       label:'4°C'},
+  {key:'room',     label:'Room Temp'},
+  {key:'c40',      label:'40°C'},
+  {key:'sunlight', label:'Sunlight'},
+];
+// RESULT_ITEMS ใช้สำหรับตารางสรุป (รายงาน) — texture แยกเป็น 2 ค่าตามฟอร์มเดิม (หลังออกจากตู้ / หลังตั้งทิ้งไว้อุณหภูมิห้อง)
+const RESULT_ITEMS = [
+  {key:'textureOut',  label:'Texture&Perf. (After removal from chamber)'},
+  {key:'textureRoom', label:'Texture&Perf. (After room temp equilibration)'},
+  {key:'color',       label:'Color'},
+  {key:'odor',        label:'Odor'},
+  {key:'ph',          label:'pH'},
+  {key:'viscosity',   label:'Viscosity'},
+];
+
+// แต่ละ checkpoint ทดสอบเฉพาะเงื่อนไขที่กำหนดไว้จริงตามแผนงาน (อ้างอิงฟอร์มกระดาษเดิม)
+// ปรับแก้ list นี้ได้ตรงๆ ถ้าแผนงานเปลี่ยนในอนาคต
+const CHECKPOINT_CONDITIONS = {
+  day0:   ['room'],
+  day1:   ['room'],
+  day3:   ['room','c40','sunlight'],
+  week1:  ['c4','room','c40','sunlight'],
+  week2:  ['c4','room','c40','sunlight'],
+  week4:  ['c4','room','c40'],
+  week8:  ['c4','room','c40'],
+  week12: ['c4','room','c40'],
+  week20: ['c4','room','c40'],
+  m12:    ['c4','room'],
+  m20:    ['c4','room'],
+};
+
+// ตัวเลือกวิธีวัดความหนืด (Brookfield method) — เข็ม / ความเร็วรอบ (พิมพ์ค้นหาได้ผ่าน datalist), เวลาให้พิมพ์เอง
+const VISC_SPINDLES = ['S61','S62','S63','S64','S91','S92','S93','S94','S95','S96','S97','LV1','LV2','LV3','LV4','RV1','RV2','RV3','RV4','RV5','RV6','RV7'];
+const VISC_RPMS = ['0.3','0.5','0.6','1','1.5','2','2.5','3','4','5','6','10','12','20','30','50','60','100'];
+
+/* ───────────────────────── State ───────────────────────── */
+let products = [];          // loaded from backend
+let people = [];             // ผู้บันทึก / ผู้พัฒนาสูตร — โหลดจาก backend
+let settings = {backend:''};
+let calDate = new Date();   // month currently shown in calendar
+
+/* ───────────────────────── Settings persistence (local only — just remembers the backend URL on this device) ───────────────────────── */
+function loadLocalSettings(){
+  try{ settings = JSON.parse(localStorage.getItem('stability_settings_v2') || '{}'); }catch(e){ settings = {}; }
+  if(!settings.backend) settings.backend = '';
+}
+function saveLocalSettings(){
+  try{ localStorage.setItem('stability_settings_v2', JSON.stringify(settings)); }catch(e){}
+}
+
+/* ───────────────────────── Sync indicator ───────────────────────── */
+function setSync(state, label){
+  const dot = document.getElementById('syncDot');
+  dot.className = 'sync-dot' + (state==='busy' ? ' busy' : state==='err' ? ' err' : '');
+  document.getElementById('syncLabel').textContent = label;
+}
+
+/* ───────────────────────── Backend API ───────────────────────── */
+async function apiList(){
+  if(!settings.backend){ setSync('err','ยังไม่ได้ตั้งค่า Backend URL'); return null; }
+  setSync('busy','กำลังโหลดข้อมูล…');
+  try{
+    const res = await fetch(settings.backend, {method:'GET'});
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'unknown error');
+    setSync('ok','ซิงค์ล่าสุด ' + new Date().toLocaleTimeString('th-TH'));
+    return {products: data.products || [], people: data.people || []};
+  }catch(e){
+    setSync('err','โหลดข้อมูลไม่สำเร็จ — เช็ค Backend URL');
+    showToast('โหลดข้อมูลไม่สำเร็จ: ตรวจสอบ Backend URL ในหน้าตั้งค่า');
+    return null;
+  }
+}
+
+async function apiPost(payload){
+  if(!settings.backend){ showToast('กรุณาตั้งค่า Backend URL ก่อน'); return null; }
+  try{
+    const res = await fetch(settings.backend, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // เลี่ยง CORS preflight
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'unknown error');
+    return data;
+  }catch(e){
+    showToast('การเชื่อมต่อ Backend ล้มเหลว: ' + e.message);
+    return null;
+  }
+}
+
+/* ───────────────────────── Load / refresh ───────────────────────── */
+async function refreshAll(){
+  const res = await apiList();
+  if(res !== null){ products = res.products; people = res.people; renderAll(); }
+}
+
+/* ───────────────────────── Date helpers ───────────────────────── */
+function toDate(str){ const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
+function ymd(date){
+  const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,'0'), d=String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function fmt(date){ return date.toLocaleDateString('th-TH-u-ca-gregory', {year:'numeric', month:'short', day:'numeric'}); }
+function fmtEN(date){ return date.toLocaleDateString('en-GB', {year:'numeric', month:'short', day:'numeric'}); } // ใช้เฉพาะในรายงาน (ต้องเป็นภาษาอังกฤษล้วน)
+function addDays(date, n){ const d = new Date(date); d.setDate(d.getDate()+n); return d; }
+function addMonths(date, n){ const d = new Date(date); d.setMonth(d.getMonth()+n); return d; }
+function daysBetween(a, b){ return Math.round((b - a) / 86400000); }
+function todayMidnight(){ const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+
+function computeSchedule(entry){
+  if(!entry.day0) return [];
+  const day0 = toDate(entry.day0);
+  const today = todayMidnight();
+  return CHECKPOINTS.map(cp=>{
+    const date = cp.unit === 'day' ? addDays(day0, cp.value) : addMonths(day0, cp.value);
+    const diff = daysBetween(today, date);
+    const isTested = !!(entry.tested && entry.tested[cp.key]);
+    let status;
+    if(isTested) status = 'done';
+    else if(diff < 0) status = 'overdue';
+    else if(diff === 0) status = 'today';
+    else status = 'upcoming';
+    return {...cp, date, diff, status, tested:isTested};
+  });
+}
+
+function allDueToday(){
+  let due = [];
+  products.forEach(p=>{
+    if(p.archived) return;
+    computeSchedule(p).forEach(cp=>{
+      if(cp.status === 'today' || cp.status === 'overdue') due.push({entry:p, cp});
+    });
+  });
+  return due;
+}
+
+/* ───────────────────────── Render orchestration ───────────────────────── */
+function renderAll(){
+  renderBanner();
+  renderCalendar();
+  renderList();
+}
+
+function renderBanner(){
+  const due = allDueToday();
+  document.getElementById('bannerNum').textContent = due.length;
+  const banner = document.getElementById('banner');
+  if(due.length === 0){ banner.classList.add('calm'); document.getElementById('sendDueBtn').disabled = true; }
+  else { banner.classList.remove('calm'); document.getElementById('sendDueBtn').disabled = false; }
+}
+
+/* ───────────────────────── Tabs ───────────────────────── */
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.getElementById('view-cal').classList.toggle('active', tab==='cal');
+  document.getElementById('view-list').classList.toggle('active', tab==='list');
+}
+
+/* ───────────────────────── Calendar ───────────────────────── */
+function calShift(delta){ calDate = new Date(calDate.getFullYear(), calDate.getMonth()+delta, 1); renderCalendar(); }
+function calToday(){ calDate = new Date(); renderCalendar(); }
+
+function renderCalendar(){
+  const year = calDate.getFullYear(), month = calDate.getMonth();
+  document.getElementById('calTitle').textContent = calDate.toLocaleDateString('th-TH-u-ca-gregory', {year:'numeric', month:'long'});
+
+  // build map: 'yyyy-mm-dd' -> [{entry,cp}]
+  const dayMap = {};
+  products.forEach(p=>{
+    if(p.archived) return;
+    computeSchedule(p).forEach(cp=>{
+      if(cp.tested) return; // ตรวจแล้ว ไม่ต้องโชว์ค้างในปฏิทิน
+      const key = ymd(cp.date);
+      (dayMap[key] = dayMap[key] || []).push({entry:p, cp});
+    });
+  });
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['อา','จ','อ','พ','พฤ','ศ','ส'].forEach(d=>{
+    const el = document.createElement('div'); el.className='cal-dow'; el.textContent=d; grid.appendChild(el);
+  });
+
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today = todayMidnight();
+
+  for(let i=0;i<firstDow;i++){ const el=document.createElement('div'); el.className='cal-cell empty'; grid.appendChild(el); }
+
+  for(let day=1; day<=daysInMonth; day++){
+    const cellDate = new Date(year, month, day);
+    const key = ymd(cellDate);
+    const items = dayMap[key] || [];
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (daysBetween(today, cellDate)===0 ? ' is-today' : '');
+    const numEl = document.createElement('div'); numEl.className='cal-daynum'; numEl.textContent=day; cell.appendChild(numEl);
+
+    const shown = items.slice(0,3);
+    shown.forEach(it=>{
+      const chip = document.createElement('div');
+      chip.className = 'cal-chip ' + it.cp.status;
+      chip.textContent = `#${it.entry.seq||'-'} ${it.entry.productName} (${it.entry.formNo||'-'})`;
+      chip.title = `${it.entry.productName} (${it.entry.formNo||'-'}) · ${it.cp.label}`;
+      cell.appendChild(chip);
+    });
+    if(items.length > 3){
+      const more = document.createElement('div'); more.className='cal-more'; more.textContent = `+${items.length-3} เพิ่มเติม`;
+      cell.appendChild(more);
+    }
+    if(items.length > 0){ cell.onclick = () => openDayModal(cellDate); }
+    grid.appendChild(cell);
+  }
+}
+
+function getDueItemsForDate(date){
+  const key = ymd(date);
+  const items = [];
+  products.forEach(p=>{
+    if(p.archived) return;
+    computeSchedule(p).forEach(cp=>{
+      if(cp.tested) return;
+      if(ymd(cp.date) === key) items.push({entry:p, cp});
+    });
+  });
+  return items;
+}
+
+let currentDayModalDate = null;
+
+function openDayModal(date){
+  currentDayModalDate = date;
+  renderDayModalBody();
+  document.getElementById('dayModal').classList.add('open');
+}
+
+function renderDayModalBody(){
+  const date = currentDayModalDate;
+  const items = getDueItemsForDate(date);
+  document.getElementById('dayModalTitle').textContent = 'รายการที่ถึงกำหนด — ' + fmt(date);
+  const body = document.getElementById('dayModalBody');
+  body.innerHTML = '';
+
+  if(items.length === 0){
+    body.innerHTML = `<div class="helptext">ตรวจครบทุกรายการของวันนี้แล้ว 🎉</div>`;
+    return;
+  }
+
+  items.forEach(it=>{
+    const applicableConds = (CHECKPOINT_CONDITIONS[it.cp.key] || []).map(k=>CONDITIONS.find(c=>c.key===k).label);
+    const condChipsHtml = applicableConds.length
+      ? applicableConds.map(l=>`<span class="cond-chip">${l}</span>`).join('')
+      : '<span style="color:var(--muted);font-size:11px">ไม่มีเงื่อนไขที่ต้องวัดตามแผนงาน</span>';
+    const div = document.createElement('div');
+    div.className = 'day-list-item';
+    div.innerHTML = `
+      <div class="dli-head">
+        <div><b>${escapeHtml(it.entry.productName)}</b> <span style="color:var(--muted)">(${escapeHtml(it.entry.formNo||'-')})</span><br>
+        <span style="color:var(--muted);font-size:11px">ลูกค้า: ${escapeHtml(it.entry.customer||'-')} · Checkpoint: ${it.cp.label}</span></div>
+        <span class="status-pill ${it.cp.status}">${it.cp.status==='overdue' ? '⚠ เลยกำหนด' : '● ถึงกำหนด'}</span>
+      </div>
+      <div style="margin-top:6px;">${condChipsHtml}</div>
+      <div style="margin-top:8px;display:flex;justify-content:flex-end;gap:8px;">
+        <button class="mark-btn" onclick="closeModal('dayModal');openResultModal('${it.entry.id}')">📝 บันทึกผลทดสอบ</button>
+        <button class="mark-btn" onclick="toggleTested('${it.entry.id}','${it.cp.key}', 'day')">✓ ทำเครื่องหมายว่าตรวจแล้ว</button>
+      </div>`;
+    body.appendChild(div);
+  });
+}
+
+/* ───────────────────────── List view ───────────────────────── */
+function renderList(){
+  const q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+  const showArchived = document.getElementById('showArchivedBox').checked;
+  const wrap = document.getElementById('listWrap');
+  const empty = document.getElementById('emptyState');
+  wrap.innerHTML = '';
+
+  const filtered = products.filter(p=>{
+    if(!showArchived && p.archived) return false;
+    if(!q) return true;
+    return (p.productName||'').toLowerCase().includes(q) ||
+           (p.formNo||'').toLowerCase().includes(q) ||
+           (p.customer||'').toLowerCase().includes(q);
+  });
+
+  if(products.length === 0){ empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  const table = document.createElement('table');
+  table.className = 'entry-table';
+  table.innerHTML = `<thead><tr>
+    <th>#</th><th>สินค้า</th><th>สูตร</th><th>ลูกค้า</th><th>Day 0</th><th>สถานะถัดไป</th><th>การจัดการ</th>
+  </tr></thead><tbody></tbody>`;
+  const tbody = table.querySelector('tbody');
+
+  filtered.sort((a,b)=> (parseInt(a.seq)||0) - (parseInt(b.seq)||0));
+
+  filtered.forEach(p=>{
+    const schedule = computeSchedule(p);
+    const next = schedule.find(cp=>cp.status!=='done') || schedule[schedule.length-1];
+    const statusLabelMap = {done:'✓ ตรวจครบแล้ว', today:'● ถึงกำหนดวันนี้', overdue:'⚠ เลยกำหนด', upcoming:'รอถึงกำหนด'};
+    const allDone = schedule.every(cp=>cp.status==='done');
+    const archiveBtn = p.archived
+      ? `<button class="btn btn-ghost btn-xs" onclick="toggleArchive('${p.id}', false)">♻️ นำออกจากคลัง</button>`
+      : `<button class="btn btn-ghost btn-xs" onclick="toggleArchive('${p.id}', true)">📦 เก็บเข้าคลัง</button>`;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><span class="seq-badge">#${escapeHtml(p.seq||'-')}</span></td>
+      <td>${escapeHtml(p.productName)} ${p.archived ? '<span style="color:var(--muted);font-size:10.5px">📦 เก็บในคลัง</span>' : (allDone ? '<span style="color:var(--done);font-size:10.5px">✓ ตรวจครบ</span>' : '')}</td>
+      <td>${escapeHtml(p.formNo||'-')}</td>
+      <td>${escapeHtml(p.customer||'-')}</td>
+      <td style="font-family:var(--mono)">${p.day0 ? fmt(toDate(p.day0)) : '-'}</td>
+      <td><span class="status-pill ${next.status}">${statusLabelMap[next.status]} · ${next.label}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-brand btn-xs" onclick="openResultModal('${p.id}')">📝 บันทึกผลทดสอบ</button>
+        <button class="btn btn-ghost btn-xs" onclick="openReportModal('${p.id}')">📄 รายงาน</button>
+        <button class="btn btn-ghost btn-xs" onclick="openProductModal('${p.id}')">แก้ไข</button>
+        ${archiveBtn}
+        <button class="btn btn-danger btn-xs" onclick="deleteEntry('${p.id}')">ลบ</button>
+      </td>`;
+    tbody.appendChild(row);
+  });
+
+  wrap.appendChild(table);
+}
+
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ───────────────────────── Product CRUD ───────────────────────── */
+function nextSuggestedSeq(){
+  let max = 0;
+  products.forEach(p=>{ const n = parseInt(p.seq,10); if(!isNaN(n)) max = Math.max(max, n); });
+  return max + 1;
+}
+
+function openProductModal(id){
+  document.getElementById('editId').value = id || '';
+  if(id){
+    const p = products.find(x=>x.id===id);
+    document.getElementById('productModalTitle').textContent = 'แก้ไขสินค้า/สูตร';
+    document.getElementById('f_seq').value = p.seq || '';
+    document.getElementById('f_productName').value = p.productName || '';
+    document.getElementById('f_formNo').value = p.formNo || '';
+    document.getElementById('f_customer').value = p.customer || '';
+    document.getElementById('f_mixDate').value = p.mixDate || '';
+    document.getElementById('f_day0').value = p.day0 || '';
+  } else {
+    document.getElementById('productModalTitle').textContent = 'เพิ่มสินค้า/สูตรใหม่';
+    ['f_productName','f_formNo','f_customer','f_mixDate','f_day0'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f_seq').value = nextSuggestedSeq();
+  }
+  document.getElementById('productModal').classList.add('open');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+async function saveProduct(){
+  const id = document.getElementById('editId').value;
+  const productName = document.getElementById('f_productName').value.trim();
+  const day0 = document.getElementById('f_day0').value;
+  if(!productName){ showToast('กรุณากรอกชื่อสินค้า'); return; }
+  if(!day0){ showToast('กรุณาระบุวันที่ Day 0'); return; }
+
+  const data = {
+    seq: document.getElementById('f_seq').value.trim(),
+    productName,
+    formNo: document.getElementById('f_formNo').value.trim(),
+    customer: document.getElementById('f_customer').value.trim(),
+    mixDate: document.getElementById('f_mixDate').value,
+    day0,
+  };
+
+  setSync('busy','กำลังบันทึก…');
+  let res;
+  if(id) res = await apiPost({action:'update', id, ...data});
+  else   res = await apiPost({action:'create', ...data});
+
+  if(res){
+    closeModal('productModal');
+    showToast('บันทึกเรียบร้อย');
+    await refreshAll();
+  } else {
+    setSync('err','บันทึกไม่สำเร็จ');
+  }
+}
+
+async function deleteEntry(id){
+  if(!confirm('ต้องการลบรายการนี้ออกจากระบบใช่หรือไม่? (ข้อมูลผลทดสอบที่เคยบันทึกไว้จะหายไปด้วย ถ้าแค่อยากซ่อนแต่เก็บข้อมูลไว้ ใช้ปุ่ม "เก็บเข้าคลัง" แทน)')) return;
+  setSync('busy','กำลังลบ…');
+  const res = await apiPost({action:'delete', id});
+  if(res){ showToast('ลบเรียบร้อย'); await refreshAll(); }
+  else setSync('err','ลบไม่สำเร็จ');
+}
+
+async function toggleArchive(id, archived){
+  const entry = products.find(p=>p.id===id);
+  if(!entry) return;
+  const previous = !!entry.archived;
+  entry.archived = archived; // optimistic
+  renderAll();
+  const res = await apiPost({action:'setArchived', id, archived});
+  if(res){ showToast(archived ? 'เก็บเข้าคลังเรียบร้อย — ข้อมูลผลทดสอบยังอยู่ครบ ดูได้จากติ๊ก "แสดงรายการที่เก็บเข้าคลังแล้ว"' : 'นำออกจากคลังเรียบร้อย'); }
+  else { entry.archived = previous; renderAll(); showToast('ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง'); }
+}
+
+async function toggleTested(id, checkpointKey, source){
+  const entry = products.find(p=>p.id===id);
+  if(!entry) return;
+  entry.tested = entry.tested || {};
+  const previous = !!entry.tested[checkpointKey];
+  entry.tested[checkpointKey] = !previous; // optimistic — เปลี่ยนทันทีไม่ต้องรอ network
+
+  renderAll(); // อัปเดตปฏิทิน/รายการทั้งหมด/แบนเนอร์เสมอ ไม่ว่าจะกดจากที่ไหน
+  if(source === 'record') renderResultModalBody(id);
+  if(source === 'day') renderDayModalBody();
+
+  const res = await apiPost({action:'toggleTested', id, checkpointKey});
+  if(!res){
+    entry.tested[checkpointKey] = previous; // ย้อนกลับถ้า backend ปฏิเสธ/ล้มเหลวจริง
+    renderAll();
+    if(source === 'record') renderResultModalBody(id);
+    if(source === 'day') renderDayModalBody();
+    showToast('อัปเดตไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }
+}
+
+/* ───────────────────────── Settings ───────────────────────── */
+function openSettings(){
+  document.getElementById('f_backend').value = settings.backend || '';
+  document.getElementById('settingsModal').classList.add('open');
+}
+async function saveSettings(){
+  settings.backend = document.getElementById('f_backend').value.trim();
+  saveLocalSettings();
+  closeModal('settingsModal');
+  showToast('บันทึกการตั้งค่าเรียบร้อย — กำลังโหลดข้อมูล');
+  await refreshAll();
+}
+async function testBackend(){
+  const backend = document.getElementById('f_backend').value.trim();
+  if(!backend){ showToast('กรุณากรอก Backend URL ก่อนทดสอบ'); return; }
+  try{
+    const res = await fetch(backend, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({action:'test'})});
+    const data = await res.json();
+    showToast(data.ok ? 'เชื่อมต่อสำเร็จ — เช็คที่ Teams/LINE ว่ามีข้อความทดสอบเข้าไหม' : 'Backend ตอบกลับผิดพลาด: ' + (data.error||''));
+  }catch(e){
+    showToast('เชื่อมต่อไม่สำเร็จ — ตรวจสอบ URL และการ Deploy');
+  }
+}
+document.getElementById('settingsModal').addEventListener('click', e=>{ if(e.target.id==='settingsModal') closeModal('settingsModal'); });
+document.getElementById('productModal').addEventListener('click', e=>{ if(e.target.id==='productModal') closeModal('productModal'); });
+document.getElementById('dayModal').addEventListener('click', e=>{ if(e.target.id==='dayModal') closeModal('dayModal'); });
+document.getElementById('resultModal').addEventListener('click', e=>{ if(e.target.id==='resultModal') closeModal('resultModal'); });
+document.getElementById('reportModal').addEventListener('click', e=>{ if(e.target.id==='reportModal') closeModal('reportModal'); });
+document.getElementById('peopleModal').addEventListener('click', e=>{ if(e.target.id==='peopleModal') closeModal('peopleModal'); });
+
+/* ───────────────────────── Notify now ───────────────────────── */
+async function sendNotifyNow(){
+  const btn = document.getElementById('sendDueBtn');
+  btn.disabled = true; btn.textContent = 'กำลังส่ง…';
+  const res = await apiPost({action:'notifyNow'});
+  if(res){ showToast(`ส่งแจ้งเตือนแล้ว (${res.sentCount||0} รายการ) — เช็คที่ Teams/LINE`); }
+  btn.disabled = false; btn.textContent = '➤ ส่งเข้า Teams/LINE ตอนนี้ (ไม่บังคับ)';
+}
+
+/* ───────────────────────── Backup ───────────────────────── */
+function downloadBackup(){
+  const blob = new Blob([JSON.stringify(products, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'stability_test_backup_' + ymd(new Date()) + '.json';
+  a.click();
+  showToast('ดาวน์โหลดไฟล์สำรองข้อมูลแล้ว (นอกจากนี้ตัว Google Sheet เองก็เก็บประวัติการแก้ไขให้อัตโนมัติอยู่แล้ว)');
+}
+
+/* ───────────────────────── Result recording ───────────────────────── */
+let currentResultEntryId = null;
+let dirtyCheckpoints = new Set(); // checkpoint keys with unsaved edits — used for autosave-on-close
+
+function peopleOptionsHtml(selected){
+  const opts = ['<option value="">-</option>'].concat(
+    people.map(p=>`<option value="${escapeHtml(p.name)}" ${p.name===selected?'selected':''}>${escapeHtml(p.name)}</option>`)
+  );
+  return opts.join('');
+}
+
+// จำค่า "ผู้บันทึก/ผู้พัฒนาสูตร" ล่าสุดที่เลือกไว้ในเซสชันนี้ ใช้เป็นค่าเริ่มต้นแนะนำให้แถวใหม่ (แก้ไขเองได้เสมอ)
+let lastTester = '';
+
+// หาวิธีวัด viscosity ล่าสุดที่เคยกรอกไว้ในสินค้า/สูตรนี้ (สมมุติว่าวิธีวัดเหมือนกันตลอดทั้งการทดสอบ)
+// ใช้เป็นค่าเริ่มต้นแนะนำให้แถวใหม่ ๆ แต่ยังแก้ไขเองได้เสมอ
+function getDefaultViscMethod(entry){
+  const out = {spindle:'', rpm:'', timeMin:''};
+  if(!entry.results) return out;
+  for(const cpKey in entry.results){
+    for(const condKey in entry.results[cpKey]){
+      if(condKey === '_remark') continue;
+      const rows = entry.results[cpKey][condKey];
+      const arr = Array.isArray(rows) ? rows : (rows && Object.keys(rows).length ? [rows] : []);
+      for(const r of arr){
+        if(r && r.spindle){ return {spindle:r.spindle, rpm:r.rpm||'', timeMin:r.timeMin||''}; }
+      }
+    }
+  }
+  return out;
+}
+
+// normalize ข้อมูลเก่า (เคยเป็น object เดี่ยว) ให้เป็น array เสมอ + ย้าย field 'texture' เก่าไปที่ textureRoom
+function normalizeConditionRows(raw){
+  if(Array.isArray(raw)) return raw;
+  if(raw && typeof raw === 'object' && Object.keys(raw).length){
+    const r = {...raw};
+    if(r.texture !== undefined && r.textureRoom === undefined){ r.textureRoom = r.texture; }
+    return [r];
+  }
+  return [];
+}
+
+function openResultModal(entryId){
+  currentResultEntryId = entryId;
+  dirtyCheckpoints.clear();
+  const entry = products.find(p=>p.id===entryId);
+  document.getElementById('resultModalTitle').textContent = `บันทึกผลทดสอบ — ${entry.productName} (${entry.formNo||'-'})`;
+  renderResultModalBody(entryId);
+  document.getElementById('resultModal').classList.add('open');
+  document.getElementById('resultModalInner').scrollTop = 0; // เปิดมาแล้วต้องเห็นด้านบนสุดก่อนเสมอ
+}
+
+function expandAllCheckpoints(open){
+  document.querySelectorAll('#resultModalBody details.cp-section').forEach(d => d.open = open);
+}
+
+function buildConditionRowHtml(cpKey, condKey, ridx, d, defaults){
+  const pfx = `rr_${cpKey}_${condKey}_${ridx}`;
+  const condLabel = CONDITIONS.find(c=>c.key===condKey).label;
+  return `<tr data-cp="${cpKey}" data-cond="${condKey}">
+    <td class="cond-label">${condLabel}</td>
+    <td><input data-f="textureOut" id="${pfx}_textureOut" value="${escapeHtml(d.textureOut||'')}" placeholder="0,-1,+2"></td>
+    <td><input data-f="textureRoom" id="${pfx}_textureRoom" value="${escapeHtml(d.textureRoom||'')}" placeholder="0,-1,+2"></td>
+    <td><input data-f="color" id="${pfx}_color" value="${escapeHtml(d.color||'')}" placeholder="0,-1,+2"></td>
+    <td><input data-f="odor" id="${pfx}_odor" value="${escapeHtml(d.odor||'')}" placeholder="0,-1,+2"></td>
+    <td><input data-f="ph" id="${pfx}_ph" value="${escapeHtml(d.ph||'')}" placeholder="-"></td>
+    <td><input data-f="viscosity" id="${pfx}_viscosity" value="${escapeHtml(d.viscosity||'')}" placeholder="ค่า"></td>
+    <td><input data-f="spindle" id="${pfx}_spindle" list="spindleList" value="${escapeHtml(d.spindle||defaults.spindle||'')}" placeholder="พิมพ์…"></td>
+    <td><input data-f="rpm" id="${pfx}_rpm" list="rpmList" value="${escapeHtml(d.rpm||defaults.rpm||'')}" placeholder="พิมพ์…"></td>
+    <td><input data-f="timeMin" id="${pfx}_timeMin" value="${escapeHtml(d.timeMin||defaults.timeMin||'')}" placeholder="นาที"></td>
+    <td><select data-f="tester" id="${pfx}_tester">${peopleOptionsHtml(d.tester||defaults.tester||'')}</select></td>
+    <td><select data-f="developer" id="${pfx}_developer">${peopleOptionsHtml(d.developer||defaults.developer||'')}</select></td>
+    <td><button class="remove-row-btn" onclick="this.closest('tr').remove()" title="ลบแถวนี้">✕</button></td>
+  </tr>`;
+}
+
+function addRowTriggerHtml(cpKey, condKey){
+  const condLabel = CONDITIONS.find(c=>c.key===condKey).label;
+  return `<tr class="add-row-tr" data-addfor="${condKey}"><td colspan="12"><button class="add-row-btn" onclick="addConditionRow('${cpKey}','${condKey}')">+ เพิ่มแถว ${condLabel} (วัดซ้ำ/วิธีอื่น)</button></td></tr>`;
+}
+
+function addConditionRow(cpKey, condKey){
+  const entry = products.find(p=>p.id===currentResultEntryId);
+  const defaults = {...getDefaultViscMethod(entry), tester:lastTester};
+  const tbody = document.getElementById(`tbody_${cpKey}`);
+  const ridx = tbody.querySelectorAll(`tr[data-cond="${condKey}"]`).length;
+  const trigger = tbody.querySelector(`tr.add-row-tr[data-addfor="${condKey}"]`);
+  trigger.insertAdjacentHTML('beforebegin', buildConditionRowHtml(cpKey, condKey, ridx, {}, defaults));
+  dirtyCheckpoints.add(cpKey);
+}
+
+function renderResultModalBody(entryId){
+  const entry = products.find(p=>p.id===entryId);
+  if(!entry) return;
+  const schedule = computeSchedule(entry);
+  const statusLabelMap = {done:'✓ ตรวจครบแล้ว', today:'● ถึงกำหนดวันนี้', overdue:'⚠ เลยกำหนด', upcoming:'รอถึงกำหนด'};
+  const body = document.getElementById('resultModalBody');
+  const defaults0 = getDefaultViscMethod(entry);
+
+  const controlsHtml = `<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;">
+    <button class="btn btn-ghost btn-xs" onclick="expandAllCheckpoints(true)">⬇ ขยายทั้งหมด</button>
+    <button class="btn btn-ghost btn-xs" onclick="expandAllCheckpoints(false)">⬆ ย่อทั้งหมด</button>
+  </div>`;
+
+  const sectionsHtml = schedule.map(cp=>{
+    const applicableConds = CHECKPOINT_CONDITIONS[cp.key] || [];
+    const existing = (entry.results && entry.results[cp.key]) || {};
+    const remark = existing._remark || '';
+    const condChips = applicableConds.map(k=>CONDITIONS.find(c=>c.key===k).label).join(' / ');
+    const defaults = {...defaults0, tester:lastTester};
+    const shouldOpen = (cp.status === 'overdue' || cp.status === 'today');
+
+    let rowsHtml = '';
+    applicableConds.forEach(condKey=>{
+      const rows = normalizeConditionRows(existing[condKey]);
+      const rowsToShow = rows.length ? rows : [{}];
+      rowsToShow.forEach((d,i)=> rowsHtml += buildConditionRowHtml(cp.key, condKey, i, d, defaults));
+      rowsHtml += addRowTriggerHtml(cp.key, condKey);
+    });
+
+    const bodyHtml = applicableConds.length === 0
+      ? `<div class="cp-no-cond">checkpoint นี้ไม่มีเงื่อนไขที่ต้องทดสอบตามแผนงาน</div>`
+      : `<div class="result-table-wrap"><table class="result-table">
+          <thead>
+            <tr><th rowspan="2">เงื่อนไข</th><th colspan="2">TEXTURE &amp; PERFORMANCE</th><th rowspan="2">Color</th><th rowspan="2">Odor</th><th rowspan="2">pH</th><th rowspan="2">Viscosity</th><th rowspan="2">Spindle</th><th rowspan="2">RPM</th><th rowspan="2">Time (นาที)</th><th rowspan="2">ผู้บันทึก</th><th rowspan="2">ผู้พัฒนาสูตร</th><th rowspan="2"></th></tr>
+            <tr><th>หลังออกจากตู้</th><th>ตั้งทิ้งไว้อุณหภูมิห้อง</th></tr>
+          </thead>
+          <tbody id="tbody_${cp.key}">${rowsHtml}</tbody>
+        </table></div>
+        <textarea class="remark-box" id="remark_${cp.key}" placeholder="หมายเหตุสำหรับวันนี้ (ถ้ามี)…">${escapeHtml(remark)}</textarea>
+        <div style="margin-top:8px;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:8px;">
+          <span class="save-status" id="savestatus_${cp.key}">✓ บันทึกแล้ว</span>
+          <button class="btn btn-brand btn-xs" onclick="saveCheckpointResults('${entryId}','${cp.key}')">💾 บันทึก ${cp.label}</button>
+        </div>`;
+
+    return `<details class="cp-section" data-cpkey="${cp.key}" ${shouldOpen ? 'open' : ''}>
+      <summary class="cp-section-head">
+        <div><span class="cp-chevron">▶</span> <span class="cp-section-title">${cp.label}</span><span class="cp-section-date">${fmt(cp.date)}</span>
+          ${condChips ? `<div class="dli-conds">เงื่อนไขที่ต้องวัด: ${condChips}</div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="status-pill ${cp.status}">${statusLabelMap[cp.status]}</span>
+          <button class="mark-btn ${cp.tested?'marked':''}" onclick="event.preventDefault();event.stopPropagation();toggleTested('${entryId}','${cp.key}','record')">${cp.tested?'✓ ยกเลิกทำเครื่องหมาย':'ทำเครื่องหมายว่าตรวจแล้ว'}</button>
+        </div>
+      </summary>
+      <div class="cp-section-body">${bodyHtml}</div>
+    </details>`;
+  }).join('');
+
+  body.innerHTML = controlsHtml + sectionsHtml;
+
+  // ติดตาม "แก้ไขแล้วยังไม่บันทึก" ต่อ checkpoint ไว้ ใช้ตอนกดปิดโมดัลเพื่อบันทึกอัตโนมัติ
+  // และจำค่าผู้บันทึก/ผู้พัฒนาสูตรล่าสุดไว้ใช้เป็นค่าเริ่มต้นของแถวถัดไป
+  body.querySelectorAll('details.cp-section').forEach(sec=>{
+    sec.addEventListener('input', e=>{
+      dirtyCheckpoints.add(sec.dataset.cpkey);
+    });
+    sec.addEventListener('change', e=>{
+      dirtyCheckpoints.add(sec.dataset.cpkey);
+      if(e.target.dataset && e.target.dataset.f === 'tester') lastTester = e.target.value;
+    });
+  });
+}
+
+function readConditionRowsFromDom(cpKey, condKey){
+  const tbody = document.getElementById(`tbody_${cpKey}`);
+  if(!tbody) return [];
+  return Array.from(tbody.querySelectorAll(`tr[data-cond="${condKey}"]`)).map(row=>{
+    const data = {};
+    row.querySelectorAll('[data-f]').forEach(el=>{ data[el.dataset.f] = el.value.trim ? el.value.trim() : el.value; });
+    return data;
+  }).filter(d => Object.values(d).some(v=>v)); // ข้ามแถวที่ว่างเปล่าทั้งแถว
+}
+
+async function saveCheckpointResults(entryId, checkpointKey, silent){
+  const conds = CHECKPOINT_CONDITIONS[checkpointKey] || [];
+  const entry = products.find(p=>p.id===entryId);
+  if(!entry) return;
+  entry.results = entry.results || {};
+  entry.results[checkpointKey] = entry.results[checkpointKey] || {};
+
+  const remarkEl = document.getElementById(`remark_${checkpointKey}`);
+  const remark = remarkEl ? remarkEl.value.trim() : '';
+
+  // อัปเดต local state ทันที (optimistic) ให้ผู้ใช้เห็นผลไว ไม่ต้องรอ network
+  const payloads = [];
+  for(const condKey of conds){
+    const rows = readConditionRowsFromDom(checkpointKey, condKey);
+    entry.results[checkpointKey][condKey] = rows;
+    payloads.push({condKey, rows});
+  }
+  entry.results[checkpointKey]._remark = remark;
+
+  if(!silent){
+    const statusEl = document.getElementById(`savestatus_${checkpointKey}`);
+    if(statusEl){ statusEl.classList.add('show'); setTimeout(()=>statusEl.classList.remove('show'), 1800); }
+  }
+  dirtyCheckpoints.delete(checkpointKey);
+
+  // ส่งขึ้น backend เบื้องหลัง (ไม่บล็อก UI ที่อัปเดตไปแล้ว)
+  for(const p of payloads){
+    await apiPost({action:'saveResult', id: entryId, checkpointKey, condition: p.condKey, data: p.rows});
+  }
+  await apiPost({action:'saveRemark', id: entryId, checkpointKey, remark});
+
+  if(!silent) showToast(`บันทึกผลทดสอบของ ${CHECKPOINTS.find(c=>c.key===checkpointKey).label} เรียบร้อย`);
+}
+
+async function closeResultModal(){
+  const entryId = currentResultEntryId;
+  if(entryId && dirtyCheckpoints.size > 0){
+    setSync('busy','กำลังบันทึกก่อนปิด…');
+    for(const cpKey of Array.from(dirtyCheckpoints)){
+      await saveCheckpointResults(entryId, cpKey, true);
+    }
+    setSync('ok','บันทึกและซิงค์เรียบร้อย');
+  }
+  closeModal('resultModal');
+}
+
+/* ───────────────────────── People management (optimistic — no full refetch, feels instant) ───────────────────────── */
+function openPeopleModal(){
+  renderPeopleList();
+  document.getElementById('peopleModal').classList.add('open');
+}
+
+function renderPeopleList(){
+  const wrap = document.getElementById('peopleListWrap');
+  if(people.length === 0){ wrap.innerHTML = `<div class="helptext">ยังไม่มีรายชื่อ — เพิ่มด้านล่างได้เลย</div>`; return; }
+  wrap.innerHTML = people.map(p=>`
+    <div class="people-row">
+      <input id="person_${p.id}" value="${escapeHtml(p.name)}">
+      <button class="btn btn-ghost btn-xs" onclick="updatePersonUI('${p.id}')">💾 บันทึก</button>
+      <button class="btn btn-danger btn-xs" onclick="deletePersonUI('${p.id}')">🗑 ลบ</button>
+    </div>`).join('');
+}
+
+async function addPersonUI(){
+  const input = document.getElementById('f_newPersonName');
+  const name = input.value.trim();
+  if(!name){ showToast('กรุณากรอกชื่อก่อน'); return; }
+  input.value = '';
+  const tempId = 'temp_' + Date.now();
+  people.push({id: tempId, name}); // optimistic — โผล่ในลิสต์ทันที
+  renderPeopleList();
+  const res = await apiPost({action:'addPerson', name});
+  if(res){
+    const p = people.find(x=>x.id===tempId);
+    if(p) p.id = res.id; // แทนที่ id ชั่วคราวด้วย id จริงจาก backend
+    showToast('เพิ่มรายชื่อเรียบร้อย');
+  } else {
+    people = people.filter(x=>x.id!==tempId); // ย้อนกลับถ้าไม่สำเร็จ
+    renderPeopleList();
+    showToast('เพิ่มรายชื่อไม่สำเร็จ');
+  }
+}
+
+async function updatePersonUI(id){
+  const name = document.getElementById('person_' + id).value.trim();
+  if(!name){ showToast('กรุณากรอกชื่อ'); return; }
+  const p = people.find(x=>x.id===id);
+  const previous = p ? p.name : '';
+  if(p) p.name = name; // optimistic
+  const res = await apiPost({action:'updatePerson', id, name});
+  if(res){ showToast('บันทึกชื่อเรียบร้อย'); }
+  else { if(p) p.name = previous; renderPeopleList(); showToast('บันทึกไม่สำเร็จ'); }
+}
+
+async function deletePersonUI(id){
+  if(!confirm('ต้องการลบรายชื่อนี้ใช่หรือไม่?')) return;
+  const backup = people.slice();
+  people = people.filter(x=>x.id!==id); // optimistic
+  renderPeopleList();
+  const res = await apiPost({action:'deletePerson', id});
+  if(res){ showToast('ลบรายชื่อเรียบร้อย'); }
+  else { people = backup; renderPeopleList(); showToast('ลบไม่สำเร็จ'); }
+}
+
+/* ───────────────────────── Reports ───────────────────────── */
+function openReportModal(entryId){
+  document.getElementById('reportEntryId').value = entryId;
+  document.getElementById('reportModal').classList.add('open');
+}
+
+function generateReport(style){
+  const entryId = document.getElementById('reportEntryId').value;
+  const entry = products.find(p=>p.id===entryId);
+  closeModal('reportModal');
+  const html = style === 'form' ? buildFormReportHtml(entry) : buildSummaryReportHtml(entry);
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+function reportBaseStyle(){
+  return `
+  <style>
+    body{font-family:'Noto Sans','Noto Sans Thai',sans-serif;padding:28px;color:#1f2a24;}
+    .doc-title{text-align:center;font-weight:800;font-size:15px;letter-spacing:.3px;margin-bottom:6px;text-transform:uppercase;}
+    h1{font-size:13px;margin-bottom:4px;color:#555;text-align:center;font-weight:500;}
+    .meta{font-size:11px;color:#777;margin-bottom:16px;text-align:center;}
+    .meta b{color:#1f2a24;}
+    table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px;}
+    th,td{border:1px solid #999;padding:5px 7px;text-align:center;vertical-align:middle;}
+    th{background:#eee;font-weight:700;}
+    td.left{text-align:left;}
+    .doc-footer{margin-top:22px;display:flex;justify-content:space-between;align-items:flex-end;font-size:10px;color:#666;border-top:1px solid #ccc;padding-top:6px;}
+    .print-bar{margin-bottom:18px;}
+    .print-bar button{font-family:sans-serif;padding:9px 18px;background:#1d4e42;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;}
+    @media print{
+      .print-bar{display:none;}
+      body{padding:14px 16px 40px;}
+      .doc-footer{position:fixed;bottom:8px;right:16px;left:16px;border-top:1px solid #ccc;padding-top:4px;}
+    }
+  </style>`;
+}
+
+const DOC_NUMBER = 'NBD-F-RD-26  Rev.07'; // เลขที่เอกสารอ้างอิงจากฟอร์มกระดาษเดิม
+const DOC_EFFECTIVE_DATE = '07/02/2024'; // วันที่ประกาศใช้ (ค.ศ.)
+
+function reportTopHtml(){
+  return `<div class="doc-title">R&amp;D Personal Care Bulk Stability Test</div>`;
+}
+
+function reportFooterHtml(){
+  return `<div class="doc-footer"><span>Effective Date: ${DOC_EFFECTIVE_DATE}</span><span>${DOC_NUMBER}</span></div>`;
+}
+
+function reportHeaderHtml(entry){
+  return `
+    <table style="margin-bottom:14px;">
+      <tr><td class="left" style="width:25%"><b>PRODUCT NAME</b></td><td class="left" style="width:35%">${escapeHtml(entry.productName)}</td>
+          <td class="left" style="width:20%"><b>FORMULATION NO.</b></td><td class="left" style="width:20%">${escapeHtml(entry.formNo||'-')}</td></tr>
+      <tr><td class="left"><b>CUSTOMER</b></td><td class="left">${escapeHtml(entry.customer||'-')}</td>
+          <td class="left"><b>MIXING DATE</b></td><td class="left">${entry.mixDate?fmtEN(toDate(entry.mixDate)):'-'}</td></tr>
+    </table>`;
+}
+
+// รายงานแบบฟอร์ม — merge เซลล์ Checkpoint/วันที่ (คลุมทุกเงื่อนไขของวันนั้น) และเซลล์เงื่อนไข (คลุมแถววัดซ้ำของเงื่อนไขเดียวกัน) เหมือนฟอร์มกระดาษเดิม
+function buildFormReportHtml(entry){
+  const schedule = computeSchedule(entry);
+  const flatRows = [];
+
+  schedule.forEach(cp=>{
+    const applicableConds = CHECKPOINT_CONDITIONS[cp.key] || [];
+    const resultsForCp = (entry.results && entry.results[cp.key]) || {};
+    const remark = resultsForCp._remark || '';
+    const cpStartIdx = flatRows.length;
+
+    applicableConds.forEach(condKey=>{
+      const cond = CONDITIONS.find(c=>c.key===condKey);
+      const dataRows = normalizeConditionRows(resultsForCp[condKey]);
+      const condStartIdx = flatRows.length;
+      if(dataRows.length === 0){
+        flatRows.push({cpLabel:cp.label, cpDate:fmtEN(cp.date), condLabel:cond.label, data:null});
+      } else {
+        dataRows.forEach(d=> flatRows.push({cpLabel:cp.label, cpDate:fmtEN(cp.date), condLabel:cond.label, data:d}));
+      }
+      flatRows[condStartIdx].condSpan = flatRows.length - condStartIdx;
+    });
+
+    if(applicableConds.length > 0) flatRows[cpStartIdx].cpSpan = flatRows.length - cpStartIdx;
+    if(remark) flatRows.push({remarkRow:true, cpLabel:cp.label, remark});
+  });
+
+  let rows = '';
+  flatRows.forEach(r=>{
+    if(r.remarkRow){
+      rows += `<tr><td colspan="12" class="left" style="background:#f7f5ee;font-style:italic;">📝 Remark (${r.cpLabel}): ${escapeHtml(r.remark)}</td></tr>`;
+      return;
+    }
+    let tds = '';
+    if(r.cpSpan) tds += `<td rowspan="${r.cpSpan}">${r.cpLabel}</td><td rowspan="${r.cpSpan}">${r.cpDate}</td>`;
+    if(r.condSpan) tds += `<td rowspan="${r.condSpan}" class="left" style="font-weight:700">${r.condLabel}</td>`;
+    const d = r.data || {};
+    const viscMethod = r.data ? [d.spindle, d.rpm?`${d.rpm} rpm`:'', d.timeMin?`${d.timeMin} min`:''].filter(Boolean).join(' / ') : '';
+    tds += `<td>${escapeHtml(d.textureOut||'-')}</td><td>${escapeHtml(d.textureRoom||'-')}</td>
+      <td>${escapeHtml(d.color||'-')}</td><td>${escapeHtml(d.odor||'-')}</td>
+      <td>${escapeHtml(d.ph||'-')}</td><td>${escapeHtml(d.viscosity||'-')}</td><td style="font-size:9px">${escapeHtml(viscMethod||'-')}</td>
+      <td>${escapeHtml(d.tester||'-')}</td><td>${escapeHtml(d.developer||'-')}</td>`;
+    rows += `<tr>${tds}</tr>`;
+  });
+  if(!rows) rows = `<tr><td colspan="12" class="left" style="color:#888">No test results recorded for this item yet.</td></tr>`;
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Report — ${escapeHtml(entry.productName)}</title>${reportBaseStyle()}</head>
+  <body>
+    <div class="print-bar"><button onclick="window.print()">🖨 Print / Save as PDF</button></div>
+    ${reportTopHtml()}
+    <h1>Form Report — Stability Test Results</h1>
+    <div class="meta">Printed on ${new Date().toLocaleString('en-GB')}</div>
+    ${reportHeaderHtml(entry)}
+    <table>
+      <thead>
+        <tr><th rowspan="2">Checkpoint</th><th rowspan="2">Date</th><th rowspan="2">Condition</th><th colspan="2">TEXTURE &amp; PERFORMANCE</th><th rowspan="2">Color</th><th rowspan="2">Odor</th><th rowspan="2">pH</th><th rowspan="2">Viscosity</th><th rowspan="2">Method (Spindle/RPM/Time)</th><th rowspan="2">Recorded By</th><th rowspan="2">Formulator</th></tr>
+        <tr><th>After removal from chamber</th><th>After room temp equilibration</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${reportFooterHtml()}
+  </body></html>`;
+}
+
+// ตารางสรุป — merge เซลล์ Test Item (คลุมทุกเงื่อนไขของรายการทดสอบนั้น) — รายการทดสอบ (แถว) x checkpoint (คอลัมน์)
+function buildSummaryReportHtml(entry){
+  const schedule = computeSchedule(entry);
+  const today = todayMidnight();
+
+  let bodyRows = '';
+  RESULT_ITEMS.forEach(item=>{
+    const applicableConditions = CONDITIONS.filter(cond =>
+      schedule.some(cp => (CHECKPOINT_CONDITIONS[cp.key]||[]).includes(cond.key))
+    );
+    applicableConditions.forEach((cond, condIdx)=>{
+      const cells = schedule.map(cp=>{
+        const applicable = (CHECKPOINT_CONDITIONS[cp.key]||[]).includes(cond.key);
+        if(!applicable) return '<span style="color:#bbb">—</span>';
+        const dataRows = normalizeConditionRows(entry.results && entry.results[cp.key] && entry.results[cp.key][cond.key]);
+        const val = dataRows.length ? dataRows[0][item.key] : null; // ถ้าวัดซ้ำหลายแถว โชว์แถวแรกในตารางสรุป
+        if(val) return escapeHtml(val) + (dataRows.length > 1 ? ` <span style="color:#999">(+${dataRows.length-1})</span>` : '');
+        return daysBetween(today, cp.date) > 0 ? 'N/A' : 'U/T'; // ยังไม่ถึงกำหนด = N/A, ถึง/เลยกำหนดแล้วแต่ยังไม่บันทึก = U/T
+      }).join('</td><td>');
+      const itemCell = condIdx === 0 ? `<td rowspan="${applicableConditions.length}" class="left" style="font-weight:700">${item.label}</td>` : '';
+      bodyRows += `<tr>${itemCell}<td class="left">${cond.label}</td><td>${cells}</td></tr>`;
+    });
+  });
+
+  const headerCols = schedule.map(cp=>`<th>${cp.label}</th>`).join('');
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Summary — ${escapeHtml(entry.productName)}</title>${reportBaseStyle()}</head>
+  <body>
+    <div class="print-bar"><button onclick="window.print()">🖨 Print / Save as PDF</button></div>
+    ${reportTopHtml()}
+    <h1>Stability Test Summary Table</h1>
+    <div class="meta">Printed on ${new Date().toLocaleString('en-GB')} · N/A = Not yet due, U/T = Due but not yet recorded, — = Condition not applicable per protocol</div>
+    ${reportHeaderHtml(entry)}
+    <table>
+      <thead><tr><th>Test Item</th><th>Condition</th>${headerCols}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+    ${reportFooterHtml()}
+  </body></html>`;
+}
+
+/* ───────────────────────── Toast ───────────────────────── */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3400);
+}
+
+/* ───────────────────────── Init ───────────────────────── */
+(async function init(){
+  document.getElementById('spindleList').innerHTML = VISC_SPINDLES.map(v=>`<option value="${v}">`).join('');
+  document.getElementById('rpmList').innerHTML = VISC_RPMS.map(v=>`<option value="${v}">`).join('');
+  loadLocalSettings();
+  if(!settings.backend){
+    setSync('err','ยังไม่ได้ตั้งค่า Backend URL — กด ⚙ ตั้งค่า');
+    renderAll();
+    openSettings();
+    return;
+  }
+  await refreshAll();
+})();
+</script>
+</body>
+</html>
