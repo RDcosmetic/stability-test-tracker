@@ -279,7 +279,7 @@ body{
   <!-- List view -->
   <div class="view" id="view-list">
     <div class="toolbar">
-      <input class="search-input" id="searchBox" placeholder="ค้นหาชื่อสินค้า / สูตร / ลูกค้า…" oninput="renderList()">
+      <input class="search-input" id="searchBox" placeholder="ค้นหาลำดับ / ชื่อสินค้า / สูตร / ลูกค้า…" oninput="renderList()">
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer;">
         <input type="checkbox" id="showArchivedBox" onchange="renderList()"> แสดงรายการที่เก็บเข้าคลังแล้ว
       </label>
@@ -291,6 +291,18 @@ body{
     </div>
   </div>
 
+</div>
+
+<!-- Delete confirmation modal -->
+<div class="modal-backdrop" id="deleteConfirmModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header"><h3>⚠ ยืนยันการลบ</h3><button class="modal-close" onclick="closeModal('deleteConfirmModal')">✕</button></div>
+    <div id="deleteConfirmBody" style="font-size:13.5px;line-height:1.7;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('deleteConfirmModal')">ยกเลิก</button>
+      <button class="btn btn-danger" style="background:var(--overdue);color:#fff;" onclick="confirmDeleteEntry()">🗑 ลบถาวร</button>
+    </div>
+  </div>
 </div>
 
 <!-- Product Modal -->
@@ -310,8 +322,14 @@ body{
       <div class="field"><label>CUSTOMER</label><input id="f_customer" placeholder="ชื่อลูกค้า"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>MIXING DATE</label><input type="date" id="f_mixDate"></div>
-      <div class="field"><label>DAY 0 (วันเริ่มเก็บ stability)</label><input type="date" id="f_day0"></div>
+      <div class="field"><label>MIXING DATE (dd/mm/yyyy)</label><input type="date" id="f_mixDate" lang="en-GB" onchange="syncDay0IfLinked()"></div>
+      <div class="field">
+        <label>DAY 0 (วันเริ่มเก็บ stability) (dd/mm/yyyy)</label>
+        <input type="date" id="f_day0" lang="en-GB">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:400;margin-top:4px;cursor:pointer;">
+          <input type="checkbox" id="f_day0SameAsMix" onchange="syncDay0IfLinked()"> เป็นวันเดียวกับ Mixing Date
+        </label>
+      </div>
     </div>
     <div class="helptext">ระบบจะคำนวณ Day 1, Day 3, Week 1/2/4/8/12/20, 12 เดือน และ 20 เดือน ให้อัตโนมัติจากวันที่ Day 0 — ลำดับจะรันต่อจากตัวล่าสุดในระบบให้อัตโนมัติ แต่แก้ไขเป็นเลขอื่นเองได้ (เช่น ตอนย้ายข้อมูลเก่าเข้าระบบ)</div>
     <div class="modal-actions">
@@ -705,7 +723,8 @@ function renderList(){
     if(!q) return true;
     return (p.productName||'').toLowerCase().includes(q) ||
            (p.formNo||'').toLowerCase().includes(q) ||
-           (p.customer||'').toLowerCase().includes(q);
+           (p.customer||'').toLowerCase().includes(q) ||
+           String(p.seq||'').toLowerCase().includes(q);
   });
 
   if(products.length === 0){ empty.style.display='block'; return; }
@@ -718,7 +737,7 @@ function renderList(){
   </tr></thead><tbody></tbody>`;
   const tbody = table.querySelector('tbody');
 
-  filtered.sort((a,b)=> (parseInt(a.seq)||0) - (parseInt(b.seq)||0));
+  filtered.sort((a,b)=> (parseInt(b.seq)||0) - (parseInt(a.seq)||0));
 
   filtered.forEach(p=>{
     const schedule = computeSchedule(p);
@@ -770,14 +789,24 @@ function openProductModal(id){
     document.getElementById('f_customer').value = p.customer || '';
     document.getElementById('f_mixDate').value = p.mixDate || '';
     document.getElementById('f_day0').value = p.day0 || '';
+    document.getElementById('f_day0SameAsMix').checked = !!(p.mixDate && p.day0 && p.mixDate === p.day0);
   } else {
     document.getElementById('productModalTitle').textContent = 'เพิ่มสินค้า/สูตรใหม่';
     ['f_productName','f_formNo','f_customer','f_mixDate','f_day0'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('f_seq').value = nextSuggestedSeq();
+    document.getElementById('f_day0SameAsMix').checked = false;
   }
   document.getElementById('productModal').classList.add('open');
 }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// เมื่อติ๊ก "เป็นวันเดียวกับ Mixing Date" หรือแก้ Mixing Date ขณะติ๊กอยู่ ให้ Day 0 ตามไปด้วยอัตโนมัติ
+function syncDay0IfLinked(){
+  const linked = document.getElementById('f_day0SameAsMix').checked;
+  if(linked){
+    document.getElementById('f_day0').value = document.getElementById('f_mixDate').value;
+  }
+}
 
 async function saveProduct(){
   const id = document.getElementById('editId').value;
@@ -809,12 +838,28 @@ async function saveProduct(){
   }
 }
 
-async function deleteEntry(id){
-  if(!confirm('ต้องการลบรายการนี้ออกจากระบบใช่หรือไม่? (ข้อมูลผลทดสอบที่เคยบันทึกไว้จะหายไปด้วย ถ้าแค่อยากซ่อนแต่เก็บข้อมูลไว้ ใช้ปุ่ม "เก็บเข้าคลัง" แทน)')) return;
+let pendingDeleteId = null;
+
+function deleteEntry(id){
+  const entry = products.find(p=>p.id===id);
+  if(!entry) return;
+  pendingDeleteId = id;
+  document.getElementById('deleteConfirmBody').innerHTML = `
+    ต้องการลบรายการนี้ออกจากระบบใช่หรือไม่?<br>
+    <b>#${escapeHtml(entry.seq||'-')} ${escapeHtml(entry.productName)}</b> (${escapeHtml(entry.formNo||'-')})<br><br>
+    <span style="color:var(--muted);font-size:12px;">ข้อมูลผลทดสอบที่เคยบันทึกไว้จะหายไปด้วย และ<b>กู้คืนไม่ได้</b> — ถ้าแค่อยากซ่อนแต่เก็บข้อมูลไว้ ใช้ปุ่ม "เก็บเข้าคลัง" แทนจะปลอดภัยกว่า</span>`;
+  document.getElementById('deleteConfirmModal').classList.add('open');
+}
+
+async function confirmDeleteEntry(){
+  const id = pendingDeleteId;
+  if(!id) return;
+  closeModal('deleteConfirmModal');
   setSync('busy','กำลังลบ…');
   const res = await apiPost({action:'delete', id});
   if(res){ showToast('ลบเรียบร้อย'); await refreshAll(); }
   else setSync('err','ลบไม่สำเร็จ');
+  pendingDeleteId = null;
 }
 
 async function toggleArchive(id, archived){
@@ -878,6 +923,7 @@ document.getElementById('dayModal').addEventListener('click', e=>{ if(e.target.i
 document.getElementById('resultModal').addEventListener('click', e=>{ if(e.target.id==='resultModal') closeModal('resultModal'); });
 document.getElementById('reportModal').addEventListener('click', e=>{ if(e.target.id==='reportModal') closeModal('reportModal'); });
 document.getElementById('peopleModal').addEventListener('click', e=>{ if(e.target.id==='peopleModal') closeModal('peopleModal'); });
+document.getElementById('deleteConfirmModal').addEventListener('click', e=>{ if(e.target.id==='deleteConfirmModal') closeModal('deleteConfirmModal'); });
 
 /* ───────────────────────── Notify now ───────────────────────── */
 async function sendNotifyNow(){
