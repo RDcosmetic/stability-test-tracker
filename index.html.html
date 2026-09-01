@@ -186,6 +186,8 @@ body{
 .day-list-item{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;font-size:13.5px;background:var(--surface);box-shadow:var(--shadow-sm);}
 .day-list-item:last-child{margin-bottom:0;}
 .dli-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.dli-head-main{min-width:0;flex:1;}
+.dli-head .status-pill{flex-shrink:0;white-space:nowrap;}
 .dli-title{font-weight:700;color:var(--ink);font-size:14.5px;line-height:1.45;}
 .dli-formno{color:var(--muted);font-weight:500;font-size:13px;}
 .dli-meta{font-size:11.5px;color:var(--muted);margin-top:4px;}
@@ -759,7 +761,7 @@ function renderDayModalBody(){
     div.className = 'day-list-item';
     div.innerHTML = `
       <div class="dli-head">
-        <div>
+        <div class="dli-head-main">
           <div class="dli-title">${escapeHtml(it.entry.productName)} <span class="dli-formno">(${escapeHtml(it.entry.formNo||'-')})</span></div>
           <div class="dli-meta">Checkpoint: ${it.cp.label}</div>
         </div>
@@ -1004,7 +1006,15 @@ async function toggleTested(id, checkpointKey, source){
   if(source === 'day') renderDayModalBody();
 
   const res = await apiPost({action:'toggleTested', id, checkpointKey});
-  if(!res){
+  if(res){
+    // ใช้ค่าที่ backend เก็บจริงเป็นหลัก (โดยเฉพาะ testedDate ที่ต้องคงอยู่ข้ามการรีเฟรชหน้า
+    // เพื่อให้รายการที่เพิ่งตรวจวันนี้ยังโชว์ในปฏิทินจนกว่าจะข้ามวันนั้นไปจริงๆ)
+    if(res.tested) entry.tested = res.tested;
+    if(res.testedDate) entry.testedDate = res.testedDate;
+    renderAll();
+    if(source === 'record') renderResultModalBody(id);
+    if(source === 'day') renderDayModalBody();
+  } else {
     entry.tested[checkpointKey] = previous; // ย้อนกลับถ้า backend ปฏิเสธ/ล้มเหลวจริง
     entry.testedDate[checkpointKey] = previousDate;
     renderAll();
