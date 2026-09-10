@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stability Test — Notification Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai+Looped:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
 :root{
   /* surfaces */
@@ -221,21 +222,54 @@ body{
 .cp-section[open] .cp-chevron{transform:rotate(90deg);}
 .cp-section-title{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink);}
 .cp-section-date{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:8px;}
-.result-table-wrap{overflow-x:auto;}
-.result-table{width:100%;border-collapse:collapse;font-size:12.5px;}
-.result-table th{background:var(--surface-2);font-family:var(--sans);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:6px 7px;text-align:left;border:1px solid var(--line);}
-.result-table td{padding:5px 6px;border:1px solid var(--line);vertical-align:middle;}
-.result-table input{font-family:var(--mono);font-size:12.5px;padding:5px 6px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);width:100%;outline:none;min-width:64px;}
-.result-table select{font-family:var(--sans);font-size:12.5px;padding:5px 6px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);width:100%;outline:none;min-width:64px;}
-.result-table select:focus, .result-table input:focus{border-color:var(--brand);}
-.result-table td.cond-label{font-weight:700;color:var(--ink);white-space:nowrap;}
 .cp-no-cond{color:var(--muted);font-size:12.5px;font-style:italic;}
-.add-row-btn{font-family:var(--sans);font-size:11.5px;padding:3px 10px;border-radius:5px;border:1px dashed var(--line);background:var(--surface);color:var(--ink);cursor:pointer;margin-top:4px;}
-.add-row-btn:hover{border-style:solid;border-color:var(--brand);color:var(--brand);background:var(--brand-soft);}
-.remove-row-btn{font-size:13px;padding:3px 7px;border-radius:5px;border:1px solid var(--line);background:var(--surface);color:var(--overdue);cursor:pointer;}
-.remove-row-btn:hover{background:var(--overdue);color:#fff;border-color:var(--overdue);}
-.remark-box{width:100%;font-family:var(--sans);font-size:13.5px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);outline:none;resize:vertical;min-height:44px;margin-top:8px;}
+
+/* แถบสถานะ checkpoint (รวมสถานะ/ปุ่มทำเครื่องหมาย/หมายเหตุ ของทุก checkpoint ไว้ที่เดียวด้านบน) */
+/* แท็บวันที่ (checkpoint) ด้านบนของหน้าบันทึกผล — คลิกเพื่อสลับดู/กรอกทีละวัน แทนที่จะกางตารางทุกวันพร้อมกัน */
+.cp-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+.cp-tab{font-family:var(--sans);font-size:12px;font-weight:600;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;white-space:nowrap;}
+.cp-tab:hover{border-color:var(--brand-soft-line);color:var(--ink);}
+.cp-tab.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+.cp-tab.status-overdue:not(.active){color:var(--overdue);border-color:var(--overdue-line);}
+.cp-tab.status-today:not(.active){color:var(--today);border-color:var(--today-line);}
+.cp-panel-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.remark-box{width:100%;font-family:var(--sans);font-size:13.5px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);outline:none;resize:vertical;min-height:44px;margin-top:12px;box-sizing:border-box;}
 .remark-box:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);}
+
+/* ตารางเปรียบเทียบต่อเงื่อนไข — checkpoint เป็นคอลัมน์ (อ่านไปตามแถว = เห็นแนวโน้มตามเวลา,
+   สลับดูตารางของอีกเงื่อนไข = เทียบระหว่างเงื่อนไขวันเดียวกันได้) */
+.matrix-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
+.matrix-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.matrix-table th, .matrix-table td{padding:6px 8px;border:1px solid var(--line);vertical-align:middle;}
+.matrix-table thead th{background:var(--surface-2);font-family:var(--sans);font-size:10.5px;font-weight:700;color:var(--muted);text-align:left;white-space:nowrap;}
+.param-col-head{position:sticky;left:0;z-index:3;background:var(--surface-2) !important;}
+.matrix-table td.param-label{position:sticky;left:0;z-index:2;background:var(--surface);font-weight:600;color:var(--ink);white-space:nowrap;font-size:11.5px;}
+.matrix-table tr.param-row-analysis td.param-label{color:var(--brand);}
+.matrix-col-head{display:flex;align-items:center;gap:6px;}
+.matrix-col-head-text{display:flex;flex-direction:column;line-height:1.3;}
+.matrix-col-date{font-family:var(--mono);font-weight:500;color:var(--muted);font-size:10px;text-transform:none;}
+.add-col-btn, .remove-col-btn{font-size:11px;width:18px;height:18px;line-height:1;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:0;}
+.add-col-btn{color:var(--brand);border-color:var(--brand-soft-line);}
+.add-col-btn:hover{background:var(--brand-soft);}
+.remove-col-btn{color:var(--overdue);}
+.remove-col-btn:hover{background:var(--overdue);color:#fff;border-color:var(--overdue);}
+.matrix-table input, .matrix-table select{width:100%;min-width:76px;padding:5px 7px;font-size:12px;font-family:var(--mono);border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);outline:none;box-sizing:border-box;}
+.matrix-table select{font-family:var(--sans);min-width:84px;}
+.matrix-table input:focus, .matrix-table select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);}
+.matrix-table tr.param-row-desc input{background:var(--surface-2);}
+.matrix-table tr.param-row-analysis input{font-weight:700;}
+.matrix-cell-method{display:flex;flex-direction:column;gap:4px;min-width:80px;}
+.matrix-cell-method input{min-width:0;}
+.photo-matrix-cell{min-width:96px;}
+
+.photo-thumbs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;}
+.photo-thumb{position:relative;width:32px;height:32px;border-radius:5px;overflow:hidden;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);font-size:13px;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;cursor:pointer;}
+.photo-thumb.photo-uploading{color:var(--muted);}
+.photo-remove{position:absolute;top:-2px;right:-2px;width:13px;height:13px;border-radius:50%;border:none;background:var(--overdue);color:#fff;font-size:8px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.photo-btn{white-space:nowrap;font-size:10.5px !important;padding:4px 8px !important;}
+.add-row-btn{font-family:var(--sans);font-size:12px;padding:6px 14px;border-radius:7px;border:1px dashed var(--line);background:var(--surface);color:var(--ink);cursor:pointer;}
+.add-row-btn:hover{border-style:solid;border-color:var(--brand);color:var(--brand);background:var(--brand-soft);}
 .legend-box{font-size:11.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.6;}
 .legend-box b{color:var(--ink);}
 .save-status{font-size:12px;color:var(--done);margin-left:8px;opacity:0;transition:opacity .2s;}
@@ -247,10 +281,15 @@ body{
 .people-row input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);}
 
 /* Report choice modal */
-.report-choice{display:flex;gap:12px;margin-top:6px;}
-.report-choice .btn{flex:1;justify-content:center;padding:16px;flex-direction:column;gap:6px;}
+.report-choice{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;}
+.report-choice .btn{flex:1 1 160px;justify-content:center;padding:16px;flex-direction:column;gap:6px;}
 .report-choice .btn .rc-title{font-weight:700;font-size:14px;}
 .report-choice .btn .rc-sub{font-size:11.5px;color:var(--muted);font-weight:400;}
+.report-fields{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px;background:var(--surface-2);}
+.report-fields-title{font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:8px;}
+.report-fields-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;}
+.report-field-item{display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;color:var(--ink);}
+.report-field-item input{cursor:pointer;}
 
 @media (max-width: 780px){
   .topbar,.main{padding-left:16px;padding-right:16px;}
@@ -263,16 +302,17 @@ body{
 
 <div class="topbar">
   <div class="brand">
-    <span class="eyebrow">R&amp;D · Personal Care Bulk</span>
-    <h1>Stability Test Notification Tracker</h1>
+    <span class="eyebrow" data-i18n="eyebrow">R&amp;D · Personal Care Bulk</span>
+    <h1 data-i18n="appTitle">Stability Test Notification Tracker</h1>
     <span class="sub"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">พร้อมใช้งาน</span></span>
   </div>
   <div class="topbar-actions">
-    <button class="btn btn-ghost" onclick="openSettings()">⚙ ตั้งค่า</button>
-    <button class="btn btn-ghost" onclick="openPeopleModal()">👤 จัดการรายชื่อ</button>
-    <button class="btn btn-ghost" onclick="downloadBackup()">⬇ สำรองข้อมูล</button>
-    <button class="btn btn-ghost" onclick="refreshAll()">🔄 รีเฟรช</button>
-    <button class="btn btn-brand" onclick="openProductModal()">+ เพิ่มสินค้า/สูตรใหม่</button>
+    <button class="btn btn-ghost" id="langToggleBtn" onclick="toggleLang()">🌐 EN</button>
+    <button class="btn btn-ghost" data-i18n="btnSettings" onclick="openSettings()">⚙ ตั้งค่า</button>
+    <button class="btn btn-ghost" data-i18n="btnPeople" onclick="openPeopleModal()">👤 จัดการรายชื่อ</button>
+    <button class="btn btn-ghost" data-i18n="btnBackup" onclick="downloadBackup()">⬇ สำรองข้อมูล</button>
+    <button class="btn btn-ghost" data-i18n="btnRefresh" onclick="refreshAll()">🔄 รีเฟรช</button>
+    <button class="btn btn-brand" data-i18n="btnAddProduct" onclick="openProductModal()">+ เพิ่มสินค้า/สูตรใหม่</button>
   </div>
 </div>
 
@@ -280,15 +320,15 @@ body{
 
   <div class="banner" id="banner">
     <div>
-      <div><span class="banner-num" id="bannerNum">0</span> <span class="banner-label">รายการถึงกำหนด/เลยกำหนดวันนี้</span></div>
-      <div class="banner-note">ระบบแจ้งเตือนอัตโนมัติทุกวันอยู่แล้ว ปุ่มนี้ไม่บังคับ</div>
+      <div><span class="banner-num" id="bannerNum">0</span> <span class="banner-label" data-i18n="bannerLabel">รายการถึงกำหนด/เลยกำหนดวันนี้</span></div>
+      <div class="banner-note" data-i18n="bannerNote">ระบบแจ้งเตือนอัตโนมัติทุกวันอยู่แล้ว ปุ่มนี้ไม่บังคับ</div>
     </div>
-    <button class="btn btn-brand btn-xs" id="sendDueBtn" onclick="sendNotifyNow()">➤ ส่งเข้า LINE ตอนนี้ (ไม่บังคับ)</button>
+    <button class="btn btn-brand btn-xs" id="sendDueBtn" data-i18n="sendNowBtn" onclick="sendNotifyNow()">➤ ส่งเข้า LINE ตอนนี้ (ไม่บังคับ)</button>
   </div>
 
   <div class="tabs">
-    <div class="tab active" data-tab="cal" onclick="switchTab('cal')">📅 มุมมองปฏิทิน</div>
-    <div class="tab" data-tab="list" onclick="switchTab('list')">📋 รายการทั้งหมด</div>
+    <div class="tab active" data-tab="cal" data-i18n="tabCalendar" onclick="switchTab('cal')">📅 มุมมองปฏิทิน</div>
+    <div class="tab" data-tab="list" data-i18n="tabList" onclick="switchTab('list')">📋 รายการทั้งหมด</div>
   </div>
 
   <!-- Calendar view -->
@@ -297,9 +337,9 @@ body{
       <div class="cal-head">
         <div class="cal-title" id="calTitle"></div>
         <div class="cal-nav">
-          <button class="btn btn-ghost btn-xs" onclick="calShift(-1)">‹ เดือนก่อนหน้า</button>
-          <button class="btn btn-ghost btn-xs" onclick="calToday()">วันนี้</button>
-          <button class="btn btn-ghost btn-xs" onclick="calShift(1)">เดือนถัดไป ›</button>
+          <button class="btn btn-ghost btn-xs" data-i18n="prevMonth" onclick="calShift(-1)">‹ เดือนก่อนหน้า</button>
+          <button class="btn btn-ghost btn-xs" data-i18n="calToday" onclick="calToday()">วันนี้</button>
+          <button class="btn btn-ghost btn-xs" data-i18n="nextMonth" onclick="calShift(1)">เดือนถัดไป ›</button>
         </div>
       </div>
       <div class="cal-grid" id="calGrid"></div>
@@ -309,15 +349,15 @@ body{
   <!-- List view -->
   <div class="view" id="view-list">
     <div class="toolbar">
-      <input class="search-input" id="searchBox" placeholder="ค้นหาลำดับ / ชื่อสินค้า / สูตร / ลูกค้า…" oninput="renderList()">
+      <input class="search-input" id="searchBox" data-i18n-ph="searchPlaceholder" placeholder="ค้นหาลำดับ / ชื่อสินค้า / สูตร / ลูกค้า…" oninput="renderList()">
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer;">
-        <input type="checkbox" id="showArchivedBox" onchange="renderList()"> แสดงรายการที่เก็บเข้าคลังแล้ว
+        <input type="checkbox" id="showArchivedBox" onchange="renderList()"> <span data-i18n="showArchivedLabel">แสดงรายการที่เก็บเข้าคลังแล้ว</span>
       </label>
     </div>
     <div id="listWrap"></div>
     <div class="empty-state" id="emptyState" style="display:none">
       <div class="emoji">🧪</div>
-      <div>ยังไม่มีข้อมูลในระบบ กด "+ เพิ่มสินค้า/สูตรใหม่" มุมบนขวาเพื่อเริ่มบันทึก</div>
+      <div data-i18n="emptyStateText">ยังไม่มีข้อมูลในระบบ กด "+ เพิ่มสินค้า/สูตรใหม่" มุมบนขวาเพื่อเริ่มบันทึก</div>
     </div>
   </div>
 
@@ -326,11 +366,11 @@ body{
 <!-- Delete confirmation modal -->
 <div class="modal-backdrop" id="deleteConfirmModal">
   <div class="modal" style="max-width:420px;">
-    <div class="modal-header"><h3>⚠ ยืนยันการลบ</h3><button class="modal-close" onclick="closeModal('deleteConfirmModal')">✕</button></div>
+    <div class="modal-header"><h3 data-i18n="deleteConfirmTitle">⚠ ยืนยันการลบ</h3><button class="modal-close" onclick="closeModal('deleteConfirmModal')">✕</button></div>
     <div id="deleteConfirmBody" style="font-size:13.5px;line-height:1.7;"></div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('deleteConfirmModal')">ยกเลิก</button>
-      <button class="btn btn-danger" onclick="confirmDeleteEntry()">🗑 ลบถาวร</button>
+      <button class="btn btn-ghost" data-i18n="btnCancel" onclick="closeModal('deleteConfirmModal')">ยกเลิก</button>
+      <button class="btn btn-danger" data-i18n="btnDeleteForever" onclick="confirmDeleteEntry()">🗑 ลบถาวร</button>
     </div>
   </div>
 </div>
@@ -341,41 +381,41 @@ body{
     <div class="modal-header"><h3 id="productModalTitle">เพิ่มสินค้า/สูตรใหม่</h3><button class="modal-close" onclick="closeModal('productModal')">✕</button></div>
     <input type="hidden" id="editId">
     <div class="field-row">
-      <div class="field"><label>ลำดับ (Seq. No.)</label><input type="number" id="f_seq" placeholder="อัตโนมัติ — แก้ไขเองได้"></div>
+      <div class="field"><label data-i18n="labelSeq">ลำดับ (Seq. No.)</label><input type="number" id="f_seq" data-i18n-ph="phSeqAuto" placeholder="อัตโนมัติ — แก้ไขเองได้"></div>
       <div class="field"></div>
     </div>
     <div class="field-row single">
-      <div class="field"><label>PRODUCT NAME</label><input id="f_productName" placeholder="เช่น Sunscreen SPF50 200ml"></div>
+      <div class="field"><label data-i18n="labelProductName">PRODUCT NAME</label><input id="f_productName" data-i18n-ph="phProductName" placeholder="เช่น Sunscreen SPF50 200ml"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>FORMULATION NO. (สูตร)</label><input id="f_formNo" placeholder="เช่น F-2601 — สินค้าเดียวกันมีได้หลายสูตร"></div>
-      <div class="field"><label>CUSTOMER</label><input id="f_customer" placeholder="ชื่อลูกค้า"></div>
+      <div class="field"><label data-i18n="labelFormNo">FORMULATION NO. (สูตร)</label><input id="f_formNo" data-i18n-ph="phFormNo" placeholder="เช่น F-2601 — สินค้าเดียวกันมีได้หลายสูตร"></div>
+      <div class="field"><label data-i18n="labelCustomer">CUSTOMER</label><input id="f_customer" data-i18n-ph="phCustomer" placeholder="ชื่อลูกค้า"></div>
     </div>
     <div class="field-row">
       <div class="field">
-        <label>MIXING DATE (dd/mm/yyyy)</label>
+        <label data-i18n="labelMixDate">MIXING DATE (dd/mm/yyyy)</label>
         <div style="display:flex;gap:6px;">
           <input type="text" id="f_mixDate" placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric" oninput="autoFormatDate(this)" onchange="syncDay0IfLinked()" style="flex:1;">
-          <button type="button" class="btn btn-ghost btn-xs" onclick="openDatePicker('f_mixDate','f_mixDatePicker')" title="เลือกจากปฏิทิน">📅</button>
+          <button type="button" class="btn btn-ghost btn-xs" onclick="openDatePicker('f_mixDate','f_mixDatePicker')" data-i18n-title="titlePickDate" title="เลือกจากปฏิทิน">📅</button>
         </div>
         <input type="date" id="f_mixDatePicker" style="display:none" onchange="applyPickedDate('f_mixDate','f_mixDatePicker')">
       </div>
       <div class="field">
-        <label>DAY 0 (วันเริ่มเก็บ stability) (dd/mm/yyyy)</label>
+        <label data-i18n="labelDay0">DAY 0 (วันเริ่มเก็บ stability) (dd/mm/yyyy)</label>
         <div style="display:flex;gap:6px;">
           <input type="text" id="f_day0" placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric" oninput="autoFormatDate(this)" style="flex:1;">
-          <button type="button" class="btn btn-ghost btn-xs" onclick="openDatePicker('f_day0','f_day0Picker')" title="เลือกจากปฏิทิน">📅</button>
+          <button type="button" class="btn btn-ghost btn-xs" onclick="openDatePicker('f_day0','f_day0Picker')" data-i18n-title="titlePickDate" title="เลือกจากปฏิทิน">📅</button>
         </div>
         <input type="date" id="f_day0Picker" style="display:none" onchange="applyPickedDate('f_day0','f_day0Picker')">
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:400;margin-top:4px;cursor:pointer;">
-          <input type="checkbox" id="f_day0SameAsMix" onchange="syncDay0IfLinked()"> เป็นวันเดียวกับ Mixing Date
+          <input type="checkbox" id="f_day0SameAsMix" onchange="syncDay0IfLinked()"> <span data-i18n="day0SameAsMix">เป็นวันเดียวกับ Mixing Date</span>
         </label>
       </div>
     </div>
-    <div class="helptext">คำนวณวันตรวจถัดไปให้อัตโนมัติจาก Day 0</div>
+    <div class="helptext" data-i18n="productHelptext">คำนวณวันตรวจถัดไปให้อัตโนมัติจาก Day 0</div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('productModal')">ยกเลิก</button>
-      <button class="btn btn-brand" onclick="saveProduct()">บันทึก</button>
+      <button class="btn btn-ghost" data-i18n="btnCancel" onclick="closeModal('productModal')">ยกเลิก</button>
+      <button class="btn btn-brand" data-i18n="btnSave" onclick="saveProduct()">บันทึก</button>
     </div>
   </div>
 </div>
@@ -385,13 +425,14 @@ body{
   <div class="modal" id="resultModalInner">
     <div class="modal-header">
       <h3 id="resultModalTitle">บันทึกผลทดสอบ</h3>
-      <button class="modal-close" onclick="closeResultModal()" title="ปิด (จะบันทึกข้อมูลที่แก้ไว้ให้อัตโนมัติ)">✕</button>
+      <button class="modal-close" onclick="closeResultModal()" data-i18n-title="resultModalCloseTitle" title="ปิด (จะบันทึกข้อมูลที่แก้ไว้ให้อัตโนมัติ)">✕</button>
     </div>
     <div class="legend-box">
-      <b>เกณฑ์การอ่านผล Texture/Color/Odor:</b> เปรียบเทียบกับ reference ที่เก็บที่อุณหภูมิห้อง —
-      0 = ไม่เปลี่ยนแปลง &nbsp;|&nbsp; -1 = ลดลงเล็กน้อย, -2 = ลดลงปานกลาง, -3 = ลดลงมาก &nbsp;|&nbsp; +1 = เพิ่มขึ้นเล็กน้อย, +2 = เพิ่มขึ้นปานกลาง, +3 = เพิ่มขึ้นมาก
+      <b data-i18n="legendTitle">เกณฑ์การอ่านผล Texture/Color/Odor/Viscosity:</b> <span id="legendBody" data-i18n-html="legendBody">เปรียบเทียบกับ reference ที่เก็บที่อุณหภูมิห้อง —
+      0 = ไม่เปลี่ยนแปลง &nbsp;|&nbsp; -1 = ลดลงเล็กน้อย, -2 = ลดลงปานกลาง, -3 = ลดลงมาก &nbsp;|&nbsp; +1 = เพิ่มขึ้นเล็กน้อย, +2 = เพิ่มขึ้นปานกลาง, +3 = เพิ่มขึ้นมาก</span><br>
+      <span data-i18n-html="legendDualNote" style="display:inline-block;margin-top:4px;"></span>
     </div>
-    <div class="helptext" style="margin-bottom:12px;">แต่ละ checkpoint แสดงเฉพาะเงื่อนไขที่ต้องทดสอบจริงตามแผนงาน — กด "บันทึก" ในแต่ละช่วงเพื่อบันทึกทีละ checkpoint ได้เลย หรือกด ✕ มุมบนขวาเพื่อบันทึกทั้งหมดแล้วปิดในทีเดียว</div>
+    <div class="helptext" style="margin-bottom:12px;" data-i18n="resultHelptext">แต่ละ checkpoint แสดงเฉพาะเงื่อนไขที่ต้องทดสอบจริงตามแผนงาน — กด "บันทึก" ในแต่ละช่วงเพื่อบันทึกทีละ checkpoint ได้เลย หรือกด ✕ มุมบนขวาเพื่อบันทึกทั้งหมดแล้วปิดในทีเดียว</div>
     <div id="resultModalBody"></div>
   </div>
 </div>
@@ -399,17 +440,22 @@ body{
 <!-- Report choice modal -->
 <div class="modal-backdrop" id="reportModal">
   <div class="modal">
-    <div class="modal-header"><h3>สร้างรายงาน</h3><button class="modal-close" onclick="closeModal('reportModal')">✕</button></div>
-    <div class="helptext" style="margin-bottom:10px;">เลือกรูปแบบรายงานที่ต้องการ — จะเปิดเป็นแท็บใหม่ พร้อมปุ่มพิมพ์/บันทึกเป็น PDF</div>
+    <div class="modal-header"><h3 data-i18n="reportModalTitle">สร้างรายงาน</h3><button class="modal-close" onclick="closeModal('reportModal')">✕</button></div>
+    <div class="helptext" style="margin-bottom:10px;" data-i18n="reportModalHelptext">เลือกรูปแบบรายงานที่ต้องการ — จะเปิดเป็นแท็บใหม่ พร้อมปุ่มพิมพ์/บันทึกเป็น PDF</div>
     <input type="hidden" id="reportEntryId">
+    <div class="report-fields" id="reportFieldsWrap"></div>
     <div class="report-choice">
       <button class="btn btn-ghost" onclick="generateReport('form')">
-        <span class="rc-title">📄 รายงานแบบฟอร์ม</span>
-        <span class="rc-sub">รายวัน/สัปดาห์ ตามเงื่อนไข — แบบฟอร์มบันทึกผลละเอียด</span>
+        <span class="rc-title" data-i18n="reportFormTitle">📄 รายงานแบบฟอร์ม</span>
+        <span class="rc-sub" data-i18n="reportFormSub">รายวัน/สัปดาห์ ตามเงื่อนไข — แบบฟอร์มบันทึกผลละเอียด</span>
       </button>
       <button class="btn btn-ghost" onclick="generateReport('summary')">
-        <span class="rc-title">📊 ตารางสรุป</span>
-        <span class="rc-sub">สรุปรายการทดสอบ x ช่วงเวลา ในตารางเดียว</span>
+        <span class="rc-title" data-i18n="reportSummaryTitle">📊 ตารางสรุป</span>
+        <span class="rc-sub" data-i18n="reportSummarySub">สรุปรายการทดสอบ x ช่วงเวลา ในตารางเดียว</span>
+      </button>
+      <button class="btn btn-ghost" onclick="exportEntryToExcel()">
+        <span class="rc-title" data-i18n="reportExcelTitle">📊 Export Excel</span>
+        <span class="rc-sub" data-i18n="reportExcelSub">ไฟล์ .xlsx สำหรับสำรองข้อมูล/แก้ไขภายหลัง — เก็บครบทั้งบรรยายและผลวิเคราะห์</span>
       </button>
     </div>
   </div>
@@ -418,12 +464,12 @@ body{
 <!-- People management modal -->
 <div class="modal-backdrop" id="peopleModal">
   <div class="modal">
-    <div class="modal-header"><h3>👤 จัดการรายชื่อผู้บันทึก / ผู้พัฒนาสูตร</h3><button class="modal-close" onclick="closeModal('peopleModal')">✕</button></div>
-    <div class="helptext" style="margin-bottom:12px;">รายชื่อในนี้ใช้เป็นตัวเลือกในช่อง "ผู้บันทึก" และ "ผู้พัฒนาสูตร" ตอนบันทึกผลทดสอบ — เพิ่ม/แก้ไข/ลบได้ตลอด และเก็บไว้กลางให้ทุกคนเห็นชุดเดียวกัน</div>
+    <div class="modal-header"><h3 data-i18n="peopleModalTitle">👤 จัดการรายชื่อผู้บันทึก / ผู้พัฒนาสูตร</h3><button class="modal-close" onclick="closeModal('peopleModal')">✕</button></div>
+    <div class="helptext" style="margin-bottom:12px;" data-i18n="peopleModalHelptext">รายชื่อในนี้ใช้เป็นตัวเลือกในช่อง "ผู้บันทึก" และ "ผู้พัฒนาสูตร" ตอนบันทึกผลทดสอบ — เพิ่ม/แก้ไข/ลบได้ตลอด และเก็บไว้กลางให้ทุกคนเห็นชุดเดียวกัน</div>
     <div id="peopleListWrap"></div>
     <div class="people-row" style="margin-top:10px;">
-      <input id="f_newPersonName" placeholder="ชื่อคนใหม่…">
-      <button class="btn btn-brand btn-xs" onclick="addPersonUI()">+ เพิ่ม</button>
+      <input id="f_newPersonName" data-i18n-ph="phNewPersonName" placeholder="ชื่อคนใหม่…">
+      <button class="btn btn-brand btn-xs" data-i18n="btnAddPerson" onclick="addPersonUI()">+ เพิ่ม</button>
     </div>
   </div>
 </div>
@@ -439,20 +485,20 @@ body{
 <!-- Settings Modal -->
 <div class="modal-backdrop" id="settingsModal">
   <div class="modal">
-    <div class="modal-header"><h3>⚙ ตั้งค่า Backend</h3><button class="modal-close" onclick="closeModal('settingsModal')">✕</button></div>
-    <div class="helptext" style="margin-bottom:14px;">
+    <div class="modal-header"><h3 data-i18n="settingsModalTitle">⚙ ตั้งค่า Backend</h3><button class="modal-close" onclick="closeModal('settingsModal')">✕</button></div>
+    <div class="helptext" style="margin-bottom:14px;" data-i18n="settingsHelptext">
       วาง URL ของ Google Apps Script Web App (ไฟล์ stability_test_backend.gs ที่แนบให้) —
       ตัวนี้เก็บข้อมูลสินค้า/สูตรทั้งหมดไว้ใน Google Sheet กลาง ทุกคนที่ตั้งค่า URL เดียวกัน
       จะเห็นข้อมูลชุดเดียวกันเสมอไม่ว่าจะเปิดจากเครื่องไหน และเป็นตัวส่งแจ้งเตือนเข้า Teams ด้วย
     </div>
     <div class="field-row single">
-      <div class="field"><label>BACKEND URL (จาก Apps Script)</label><input id="f_backend" placeholder="https://script.google.com/macros/s/xxxxx/exec"></div>
+      <div class="field"><label data-i18n="labelBackendUrl">BACKEND URL (จาก Apps Script)</label><input id="f_backend" placeholder="https://script.google.com/macros/s/xxxxx/exec"></div>
     </div>
     <div class="modal-actions spread">
-      <button class="btn btn-ghost" onclick="testBackend()">ทดสอบส่ง</button>
+      <button class="btn btn-ghost" data-i18n="btnTestSend" onclick="testBackend()">ทดสอบส่ง</button>
       <div style="display:flex;gap:10px;">
-        <button class="btn btn-ghost" onclick="closeModal('settingsModal')">ยกเลิก</button>
-        <button class="btn btn-brand" onclick="saveSettings()">บันทึก</button>
+        <button class="btn btn-ghost" data-i18n="btnCancel" onclick="closeModal('settingsModal')">ยกเลิก</button>
+        <button class="btn btn-brand" data-i18n="btnSave" onclick="saveSettings()">บันทึก</button>
       </div>
     </div>
   </div>
@@ -486,13 +532,40 @@ const CONDITIONS = [
   {key:'sunlight', label:'SUN'},
 ];
 // RESULT_ITEMS ใช้สำหรับตารางสรุป (รายงาน) — texture แยกเป็น 2 ค่าตามฟอร์มเดิม (หลังออกจากตู้ / หลังตั้งทิ้งไว้อุณหภูมิห้อง)
+// valueKey = ฟิลด์ที่ใช้แสดงในรายงานจริง (ผลวิเคราะห์แล้วเสมอ ยกเว้น pH ที่ใช้ค่าตรงๆ เพราะไม่มีบรรยาย/วิเคราะห์แยก)
 const RESULT_ITEMS = [
-  {key:'textureOut',  label:'Texture&Perf. (After removal from chamber)'},
-  {key:'textureRoom', label:'Texture&Perf. (After room temp equilibration)'},
-  {key:'color',       label:'Color'},
-  {key:'odor',        label:'Odor'},
-  {key:'ph',          label:'pH'},
-  {key:'viscosity',   label:'Viscosity'},
+  {key:'textureOut',  label:'Texture&Perf. (After removal from chamber)', valueKey:'textureOut_analysis'},
+  {key:'textureRoom', label:'Texture&Perf. (After room temp equilibration)', valueKey:'textureRoom_analysis'},
+  {key:'color',       label:'Color', valueKey:'color_analysis'},
+  {key:'odor',        label:'Odor', valueKey:'odor_analysis'},
+  {key:'ph',          label:'pH', valueKey:'ph'},
+  {key:'viscosity',   label:'Viscosity', valueKey:'viscosity_analysis'},
+];
+
+// พารามิเตอร์ที่บันทึกแบบ "บรรยายตามจริง" (_desc) คู่กับ "ผลวิเคราะห์ตามเกณฑ์" (_analysis) — ทุกตัวยกเว้น pH
+// ที่ใส่แค่ค่าตรงๆ เหมือนเดิม (pH เป็นตัวเลขวัดจริงอยู่แล้ว ไม่ต้องตีความ)
+const DUAL_FIELD_PARAMS = ['textureOut', 'textureRoom', 'color', 'odor', 'viscosity'];
+
+// รายการแถว (พารามิเตอร์) ที่แสดงในตารางเปรียบเทียบต่อเงื่อนไข — checkpoint เป็นคอลัมน์ ทำให้เห็นแนวโน้ม
+// ตามเวลาได้ง่าย (อ่านไปตามแถว) และเทียบกับเงื่อนไขอื่นในวันเดียวกันได้ (สลับดูตารางของอีกเงื่อนไข)
+const PARAM_ROWS = [
+  {key:'textureOut_desc',     labelKey:'thTexturePerf', subLabelKey:'thAfterChamber', type:'desc'},
+  {key:'textureOut_analysis', labelKey:'thTexturePerf', subLabelKey:'thAfterChamber', type:'analysis'},
+  {key:'textureRoom_desc',     labelKey:'thTexturePerf', subLabelKey:'thAfterRoom', type:'desc'},
+  {key:'textureRoom_analysis', labelKey:'thTexturePerf', subLabelKey:'thAfterRoom', type:'analysis'},
+  {key:'color_desc',     labelKey:'thColor', type:'desc'},
+  {key:'color_analysis', labelKey:'thColor', type:'analysis'},
+  {key:'odor_desc',     labelKey:'thOdor', type:'desc'},
+  {key:'odor_analysis', labelKey:'thOdor', type:'analysis'},
+  {key:'ph',            labelKey:'thPh', type:'ph'},
+  {key:'viscosity_desc',     labelKey:'thViscosity', type:'desc'},
+  {key:'viscosity_analysis', labelKey:'thViscosity', type:'analysis'},
+  {key:'spindle', labelKey:'thSpindle', type:'spindle'},
+  {key:'rpm',     labelKey:'thRpm', type:'rpm'},
+  {key:'timeMin', labelKey:'thTimeMin', type:'timeMin'},
+  {key:'tester',    labelKey:'thTester', type:'tester'},
+  {key:'developer', labelKey:'thDeveloper', type:'developer'},
+  {key:'photo',     labelKey:'thPhoto', type:'photo'},
 ];
 
 // แต่ละ checkpoint ทดสอบเฉพาะเงื่อนไขที่กำหนดไว้จริงตามแผนงาน (อ้างอิงฟอร์มกระดาษเดิม)
@@ -515,16 +588,272 @@ const CHECKPOINT_CONDITIONS = {
 const VISC_SPINDLES = ['S61','S62','S63','S64','S91','S92','S93','S94','S95','S96','S97','LV1','LV2','LV3','LV4','RV1','RV2','RV3','RV4','RV5','RV6','RV7'];
 const VISC_RPMS = ['0.3','0.5','0.6','1','1.5','2','2.5','3','4','5','6','10','12','20','30','50','60','100'];
 
+/* ───────────────────────── i18n (Thai / English) ───────────────────────── */
+const STRINGS = {
+  appTitle: {th:'Stability Test Notification Tracker', en:'Stability Test Notification Tracker'},
+  eyebrow: {th:'R&D · Personal Care Bulk', en:'R&D · Personal Care Bulk'},
+  syncReady: {th:'พร้อมใช้งาน', en:'Ready'},
+  syncNoBackend: {th:'ยังไม่ได้ตั้งค่า Backend URL — กด ⚙ ตั้งค่า', en:'Backend URL not set — click ⚙ Settings'},
+  syncLoading: {th:'กำลังโหลดข้อมูล…', en:'Loading data…'},
+  syncLoaded: {th:'ซิงค์ล่าสุด ', en:'Last synced '},
+  syncLoadFail: {th:'โหลดข้อมูลไม่สำเร็จ — เช็ค Backend URL', en:'Failed to load data — check Backend URL'},
+  syncSaving: {th:'กำลังบันทึก…', en:'Saving…'},
+  syncSaveFail: {th:'บันทึกไม่สำเร็จ', en:'Save failed'},
+  syncDeleting: {th:'กำลังลบ…', en:'Deleting…'},
+  syncDeleteFail: {th:'ลบไม่สำเร็จ', en:'Delete failed'},
+  syncSavingBeforeClose: {th:'กำลังบันทึกก่อนปิด…', en:'Saving before close…'},
+  syncSavedSynced: {th:'บันทึกและซิงค์เรียบร้อย', en:'Saved and synced'},
+
+  btnSettings: {th:'⚙ ตั้งค่า', en:'⚙ Settings'},
+  btnPeople: {th:'👤 จัดการรายชื่อ', en:'👤 Manage People'},
+  btnBackup: {th:'⬇ สำรองข้อมูล', en:'⬇ Backup'},
+  btnRefresh: {th:'🔄 รีเฟรช', en:'🔄 Refresh'},
+  btnAddProduct: {th:'+ เพิ่มสินค้า/สูตรใหม่', en:'+ Add Product/Formula'},
+  btnLangToggle: {th:'🌐 EN', en:'🌐 ไทย'},
+
+  bannerLabel: {th:'รายการถึงกำหนด/เลยกำหนดวันนี้', en:'items due/overdue today'},
+  bannerNote: {th:'ระบบแจ้งเตือนอัตโนมัติทุกวันอยู่แล้ว ปุ่มนี้ไม่บังคับ', en:'Daily automatic notifications are already active — this button is optional'},
+  sendNowBtn: {th:'➤ ส่งเข้า LINE ตอนนี้ (ไม่บังคับ)', en:'➤ Send to LINE now (optional)'},
+  sendingBtn: {th:'กำลังส่ง…', en:'Sending…'},
+  sentNowToast: {th:'ส่งแจ้งเตือนแล้ว', en:'Notification sent'},
+  itemsSuffix: {th:'รายการ', en:'items'},
+  checkLineSuffix: {th:'— เช็คที่ LINE', en:'— check LINE'},
+
+  tabCalendar: {th:'📅 มุมมองปฏิทิน', en:'📅 Calendar View'},
+  tabList: {th:'📋 รายการทั้งหมด', en:'📋 All Items'},
+
+  prevMonth: {th:'‹ เดือนก่อนหน้า', en:'‹ Previous month'},
+  calToday: {th:'วันนี้', en:'Today'},
+  nextMonth: {th:'เดือนถัดไป ›', en:'Next month ›'},
+  moreItems: {th:'เพิ่มเติม', en:'more'},
+  dow: {th:['อา','จ','อ','พ','พฤ','ศ','ส'], en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']},
+
+  searchPlaceholder: {th:'ค้นหาลำดับ / ชื่อสินค้า / สูตร / ลูกค้า…', en:'Search seq / product / formula / customer…'},
+  showArchivedLabel: {th:'แสดงรายการที่เก็บเข้าคลังแล้ว', en:'Show archived items'},
+  emptyStateText: {th:'ยังไม่มีข้อมูลในระบบ กด "+ เพิ่มสินค้า/สูตรใหม่" มุมบนขวาเพื่อเริ่มบันทึก', en:'No data yet — click "+ Add Product/Formula" at the top right to get started'},
+
+  thProduct: {th:'สินค้า', en:'Product'},
+  thFormula: {th:'สูตร', en:'Formula'},
+  thCustomer: {th:'ลูกค้า', en:'Customer'},
+  thDay0: {th:'Day 0', en:'Day 0'},
+  thNextStatus: {th:'สถานะถัดไป', en:'Next Status'},
+  thActions: {th:'การจัดการ', en:'Actions'},
+  archivedTag: {th:'📦 เก็บในคลัง', en:'📦 Archived'},
+  allDoneTag: {th:'✓ ตรวจครบ', en:'✓ Complete'},
+  btnRecordResult: {th:'📝 บันทึกผลทดสอบ', en:'📝 Record Results'},
+  btnReport: {th:'📄 รายงาน', en:'📄 Report'},
+  btnEdit: {th:'แก้ไข', en:'Edit'},
+  btnArchive: {th:'📦 เก็บเข้าคลัง', en:'📦 Archive'},
+  btnUnarchive: {th:'♻️ นำออกจากคลัง', en:'♻️ Unarchive'},
+  btnDelete: {th:'ลบ', en:'Delete'},
+
+  statusDone: {th:'✓ ตรวจแล้ว', en:'✓ Tested'},
+  statusToday: {th:'● ถึงกำหนดวันนี้', en:'● Due today'},
+  statusOverdue: {th:'⚠ เลยกำหนด', en:'⚠ Overdue'},
+  statusUpcoming: {th:'รอถึงกำหนด', en:'Upcoming'},
+
+  checkpointLabel: {th:'Checkpoint', en:'Checkpoint'},
+  condLabel: {th:'เงื่อนไข', en:'Conditions'},
+  noApplicableCond: {th:'ไม่มีเงื่อนไขที่ต้องวัดตามแผนงาน', en:'No conditions required per protocol'},
+
+  dayModalNoItems: {th:'ไม่มีรายการในวันนี้', en:'No items on this day'},
+  dayModalTitlePrefix: {th:'รายการของวันที่ — ', en:'Items on — '},
+
+  markBtnDone: {th:'✓ ยกเลิกทำเครื่องหมาย', en:'✓ Undo mark'},
+  markBtnMark: {th:'ทำเครื่องหมายว่าตรวจแล้ว', en:'Mark as tested'},
+  markUpdateFail: {th:'อัปเดตไม่สำเร็จ ลองใหม่อีกครั้ง', en:'Update failed, please try again'},
+
+  deleteConfirmTitle: {th:'⚠ ยืนยันการลบ', en:'⚠ Confirm delete'},
+  deleteConfirmQuestion: {th:'ต้องการลบรายการนี้ออกจากระบบใช่หรือไม่?', en:'Are you sure you want to delete this item?'},
+  deleteConfirmWarn: {th:'ข้อมูลผลทดสอบที่เคยบันทึกไว้จะหายไปด้วย และ<b>กู้คืนไม่ได้</b> — ถ้าแค่อยากซ่อนแต่เก็บข้อมูลไว้ ใช้ปุ่ม "เก็บเข้าคลัง" แทนจะปลอดภัยกว่า',
+    en:'All recorded test results will also be deleted and <b>cannot be recovered</b> — if you just want to hide it while keeping the data, use "Archive" instead, it\'s safer'},
+  btnCancel: {th:'ยกเลิก', en:'Cancel'},
+  btnDeleteForever: {th:'🗑 ลบถาวร', en:'🗑 Delete permanently'},
+  deletedToast: {th:'ลบเรียบร้อย', en:'Deleted'},
+  archivedToast: {th:'เก็บเข้าคลังเรียบร้อย — ข้อมูลผลทดสอบยังอยู่ครบ ดูได้จากติ๊ก "แสดงรายการที่เก็บเข้าคลังแล้ว"',
+    en:'Archived — all test result data is still kept, view it by checking "Show archived items"'},
+  unarchivedToast: {th:'นำออกจากคลังเรียบร้อย', en:'Unarchived'},
+  actionFailToast: {th:'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง', en:'Action failed, please try again'},
+
+  productModalTitleAdd: {th:'เพิ่มสินค้า/สูตรใหม่', en:'Add Product/Formula'},
+  productModalTitleEdit: {th:'แก้ไขสินค้า/สูตร', en:'Edit Product/Formula'},
+  labelSeq: {th:'ลำดับ (Seq. No.)', en:'Sequence No.'},
+  phSeqAuto: {th:'อัตโนมัติ — แก้ไขเองได้', en:'Automatic — editable'},
+  labelProductName: {th:'PRODUCT NAME', en:'PRODUCT NAME'},
+  phProductName: {th:'เช่น Sunscreen SPF50 200ml', en:'e.g. Sunscreen SPF50 200ml'},
+  labelFormNo: {th:'FORMULATION NO. (สูตร)', en:'FORMULATION NO.'},
+  phFormNo: {th:'เช่น F-2601 — สินค้าเดียวกันมีได้หลายสูตร', en:'e.g. F-2601 — one product can have multiple formulas'},
+  labelCustomer: {th:'CUSTOMER', en:'CUSTOMER'},
+  phCustomer: {th:'ชื่อลูกค้า', en:'Customer name'},
+  labelMixDate: {th:'MIXING DATE (dd/mm/yyyy)', en:'MIXING DATE (dd/mm/yyyy)'},
+  labelDay0: {th:'DAY 0 (วันเริ่มเก็บ stability) (dd/mm/yyyy)', en:'DAY 0 (stability start date) (dd/mm/yyyy)'},
+  day0SameAsMix: {th:'เป็นวันเดียวกับ Mixing Date', en:'Same as Mixing Date'},
+  productHelptext: {th:'คำนวณวันตรวจถัดไปให้อัตโนมัติจาก Day 0', en:'Next test dates are calculated automatically from Day 0'},
+  btnSave: {th:'บันทึก', en:'Save'},
+  titlePickDate: {th:'เลือกจากปฏิทิน', en:'Pick from calendar'},
+
+  needProductName: {th:'กรุณากรอกชื่อสินค้า', en:'Please enter a product name'},
+  needDay0: {th:'กรุณาระบุวันที่ Day 0', en:'Please enter the Day 0 date'},
+  badDay0Format: {th:'รูปแบบวันที่ Day 0 ไม่ถูกต้อง กรุณากรอกเป็น dd/mm/yyyy', en:'Invalid Day 0 date format, please enter as dd/mm/yyyy'},
+  badMixDateFormat: {th:'รูปแบบ Mixing Date ไม่ถูกต้อง กรุณากรอกเป็น dd/mm/yyyy', en:'Invalid Mixing Date format, please enter as dd/mm/yyyy'},
+  savedToast: {th:'บันทึกเรียบร้อย', en:'Saved'},
+
+  resultModalTitlePrefix: {th:'บันทึกผลทดสอบ — ', en:'Record Results — '},
+  resultModalCloseTitle: {th:'ปิด (จะบันทึกข้อมูลที่แก้ไว้ให้อัตโนมัติ)', en:'Close (unsaved edits will be saved automatically)'},
+  legendTitle: {th:'เกณฑ์การอ่านผล Texture/Color/Odor/Viscosity:', en:'Texture/Color/Odor/Viscosity rating criteria:'},
+  legendBody: {th:'เปรียบเทียบกับ reference ที่เก็บที่อุณหภูมิห้อง — 0 = ไม่เปลี่ยนแปลง &nbsp;|&nbsp; -1 = ลดลงเล็กน้อย, -2 = ลดลงปานกลาง, -3 = ลดลงมาก &nbsp;|&nbsp; +1 = เพิ่มขึ้นเล็กน้อย, +2 = เพิ่มขึ้นปานกลาง, +3 = เพิ่มขึ้นมาก',
+    en:'Compared to the reference stored at room temperature — 0 = No change &nbsp;|&nbsp; -1 = Slight decrease, -2 = Moderate decrease, -3 = Large decrease &nbsp;|&nbsp; +1 = Slight increase, +2 = Moderate increase, +3 = Large increase'},
+  resultHelptext: {th:'คลิกแท็บวันที่ด้านบนเพื่อสลับดู/กรอกผลของแต่ละ checkpoint — แต่ละวันแสดงเฉพาะเงื่อนไขที่ต้องทดสอบจริงตามแผนงาน กด "บันทึก" ท้ายตารางเพื่อบันทึกวันนั้น หรือกด ✕ มุมบนขวาเพื่อบันทึกทุกวันที่แก้ไว้แล้วปิดในทีเดียว',
+    en:'Click a date tab above to switch to/fill in that checkpoint — each date only shows the conditions actually required by the protocol. Click "Save" below the table to save that date, or click ✕ at the top right to save every edited date and close at once'},
+  condsRequiredPrefix: {th:'เงื่อนไขที่ต้องวัด: ', en:'Conditions to measure: '},
+  remarkPlaceholder: {th:'หมายเหตุสำหรับวันนี้ (ถ้ามี)…', en:'Remarks for this checkpoint (if any)…'},
+  savedStatusLabel: {th:'✓ บันทึกแล้ว', en:'✓ Saved'},
+  btnSaveCp: {th:'💾 บันทึก ', en:'💾 Save '},
+  savedResultToast: {th:'บันทึกผลทดสอบของ ', en:'Saved test results for '},
+  savedResultToastSuffix: {th:' เรียบร้อย', en:''},
+
+  thCondition: {th:'เงื่อนไข', en:'Condition'},
+  thTexturePerf: {th:'TEXTURE & PERFORMANCE', en:'TEXTURE & PERFORMANCE'},
+  thColor: {th:'Color', en:'Color'},
+  thOdor: {th:'Odor', en:'Odor'},
+  thPh: {th:'pH', en:'pH'},
+  thViscosity: {th:'Viscosity', en:'Viscosity'},
+  thSpindle: {th:'Spindle', en:'Spindle'},
+  thRpm: {th:'RPM', en:'RPM'},
+  thTimeMin: {th:'Time (นาที)', en:'Time (min)'},
+  thTester: {th:'ผู้บันทึก', en:'Recorded By'},
+  thDeveloper: {th:'ผู้พัฒนาสูตร', en:'Formulator'},
+  thPhoto: {th:'📷 รูปภาพ', en:'📷 Photo'},
+  thAfterChamber: {th:'หลังออกจากตู้', en:'After removal from chamber'},
+  thAfterRoom: {th:'ตั้งทิ้งไว้อุณหภูมิห้อง', en:'After room temp equilibration'},
+  phTextureVal: {th:'0,-1,+2', en:'0,-1,+2'},
+  dualDescLabel: {th:'บรรยาย', en:'Desc.'},
+  dualAnalysisLabel: {th:'วิเคราะห์', en:'Analysis'},
+  phDescribe: {th:'บรรยายตามจริง เช่น เหลวขึ้นเล็กน้อย', en:'Describe as observed'},
+  legendDualNote: {th:'ทุกพารามิเตอร์ (ยกเว้น pH) บันทึก 2 ช่อง: "บรรยาย" คือสิ่งที่เห็นจริงตามลักษณะ และ "วิเคราะห์" คือแปลงเป็นเกณฑ์คะแนนด้านล่าง — ตอน export รายงานจะโชว์เฉพาะช่อง "วิเคราะห์" เท่านั้น',
+    en:'Every parameter (except pH) has 2 fields: "Desc." is what was actually observed, and "Analysis" converts it to the rating scale below — exported reports show only the "Analysis" value'},
+  phDash: {th:'-', en:'-'},
+  phValue: {th:'ค่า', en:'value'},
+  phType: {th:'พิมพ์…', en:'type…'},
+  phMinutes: {th:'นาที', en:'min'},
+  titleRemoveRow: {th:'ลบแถวนี้', en:'Remove this row'},
+  titleRemoveColumn: {th:'ลบคอลัมน์วัดซ้ำนี้', en:'Remove this repeat column'},
+  titleAddColumn: {th:'เพิ่มคอลัมน์วัดซ้ำ', en:'Add a repeat measurement column'},
+  paramColHead: {th:'พารามิเตอร์', en:'Parameter'},
+  addRowBtnPrefix: {th:'+ เพิ่มแถว ', en:'+ Add row '},
+  addRowBtnSuffix: {th:' (วัดซ้ำ/วิธีอื่น)', en:' (repeat/other method)'},
+  btnAddPhoto: {th:'📷 เพิ่มรูป', en:'📷 Add photo'},
+  titleRemovePhoto: {th:'ลบรูปนี้ (รูปจะยังอยู่ในระบบ ไม่ได้ลบถาวร)', en:'Remove this photo (photo stays stored on the server, not permanently deleted)'},
+  photoUploading: {th:'กำลังอัปโหลด…', en:'Uploading…'},
+  photoUploadFailed: {th:'อัปโหลดรูปไม่สำเร็จ ลองใหม่อีกครั้ง', en:'Photo upload failed, please try again'},
+
+  reportModalTitle: {th:'สร้างรายงาน', en:'Generate Report'},
+  reportModalHelptext: {th:'เลือกรูปแบบรายงานที่ต้องการ — จะเปิดเป็นแท็บใหม่ พร้อมปุ่มพิมพ์/บันทึกเป็น PDF', en:'Choose the report format you want — it will open in a new tab with a print/save-as-PDF button'},
+  reportFormTitle: {th:'📄 รายงานแบบฟอร์ม', en:'📄 Form Report'},
+  reportFormSub: {th:'รายวัน/สัปดาห์ ตามเงื่อนไข — แบบฟอร์มบันทึกผลละเอียด', en:'Daily/weekly by condition — detailed record form'},
+  reportSummaryTitle: {th:'📊 ตารางสรุป', en:'📊 Summary Table'},
+  reportSummarySub: {th:'สรุปรายการทดสอบ x ช่วงเวลา ในตารางเดียว', en:'Test items x timepoints summarized in one table'},
+  reportExcelTitle: {th:'📊 Export Excel', en:'📊 Export Excel'},
+  reportExcelSub: {th:'หน้าตาเหมือนรายงานฟอร์ม รวมรูปภาพจริงในไฟล์ — แก้ไขต่อได้ ใช้เป็นข้อมูลสำรอง',
+    en:'Looks like the Form Report, includes real embedded photos — editable, doubles as a backup'},
+  excelSheetName: {th:'ผลทดสอบ', en:'Results'},
+  excelExportedToast: {th:'ดาวน์โหลดไฟล์ Excel เรียบร้อย', en:'Excel file downloaded'},
+  excelExportFailToast: {th:'สร้างไฟล์ Excel ไม่สำเร็จ ลองใหม่อีกครั้ง', en:'Failed to generate the Excel file, please try again'},
+  excelExportingToast: {th:'กำลังสร้างไฟล์ Excel… (ถ้ามีรูปเยอะอาจใช้เวลาสักครู่)', en:'Generating Excel file… (may take a moment if there are many photos)'},
+
+  reportFieldsTitle: {th:'เลือกข้อมูลที่จะรวมในรายงาน (ค่าเริ่มต้น = เอาทั้งหมด)', en:'Choose what to include in the report (default = include everything)'},
+  reportFieldTextureOut: {th:'Texture — หลังออกจากตู้', en:'Texture — after removal from chamber'},
+  reportFieldTextureRoom: {th:'Texture — ตั้งทิ้งไว้อุณหภูมิห้อง', en:'Texture — after room temp equilibration'},
+  reportFieldColor: {th:'Color', en:'Color'},
+  reportFieldOdor: {th:'Odor', en:'Odor'},
+  reportFieldPh: {th:'pH', en:'pH'},
+  reportFieldViscosity: {th:'Viscosity (รวม Spindle/RPM/Time)', en:'Viscosity (incl. Spindle/RPM/Time)'},
+  reportFieldTester: {th:'ผู้บันทึก', en:'Recorded By'},
+  reportFieldDeveloper: {th:'ผู้พัฒนาสูตร', en:'Formulator'},
+  reportFieldRemark: {th:'หมายเหตุ', en:'Remark'},
+  reportFieldPhotos: {th:'รูปภาพ', en:'Photos'},
+
+  peopleModalTitle: {th:'👤 จัดการรายชื่อผู้บันทึก / ผู้พัฒนาสูตร', en:'👤 Manage Recorder / Formulator Names'},
+  peopleModalHelptext: {th:'รายชื่อในนี้ใช้เป็นตัวเลือกในช่อง "ผู้บันทึก" และ "ผู้พัฒนาสูตร" ตอนบันทึกผลทดสอบ — เพิ่ม/แก้ไข/ลบได้ตลอด และเก็บไว้กลางให้ทุกคนเห็นชุดเดียวกัน',
+    en:'These names are used as options for "Recorded By" and "Formulator" when recording test results — add/edit/delete anytime, kept centrally so everyone sees the same list'},
+  peopleEmptyText: {th:'ยังไม่มีรายชื่อ — เพิ่มด้านล่างได้เลย', en:'No names yet — add one below'},
+  phNewPersonName: {th:'ชื่อคนใหม่…', en:'New person\'s name…'},
+  btnAddPerson: {th:'+ เพิ่ม', en:'+ Add'},
+  btnSavePerson: {th:'💾 บันทึก', en:'💾 Save'},
+  btnDeletePerson: {th:'🗑 ลบ', en:'🗑 Delete'},
+  needPersonName: {th:'กรุณากรอกชื่อก่อน', en:'Please enter a name first'},
+  personAddedToast: {th:'เพิ่มรายชื่อเรียบร้อย', en:'Person added'},
+
+  settingsModalTitle: {th:'⚙ ตั้งค่า Backend', en:'⚙ Backend Settings'},
+  settingsHelptext: {th:'วาง URL ของ Google Apps Script Web App (ไฟล์ stability_test_backend.gs ที่แนบให้) — ตัวนี้เก็บข้อมูลสินค้า/สูตรทั้งหมดไว้ใน Google Sheet กลาง ทุกคนที่ตั้งค่า URL เดียวกัน จะเห็นข้อมูลชุดเดียวกันเสมอไม่ว่าจะเปิดจากเครื่องไหน และเป็นตัวส่งแจ้งเตือนเข้า Teams ด้วย',
+    en:'Paste the Google Apps Script Web App URL (the stability_test_backend.gs file provided) — this keeps all product/formula data in a shared central Google Sheet. Anyone using the same URL always sees the same data regardless of device, and it also sends notifications to Teams.'},
+  labelBackendUrl: {th:'BACKEND URL (จาก Apps Script)', en:'BACKEND URL (from Apps Script)'},
+  btnTestSend: {th:'ทดสอบส่ง', en:'Test connection'},
+  needBackendUrl: {th:'กรุณากรอก Backend URL ก่อนทดสอบ', en:'Please enter a Backend URL before testing'},
+  needBackendUrlToast: {th:'กรุณาตั้งค่า Backend URL ก่อน', en:'Please set the Backend URL first'},
+  backendConnFail: {th:'การเชื่อมต่อ Backend ล้มเหลว: ', en:'Backend connection failed: '},
+  testConnSuccess: {th:'เชื่อมต่อสำเร็จ — เช็คที่ LINE ว่ามีข้อความทดสอบเข้าไหม', en:'Connected successfully — check LINE for a test message'},
+  testConnBackendErr: {th:'Backend ตอบกลับผิดพลาด: ', en:'Backend returned an error: '},
+  testConnFail: {th:'เชื่อมต่อไม่สำเร็จ — ตรวจสอบ URL และการ Deploy', en:'Connection failed — check the URL and deployment'},
+  settingsSavedToast: {th:'บันทึกการตั้งค่าเรียบร้อย — กำลังโหลดข้อมูล', en:'Settings saved — loading data'},
+
+  backupDownloadedToast: {th:'ดาวน์โหลดไฟล์สำรองข้อมูลแล้ว (นอกจากนี้ตัว Google Sheet เองก็เก็บประวัติการแก้ไขให้อัตโนมัติอยู่แล้ว)',
+    en:'Backup file downloaded (the Google Sheet itself also keeps an automatic edit history)'},
+
+  loadDataFailToast: {th:'โหลดข้อมูลไม่สำเร็จ: ตรวจสอบ Backend URL ในหน้าตั้งค่า', en:'Failed to load data: check the Backend URL in Settings'},
+  needPersonNameSimple: {th:'กรุณากรอกชื่อ', en:'Please enter a name'},
+  personAddFailToast: {th:'เพิ่มรายชื่อไม่สำเร็จ', en:'Failed to add person'},
+  personSavedToast: {th:'บันทึกชื่อเรียบร้อย', en:'Name saved'},
+  personSaveFailToast: {th:'บันทึกไม่สำเร็จ', en:'Save failed'},
+  personDeletedToast: {th:'ลบรายชื่อเรียบร้อย', en:'Person deleted'},
+  personDeleteFailToast: {th:'ลบไม่สำเร็จ', en:'Delete failed'},
+  confirmDeletePerson: {th:'ต้องการลบรายชื่อนี้ใช่หรือไม่?', en:'Delete this person?'},
+};
+
+let currentLang = 'th';
+function t(key){
+  const entry = STRINGS[key];
+  if(!entry) return key;
+  return entry[currentLang] !== undefined ? entry[currentLang] : entry.th;
+}
+function setLang(lang){
+  currentLang = (lang === 'en') ? 'en' : 'th';
+  settings.lang = currentLang;
+  saveLocalSettings();
+  applyStaticI18n();
+  if(products.length || people.length || settings.backend) renderAll();
+  // รีเฟรช modal ที่เปิดค้างอยู่ (ถ้ามี) ให้เปลี่ยนภาษาทันทีโดยไม่ต้องปิดเปิดใหม่
+  if(document.getElementById('dayModal').classList.contains('open')) renderDayModalBody();
+  if(document.getElementById('resultModal').classList.contains('open') && currentResultEntryId) renderResultModalBody(currentResultEntryId);
+  if(document.getElementById('peopleModal').classList.contains('open')) renderPeopleList();
+  if(document.getElementById('reportModal').classList.contains('open')) renderReportFieldsUI();
+}
+function toggleLang(){ setLang(currentLang === 'th' ? 'en' : 'th'); }
+function statusLabel(status){
+  return {done: t('statusDone'), today: t('statusToday'), overdue: t('statusOverdue'), upcoming: t('statusUpcoming')}[status] || status;
+}
+
+// เติมข้อความ (text/placeholder/title) ให้ element ที่ static อยู่ใน HTML โดยใช้ data-i18n / data-i18n-ph / data-i18n-title
+function applyStaticI18n(){
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.dataset.i18nTitle); });
+  document.getElementById('langToggleBtn').textContent = t('btnLangToggle');
+}
+
 /* ───────────────────────── State ───────────────────────── */
 let products = [];          // loaded from backend
 let people = [];             // ผู้บันทึก / ผู้พัฒนาสูตร — โหลดจาก backend
-let settings = {backend:''};
+let settings = {backend:'', lang:'th'};
 let calDate = new Date();   // month currently shown in calendar
 
 /* ───────────────────────── Settings persistence (local only — just remembers the backend URL on this device) ───────────────────────── */
 function loadLocalSettings(){
   try{ settings = JSON.parse(localStorage.getItem('stability_settings_v2') || '{}'); }catch(e){ settings = {}; }
   if(!settings.backend) settings.backend = '';
+  currentLang = (settings.lang === 'en') ? 'en' : 'th';
 }
 function saveLocalSettings(){
   try{ localStorage.setItem('stability_settings_v2', JSON.stringify(settings)); }catch(e){}
@@ -539,17 +868,17 @@ function setSync(state, label){
 
 /* ───────────────────────── Backend API ───────────────────────── */
 async function apiList(){
-  if(!settings.backend){ setSync('err','ยังไม่ได้ตั้งค่า Backend URL'); return null; }
-  setSync('busy','กำลังโหลดข้อมูล…');
+  if(!settings.backend){ setSync('err', t('syncNoBackend')); return null; }
+  setSync('busy', t('syncLoading'));
   try{
     const res = await fetch(settings.backend, {method:'GET'});
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || 'unknown error');
-    setSync('ok','ซิงค์ล่าสุด ' + new Date().toLocaleTimeString('th-TH'));
+    setSync('ok', t('syncLoaded') + new Date().toLocaleTimeString(currentLang==='en'?'en-GB':'th-TH'));
     return {products: data.products || [], people: data.people || []};
   }catch(e){
-    setSync('err','โหลดข้อมูลไม่สำเร็จ — เช็ค Backend URL');
-    showToast('โหลดข้อมูลไม่สำเร็จ: ตรวจสอบ Backend URL ในหน้าตั้งค่า');
+    setSync('err', t('syncLoadFail'));
+    showToast(t('loadDataFailToast'));
     return null;
   }
 }
@@ -557,7 +886,7 @@ async function apiList(){
 let pendingWrites = new Set();
 
 async function apiPost(payload){
-  if(!settings.backend){ showToast('กรุณาตั้งค่า Backend URL ก่อน'); return null; }
+  if(!settings.backend){ showToast(t('needBackendUrlToast')); return null; }
   const marker = {};
   pendingWrites.add(marker);
   try{
@@ -570,7 +899,7 @@ async function apiPost(payload){
     if(!data.ok) throw new Error(data.error || 'unknown error');
     return data;
   }catch(e){
-    showToast('การเชื่อมต่อ Backend ล้มเหลว: ' + e.message);
+    showToast(t('backendConnFail') + e.message);
     return null;
   } finally {
     pendingWrites.delete(marker);
@@ -682,7 +1011,7 @@ function renderCalendar(){
 
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
-  ['อา','จ','อ','พ','พฤ','ศ','ส'].forEach(d=>{
+  t('dow').forEach(d=>{
     const el = document.createElement('div'); el.className='cal-dow'; el.textContent=d; grid.appendChild(el);
   });
 
@@ -709,7 +1038,7 @@ function renderCalendar(){
       cell.appendChild(chip);
     });
     if(items.length > 3){
-      const more = document.createElement('div'); more.className='cal-more'; more.textContent = `+${items.length-3} เพิ่มเติม`;
+      const more = document.createElement('div'); more.className='cal-more'; more.textContent = `+${items.length-3} ${t('moreItems')}`;
       cell.appendChild(more);
     }
     if(items.length > 0){ cell.onclick = () => openDayModal(cellDate); }
@@ -742,35 +1071,34 @@ function openDayModal(date){
 function renderDayModalBody(){
   const date = currentDayModalDate;
   const items = getDueItemsForDate(date);
-  document.getElementById('dayModalTitle').textContent = 'รายการของวันที่ — ' + fmt(date);
+  document.getElementById('dayModalTitle').textContent = t('dayModalTitlePrefix') + fmt(date);
   const body = document.getElementById('dayModalBody');
   body.innerHTML = '';
 
   if(items.length === 0){
-    body.innerHTML = `<div class="helptext">ไม่มีรายการในวันนี้</div>`;
+    body.innerHTML = `<div class="helptext">${t('dayModalNoItems')}</div>`;
     return;
   }
 
   items.forEach(it=>{
-    const statusLabelMap = {done:'✓ ตรวจแล้ว', today:'● ถึงกำหนด', overdue:'⚠ เลยกำหนด', upcoming:'รอถึงกำหนด'};
     const applicableConds = (CHECKPOINT_CONDITIONS[it.cp.key] || []).map(k=>CONDITIONS.find(c=>c.key===k).label);
     const condChipsHtml = applicableConds.length
       ? applicableConds.map(l=>`<span class="cond-chip">${l}</span>`).join('')
-      : '<span class="cp-no-cond">ไม่มีเงื่อนไขที่ต้องวัดตามแผนงาน</span>';
+      : `<span class="cp-no-cond">${t('noApplicableCond')}</span>`;
     const div = document.createElement('div');
     div.className = 'day-list-item';
     div.innerHTML = `
       <div class="dli-head">
         <div class="dli-head-main">
-          <div class="dli-title">${escapeHtml(it.entry.productName)} <span class="dli-formno">(${escapeHtml(it.entry.formNo||'-')})</span></div>
-          <div class="dli-meta">Checkpoint: ${it.cp.label}</div>
+          <div class="dli-title">#${escapeHtml(it.entry.seq||'-')} ${escapeHtml(it.entry.productName)} <span class="dli-formno">(${escapeHtml(it.entry.formNo||'-')})</span></div>
+          <div class="dli-meta">${t('checkpointLabel')}: ${it.cp.label}</div>
         </div>
-        <span class="status-pill ${it.cp.status}">${statusLabelMap[it.cp.status]}</span>
+        <span class="status-pill ${it.cp.status}">${statusLabel(it.cp.status)}</span>
       </div>
-      <div class="dli-conds"><span class="dli-conds-label">เงื่อนไข:</span>${condChipsHtml}</div>
+      <div class="dli-conds"><span class="dli-conds-label">${t('condLabel')}:</span>${condChipsHtml}</div>
       <div class="dli-actions">
-        <button class="mark-btn" onclick="closeModal('dayModal');openResultModal('${it.entry.id}')">📝 บันทึกผลทดสอบ</button>
-        <button class="mark-btn ${it.cp.tested?'marked':''}" onclick="toggleTested('${it.entry.id}','${it.cp.key}', 'day')">${it.cp.tested ? '✓ ยกเลิกทำเครื่องหมาย' : 'ทำเครื่องหมายว่าตรวจแล้ว'}</button>
+        <button class="mark-btn" onclick="closeModal('dayModal');openResultModal('${it.entry.id}')">${t('btnRecordResult')}</button>
+        <button class="mark-btn ${it.cp.tested?'marked':''}" onclick="toggleTested('${it.entry.id}','${it.cp.key}', 'day')">${it.cp.tested ? t('markBtnDone') : t('markBtnMark')}</button>
       </div>`;
     body.appendChild(div);
   });
@@ -799,7 +1127,7 @@ function renderList(){
   const table = document.createElement('table');
   table.className = 'entry-table';
   table.innerHTML = `<thead><tr>
-    <th>#</th><th>สินค้า</th><th>สูตร</th><th>ลูกค้า</th><th>Day 0</th><th>สถานะถัดไป</th><th>การจัดการ</th>
+    <th>#</th><th>${t('thProduct')}</th><th>${t('thFormula')}</th><th>${t('thCustomer')}</th><th>${t('thDay0')}</th><th>${t('thNextStatus')}</th><th>${t('thActions')}</th>
   </tr></thead><tbody></tbody>`;
   const tbody = table.querySelector('tbody');
 
@@ -808,26 +1136,25 @@ function renderList(){
   filtered.forEach(p=>{
     const schedule = computeSchedule(p);
     const next = schedule.find(cp=>cp.status!=='done') || schedule[schedule.length-1];
-    const statusLabelMap = {done:'✓ ตรวจครบแล้ว', today:'● ถึงกำหนดวันนี้', overdue:'⚠ เลยกำหนด', upcoming:'รอถึงกำหนด'};
     const allDone = schedule.every(cp=>cp.status==='done');
     const archiveBtn = p.archived
-      ? `<button class="btn btn-ghost btn-xs" onclick="toggleArchive('${p.id}', false)">♻️ นำออกจากคลัง</button>`
-      : `<button class="btn btn-ghost btn-xs" onclick="toggleArchive('${p.id}', true)">📦 เก็บเข้าคลัง</button>`;
+      ? `<button class="btn btn-ghost btn-xs" onclick="toggleArchive('${p.id}', false)">${t('btnUnarchive')}</button>`
+      : `<button class="btn btn-ghost btn-xs" onclick="toggleArchive('${p.id}', true)">${t('btnArchive')}</button>`;
 
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><span class="seq-badge">#${escapeHtml(p.seq||'-')}</span></td>
-      <td>${escapeHtml(p.productName)} ${p.archived ? '<span style="color:var(--muted);font-size:10.5px">📦 เก็บในคลัง</span>' : (allDone ? '<span style="color:var(--done);font-size:10.5px">✓ ตรวจครบ</span>' : '')}</td>
+      <td>${escapeHtml(p.productName)} ${p.archived ? `<span style="color:var(--muted);font-size:10.5px">${t('archivedTag')}</span>` : (allDone ? `<span style="color:var(--done);font-size:10.5px">${t('allDoneTag')}</span>` : '')}</td>
       <td>${escapeHtml(p.formNo||'-')}</td>
       <td>${escapeHtml(p.customer||'-')}</td>
       <td style="font-family:var(--mono)">${p.day0 ? fmt(toDate(p.day0)) : '-'}</td>
-      <td><span class="status-pill ${next.status}">${statusLabelMap[next.status]} · ${next.label}</span></td>
+      <td><span class="status-pill ${next.status}">${statusLabel(next.status)} · ${next.label}</span></td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-brand btn-xs" onclick="openResultModal('${p.id}')">📝 บันทึกผลทดสอบ</button>
-        <button class="btn btn-ghost btn-xs" onclick="openReportModal('${p.id}')">📄 รายงาน</button>
-        <button class="btn btn-ghost btn-xs" onclick="openProductModal('${p.id}')">แก้ไข</button>
+        <button class="btn btn-brand btn-xs" onclick="openResultModal('${p.id}')">${t('btnRecordResult')}</button>
+        <button class="btn btn-ghost btn-xs" onclick="openReportModal('${p.id}')">${t('btnReport')}</button>
+        <button class="btn btn-ghost btn-xs" onclick="openProductModal('${p.id}')">${t('btnEdit')}</button>
         ${archiveBtn}
-        <button class="btn btn-danger btn-xs" onclick="deleteEntry('${p.id}')">ลบ</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteEntry('${p.id}')">${t('btnDelete')}</button>
       </td>`;
     tbody.appendChild(row);
   });
@@ -888,7 +1215,7 @@ function openProductModal(id){
   document.getElementById('editId').value = id || '';
   if(id){
     const p = products.find(x=>x.id===id);
-    document.getElementById('productModalTitle').textContent = 'แก้ไขสินค้า/สูตร';
+    document.getElementById('productModalTitle').textContent = t('productModalTitleEdit');
     document.getElementById('f_seq').value = p.seq || '';
     document.getElementById('f_productName').value = p.productName || '';
     document.getElementById('f_formNo').value = p.formNo || '';
@@ -897,7 +1224,7 @@ function openProductModal(id){
     document.getElementById('f_day0').value = isoToDMY(p.day0);
     document.getElementById('f_day0SameAsMix').checked = !!(p.mixDate && p.day0 && p.mixDate === p.day0);
   } else {
-    document.getElementById('productModalTitle').textContent = 'เพิ่มสินค้า/สูตรใหม่';
+    document.getElementById('productModalTitle').textContent = t('productModalTitleAdd');
     ['f_productName','f_formNo','f_customer','f_mixDate','f_day0'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('f_seq').value = nextSuggestedSeq();
     document.getElementById('f_day0SameAsMix').checked = false;
@@ -920,16 +1247,16 @@ async function saveProduct(){
   const mixDateText = document.getElementById('f_mixDate').value.trim();
   const day0Text = document.getElementById('f_day0').value.trim();
 
-  if(!productName){ showToast('กรุณากรอกชื่อสินค้า'); return; }
-  if(!day0Text){ showToast('กรุณาระบุวันที่ Day 0'); return; }
+  if(!productName){ showToast(t('needProductName')); return; }
+  if(!day0Text){ showToast(t('needDay0')); return; }
 
   const day0ISO = dmyToISO(day0Text);
-  if(!day0ISO){ showToast('รูปแบบวันที่ Day 0 ไม่ถูกต้อง กรุณากรอกเป็น dd/mm/yyyy'); return; }
+  if(!day0ISO){ showToast(t('badDay0Format')); return; }
 
   let mixDateISO = '';
   if(mixDateText){
     mixDateISO = dmyToISO(mixDateText);
-    if(!mixDateISO){ showToast('รูปแบบ Mixing Date ไม่ถูกต้อง กรุณากรอกเป็น dd/mm/yyyy'); return; }
+    if(!mixDateISO){ showToast(t('badMixDateFormat')); return; }
   }
 
   const data = {
@@ -941,17 +1268,17 @@ async function saveProduct(){
     day0: day0ISO,
   };
 
-  setSync('busy','กำลังบันทึก…');
+  setSync('busy', t('syncSaving'));
   let res;
   if(id) res = await apiPost({action:'update', id, ...data});
   else   res = await apiPost({action:'create', ...data});
 
   if(res){
     closeModal('productModal');
-    showToast('บันทึกเรียบร้อย');
+    showToast(t('savedToast'));
     await refreshAll();
   } else {
-    setSync('err','บันทึกไม่สำเร็จ');
+    setSync('err', t('syncSaveFail'));
   }
 }
 
@@ -962,9 +1289,9 @@ function deleteEntry(id){
   if(!entry) return;
   pendingDeleteId = id;
   document.getElementById('deleteConfirmBody').innerHTML = `
-    ต้องการลบรายการนี้ออกจากระบบใช่หรือไม่?<br>
+    ${t('deleteConfirmQuestion')}<br>
     <b>#${escapeHtml(entry.seq||'-')} ${escapeHtml(entry.productName)}</b> (${escapeHtml(entry.formNo||'-')})<br><br>
-    <span style="color:var(--muted);font-size:12px;">ข้อมูลผลทดสอบที่เคยบันทึกไว้จะหายไปด้วย และ<b>กู้คืนไม่ได้</b> — ถ้าแค่อยากซ่อนแต่เก็บข้อมูลไว้ ใช้ปุ่ม "เก็บเข้าคลัง" แทนจะปลอดภัยกว่า</span>`;
+    <span style="color:var(--muted);font-size:12px;">${t('deleteConfirmWarn')}</span>`;
   document.getElementById('deleteConfirmModal').classList.add('open');
 }
 
@@ -972,10 +1299,10 @@ async function confirmDeleteEntry(){
   const id = pendingDeleteId;
   if(!id) return;
   closeModal('deleteConfirmModal');
-  setSync('busy','กำลังลบ…');
+  setSync('busy', t('syncDeleting'));
   const res = await apiPost({action:'delete', id});
-  if(res){ showToast('ลบเรียบร้อย'); await refreshAll(); }
-  else setSync('err','ลบไม่สำเร็จ');
+  if(res){ showToast(t('deletedToast')); await refreshAll(); }
+  else setSync('err', t('syncDeleteFail'));
   pendingDeleteId = null;
 }
 
@@ -986,8 +1313,8 @@ async function toggleArchive(id, archived){
   entry.archived = archived; // optimistic
   renderAll();
   const res = await apiPost({action:'setArchived', id, archived});
-  if(res){ showToast(archived ? 'เก็บเข้าคลังเรียบร้อย — ข้อมูลผลทดสอบยังอยู่ครบ ดูได้จากติ๊ก "แสดงรายการที่เก็บเข้าคลังแล้ว"' : 'นำออกจากคลังเรียบร้อย'); }
-  else { entry.archived = previous; renderAll(); showToast('ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง'); }
+  if(res){ showToast(archived ? t('archivedToast') : t('unarchivedToast')); }
+  else { entry.archived = previous; renderAll(); showToast(t('actionFailToast')); }
 }
 
 async function toggleTested(id, checkpointKey, source){
@@ -1020,7 +1347,7 @@ async function toggleTested(id, checkpointKey, source){
     renderAll();
     if(source === 'record') renderResultModalBody(id);
     if(source === 'day') renderDayModalBody();
-    showToast('อัปเดตไม่สำเร็จ ลองใหม่อีกครั้ง');
+    showToast(t('markUpdateFail'));
   }
 }
 
@@ -1033,18 +1360,18 @@ async function saveSettings(){
   settings.backend = document.getElementById('f_backend').value.trim();
   saveLocalSettings();
   closeModal('settingsModal');
-  showToast('บันทึกการตั้งค่าเรียบร้อย — กำลังโหลดข้อมูล');
+  showToast(t('settingsSavedToast'));
   await refreshAll();
 }
 async function testBackend(){
   const backend = document.getElementById('f_backend').value.trim();
-  if(!backend){ showToast('กรุณากรอก Backend URL ก่อนทดสอบ'); return; }
+  if(!backend){ showToast(t('needBackendUrl')); return; }
   try{
     const res = await fetch(backend, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({action:'test'})});
     const data = await res.json();
-    showToast(data.ok ? 'เชื่อมต่อสำเร็จ — เช็คที่ LINE ว่ามีข้อความทดสอบเข้าไหม' : 'Backend ตอบกลับผิดพลาด: ' + (data.error||''));
+    showToast(data.ok ? t('testConnSuccess') : t('testConnBackendErr') + (data.error||''));
   }catch(e){
-    showToast('เชื่อมต่อไม่สำเร็จ — ตรวจสอบ URL และการ Deploy');
+    showToast(t('testConnFail'));
   }
 }
 document.getElementById('settingsModal').addEventListener('click', e=>{ if(e.target.id==='settingsModal') closeModal('settingsModal'); });
@@ -1058,10 +1385,10 @@ document.getElementById('deleteConfirmModal').addEventListener('click', e=>{ if(
 /* ───────────────────────── Notify now ───────────────────────── */
 async function sendNotifyNow(){
   const btn = document.getElementById('sendDueBtn');
-  btn.disabled = true; btn.textContent = 'กำลังส่ง…';
+  btn.disabled = true; btn.textContent = t('sendingBtn');
   const res = await apiPost({action:'notifyNow'});
-  if(res){ showToast(`ส่งแจ้งเตือนแล้ว (${res.sentCount||0} รายการ) — เช็คที่ LINE`); }
-  btn.disabled = false; btn.textContent = '➤ ส่งเข้า LINE ตอนนี้ (ไม่บังคับ)';
+  if(res){ showToast(`${t('sentNowToast')} (${res.sentCount||0} ${t('itemsSuffix')}) ${t('checkLineSuffix')}`); }
+  btn.disabled = false; btn.textContent = t('sendNowBtn');
 }
 
 /* ───────────────────────── Backup ───────────────────────── */
@@ -1071,7 +1398,7 @@ function downloadBackup(){
   a.href = URL.createObjectURL(blob);
   a.download = 'stability_test_backup_' + ymd(new Date()) + '.json';
   a.click();
-  showToast('ดาวน์โหลดไฟล์สำรองข้อมูลแล้ว (นอกจากนี้ตัว Google Sheet เองก็เก็บประวัติการแก้ไขให้อัตโนมัติอยู่แล้ว)');
+  showToast(t('backupDownloadedToast'));
 }
 
 /* ───────────────────────── Result recording ───────────────────────── */
@@ -1120,133 +1447,353 @@ function normalizeConditionRows(raw){
 function openResultModal(entryId){
   currentResultEntryId = entryId;
   dirtyCheckpoints.clear();
+  activeResultTab = null; // เปิดสินค้าใหม่ ให้เลือกแท็บวันที่ถึงกำหนด/เลยกำหนดให้อัตโนมัติใหม่เสมอ
   const entry = products.find(p=>p.id===entryId);
-  document.getElementById('resultModalTitle').textContent = `บันทึกผลทดสอบ — ${entry.productName} (${entry.formNo||'-'})`;
+  document.getElementById('resultModalTitle').textContent = `${t('resultModalTitlePrefix')}${entry.productName} (${entry.formNo||'-'})`;
   renderResultModalBody(entryId);
   document.getElementById('resultModal').classList.add('open');
   document.getElementById('resultModalInner').scrollTop = 0; // เปิดมาแล้วต้องเห็นด้านบนสุดก่อนเสมอ
 }
 
-function expandAllCheckpoints(open){
-  document.querySelectorAll('#resultModalBody details.cp-section').forEach(d => d.open = open);
+// รูปที่แนบต่อแถว เก็บเป็น array [{url, fileId}] ไว้ใน data-photos ของ <tr> เอง (เก็บชั่วคราวในหน้าเว็บ
+// จนกว่าจะกดบันทึก/ปิดโมดัล ตัวไฟล์จริงถูกอัปโหลดขึ้น Google Drive ทันทีตอนเลือกรูปแล้ว ไม่มีทางหาย)
+function photoThumbsHtml(pfx, photos){
+  return (photos||[]).map((p,i)=>
+    `<span class="photo-thumb"><img src="${escapeHtml(p.url)}" alt="" loading="lazy" onclick="window.open('${escapeHtml(p.url)}','_blank')"><button type="button" class="photo-remove" title="${t('titleRemovePhoto')}" onclick="removePhotoFromRow('${pfx}', ${i})">✕</button></span>`
+  ).join('');
 }
 
-function buildConditionRowHtml(cpKey, condKey, ridx, d, defaults){
-  const pfx = `rr_${cpKey}_${condKey}_${ridx}`;
-  const condLabel = CONDITIONS.find(c=>c.key===condKey).label;
-  return `<tr data-cp="${cpKey}" data-cond="${condKey}">
-    <td class="cond-label">${condLabel}</td>
-    <td><input data-f="textureOut" id="${pfx}_textureOut" value="${escapeHtml(d.textureOut||'')}" placeholder="0,-1,+2"></td>
-    <td><input data-f="textureRoom" id="${pfx}_textureRoom" value="${escapeHtml(d.textureRoom||'')}" placeholder="0,-1,+2"></td>
-    <td><input data-f="color" id="${pfx}_color" value="${escapeHtml(d.color||'')}" placeholder="0,-1,+2"></td>
-    <td><input data-f="odor" id="${pfx}_odor" value="${escapeHtml(d.odor||'')}" placeholder="0,-1,+2"></td>
-    <td><input data-f="ph" id="${pfx}_ph" value="${escapeHtml(d.ph||'')}" placeholder="-"></td>
-    <td><input data-f="viscosity" id="${pfx}_viscosity" value="${escapeHtml(d.viscosity||'')}" placeholder="ค่า"></td>
-    <td><input data-f="spindle" id="${pfx}_spindle" list="spindleList" value="${escapeHtml(d.spindle||defaults.spindle||'')}" placeholder="พิมพ์…"></td>
-    <td><input data-f="rpm" id="${pfx}_rpm" list="rpmList" value="${escapeHtml(d.rpm||defaults.rpm||'')}" placeholder="พิมพ์…"></td>
-    <td><input data-f="timeMin" id="${pfx}_timeMin" value="${escapeHtml(d.timeMin||defaults.timeMin||'')}" placeholder="นาที"></td>
-    <td><select data-f="tester" id="${pfx}_tester">${peopleOptionsHtml(d.tester||defaults.tester||'')}</select></td>
-    <td><select data-f="developer" id="${pfx}_developer">${peopleOptionsHtml(d.developer||defaults.developer||'')}</select></td>
-    <td><button class="remove-row-btn" onclick="this.closest('tr').remove()" title="ลบแถวนี้">✕</button></td>
-  </tr>`;
+// สร้าง 1 เซลล์ในตารางของ checkpoint หนึ่งๆ ตาม type ของพารามิเตอร์แถวนั้น (desc/analysis/ph/spindle/rpm/timeMin/tester/developer/photo)
+function matrixCellHtml(param, pfx, d, defaults, cpKey, condKey){
+  const key = param.key;
+  if(key === 'photo'){
+    const photos = d.photos || [];
+    return `<td class="photo-matrix-cell" data-pfx="${pfx}" data-cpkey="${cpKey}" data-photos='${escapeHtml(JSON.stringify(photos))}'>
+      <div class="photo-thumbs" id="photothumbs_${pfx}">${photoThumbsHtml(pfx, photos)}</div>
+      <button type="button" class="add-row-btn photo-btn" onclick="document.getElementById('photoinput_${pfx}').click()">${t('btnAddPhoto')}</button>
+      <input type="file" accept="image/*" capture="environment" style="display:none" id="photoinput_${pfx}" onchange="handlePhotoSelected(event,'${cpKey}','${condKey}','${pfx}')">
+    </td>`;
+  }
+  if(key === 'tester' || key === 'developer'){
+    return `<td><select data-f="${key}" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_${key}">${peopleOptionsHtml(d[key]||defaults[key]||'')}</select></td>`;
+  }
+  if(key === 'spindle'){
+    return `<td><input data-f="spindle" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_spindle" list="spindleList" value="${escapeHtml(d.spindle||defaults.spindle||'')}"></td>`;
+  }
+  if(key === 'rpm'){
+    return `<td><input data-f="rpm" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_rpm" list="rpmList" value="${escapeHtml(d.rpm||defaults.rpm||'')}"></td>`;
+  }
+  if(key === 'timeMin'){
+    return `<td><input data-f="timeMin" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_timeMin" value="${escapeHtml(d.timeMin||defaults.timeMin||'')}" placeholder="${t('phMinutes')}"></td>`;
+  }
+  if(key === 'ph'){
+    return `<td><input data-f="ph" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_ph" value="${escapeHtml(d.ph||'')}" placeholder="${t('phDash')}"></td>`;
+  }
+  // ช่อง desc/analysis (textureOut_desc, textureOut_analysis, ..., viscosity_analysis)
+  // เผื่อข้อมูลเก่าก่อนแยกเป็น 2 ช่อง: ถ้ายังไม่มี _analysis แต่มีค่าตัวเก่า (ไม่มี suffix) อยู่ ให้ดึงมาใส่ช่องวิเคราะห์
+  let val = d[key] || '';
+  if(param.type === 'analysis'){
+    const baseKey = key.replace('_analysis','');
+    val = (d[key] !== undefined && d[key] !== '') ? d[key] : (d[baseKey] || '');
+  }
+  const placeholder = param.type === 'analysis' ? t('phTextureVal') : t('phDescribe');
+  return `<td><input data-f="${key}" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_${key}" value="${escapeHtml(val)}" placeholder="${placeholder}"></td>`;
 }
 
-function addRowTriggerHtml(cpKey, condKey){
-  const condLabel = CONDITIONS.find(c=>c.key===condKey).label;
-  return `<tr class="add-row-tr" data-addfor="${condKey}"><td colspan="12"><button class="add-row-btn" onclick="addConditionRow('${cpKey}','${condKey}')">+ เพิ่มแถว ${condLabel} (วัดซ้ำ/วิธีอื่น)</button></td></tr>`;
+// สร้างตารางของ 1 checkpoint (1 วัน) — เงื่อนไข (4°C/RT/40°C/SUN) ที่ต้องวัดวันนั้นกลายเป็นคอลัมน์ (มีไม่เกิน 4
+// คอลัมน์ ตารางจึงเล็กกะทัดรัด) ถ้ามีวัดซ้ำมากกว่า 1 ครั้งต่อเงื่อนไข จะแตกเป็นคอลัมน์ย่อยติดกัน (เช่น "RT (#2)")
+function buildCheckpointTableHtml(entry, cp, defaults){
+  const applicableConds = CHECKPOINT_CONDITIONS[cp.key] || [];
+  if(applicableConds.length === 0) return `<div class="cp-no-cond">${t('noApplicableCond')}</div>`;
+
+  const resultsForCp = (entry.results && entry.results[cp.key]) || {};
+  const columns = [];
+  applicableConds.forEach(condKey=>{
+    const cond = CONDITIONS.find(c=>c.key===condKey);
+    const rows = normalizeConditionRows(resultsForCp[condKey]);
+    const rowsToShow = rows.length ? rows : [{}];
+    rowsToShow.forEach((d, ridx)=>{
+      columns.push({condKey, condLabel: cond.label, ridx, data: d, isLastForCond: ridx === rowsToShow.length - 1});
+    });
+  });
+
+  const headerCells = columns.map(col=>{
+    const pfx = `cx_${cp.key}_${col.condKey}_${col.ridx}`;
+    const label = col.ridx > 0 ? `${col.condLabel} (#${col.ridx+1})` : col.condLabel;
+    const btn = col.ridx > 0
+      ? `<button class="remove-col-btn" onclick="removeMatrixColumn('${entry.id}','${cp.key}','${col.condKey}',${col.ridx})" title="${t('titleRemoveColumn')}">✕</button>`
+      : (col.isLastForCond ? `<button class="add-col-btn" onclick="addMatrixColumn('${entry.id}','${cp.key}','${col.condKey}')" title="${t('titleAddColumn')}">+</button>` : '');
+    return `<th data-colpfx="${pfx}" data-condkey="${col.condKey}" data-ridx="${col.ridx}">
+      <div class="matrix-col-head">
+        <span class="matrix-col-head-text">${label}</span>
+        ${btn}
+      </div>
+    </th>`;
+  }).join('');
+
+  const bodyRows = PARAM_ROWS.map(param=>{
+    const label = param.subLabelKey ? `${t(param.labelKey)} — ${t(param.subLabelKey)}` : t(param.labelKey);
+    const cells = columns.map(col=>{
+      const pfx = `cx_${cp.key}_${col.condKey}_${col.ridx}`;
+      return matrixCellHtml(param, pfx, col.data, defaults, cp.key, col.condKey);
+    }).join('');
+    return `<tr class="param-row-${param.type}"><td class="param-label">${label}</td>${cells}</tr>`;
+  }).join('');
+
+  return `<div class="matrix-wrap">
+    <table class="matrix-table" id="cptable_${cp.key}">
+      <thead><tr><th class="param-col-head">${t('paramColHead')}</th>${headerCells}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+  </div>`;
 }
 
-function addConditionRow(cpKey, condKey){
-  const entry = products.find(p=>p.id===currentResultEntryId);
+// แปลงไฟล์รูปเป็น JPEG ที่ย่อขนาด/บีบอัดแล้ว (base64) ก่อนอัปโหลด — กันไม่ให้ไฟล์ใหญ่เกินไป อัปโหลดช้า/ค้าง
+// ย่อ/บีบอัดรูปก่อนอัปโหลด — ใส่ timeout กันไม่ให้ค้างตลอดไปถ้าเบราว์เซอร์ถอดรหัสไฟล์ไม่ได้
+// (เช่นรูป .heic จากไอโฟนบางรุ่นที่เลือกจากคลังภาพ แทนที่จะถ่ายจากกล้องสด — ไม่ reject ก็ไม่ resolve
+// จนกว่าจะครบเวลา) ผู้เรียกควรดัก error แล้ว fallback ไปอัปโหลดไฟล์ต้นฉบับตรงๆ แทนถ้าขั้นตอนนี้ล้มเหลว
+function resizeImageFile(file, maxDim, quality){
+  maxDim = maxDim || 1280; quality = quality || 0.72;
+  return new Promise((resolve, reject)=>{
+    let settled = false;
+    const timer = setTimeout(()=>{ if(!settled){ settled = true; reject(new Error('timeout ตอนย่อรูป (อาจเป็นไฟล์นามสกุลที่เบราว์เซอร์นี้เปิดไม่ได้ เช่น .heic)')); } }, 15000);
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        if(settled) return;
+        let w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w >= h){ h = Math.round(h * maxDim / w); w = maxDim; } else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        settled = true; clearTimeout(timer);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = ()=>{ if(!settled){ settled = true; clearTimeout(timer); reject(new Error('เบราว์เซอร์เปิดไฟล์รูปนี้ไม่ได้')); } };
+      img.src = e.target.result;
+    };
+    reader.onerror = ()=>{ if(!settled){ settled = true; clearTimeout(timer); reject(new Error('อ่านไฟล์รูปไม่สำเร็จ')); } };
+    reader.readAsDataURL(file);
+  });
+}
+
+// อ่านไฟล์ต้นฉบับตรงๆ เป็น base64 โดยไม่ย่อ/บีบอัด — ใช้เป็น fallback เมื่อ resizeImageFile ทำไม่ได้
+// (ไฟล์จะไม่ถูกบีบอัดจึงอาจใหญ่กว่าปกติ แต่ยังอัปโหลดขึ้น Drive ได้ตราบใดที่ไม่ใหญ่เกินไป)
+function readFileAsDataUrl(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=> resolve(e.target.result);
+    reader.onerror = ()=> reject(new Error('อ่านไฟล์รูปไม่สำเร็จ'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// อัปโหลดรูปที่ถ่าย/เลือกทันที ขึ้น Google Drive ผ่าน backend (เก็บถาวรแยกจากตัว Sheet — ไม่มีทางหายแม้แก้ไขผลทดสอบภายหลัง)
+// แล้วผูก URL ที่ได้เข้ากับเซลล์นั้นทันที (จะถูกบันทึกจริงตอนกด "บันทึก" ของวันนั้น หรือตอนปิดโมดัล เหมือนช่องอื่นๆ)
+// มี fallback หลายชั้นเพื่อลดโอกาสอัปโหลดไม่สำเร็จ: ย่อรูปไม่ได้ → ส่งไฟล์ต้นฉบับแทน, เครือข่ายมีปัญหาชั่วคราว → ลองซ้ำอัตโนมัติ 1 ครั้ง
+async function handlePhotoSelected(event, cpKey, condKey, pfx){
+  const file = event.target.files[0];
+  event.target.value = ''; // เคลียร์ค่า input เพื่อให้เลือกไฟล์เดิมซ้ำได้ในครั้งถัดไป
+  if(!file) return;
+  const cell = document.querySelector(`.photo-matrix-cell[data-pfx="${pfx}"]`);
+  const thumbWrap = document.getElementById(`photothumbs_${pfx}`);
+  if(!cell || !thumbWrap) return;
+
+  const MAX_ORIGINAL_BYTES = 15 * 1024 * 1024; // 15MB — กันไม่ให้ส่ง payload ใหญ่เกินไปตอน fallback ไปใช้ไฟล์ต้นฉบับ
+  const loadingId = 'photoload_' + Date.now();
+  thumbWrap.insertAdjacentHTML('beforeend', `<span class="photo-thumb photo-uploading" id="${loadingId}">⏳</span>`);
+
+  let dataUrl;
+  try{
+    dataUrl = await resizeImageFile(file);
+  }catch(resizeErr){
+    // ย่อรูปไม่สำเร็จ (เช่นไฟล์ .heic ที่เบราว์เซอร์นี้เปิดไม่ได้) → ลองส่งไฟล์ต้นฉบับตรงๆ แทน ดีกว่าไม่ได้อัปโหลดเลย
+    if(file.size > MAX_ORIGINAL_BYTES){
+      document.getElementById(loadingId)?.remove();
+      showToast(t('photoUploadFailed'));
+      return;
+    }
+    try{ dataUrl = await readFileAsDataUrl(file); }
+    catch(readErr){ document.getElementById(loadingId)?.remove(); showToast(t('photoUploadFailed')); return; }
+  }
+
+  const base64 = dataUrl.split(',')[1];
+  const mimeType = file.type || 'image/jpeg';
+  const filename = file.name || 'photo.jpg';
+
+  // ลองอัปโหลด — ถ้าล้มเหลวครั้งแรก (เช่นเน็ตสะดุดชั่วคราว) ลองซ้ำอัตโนมัติอีก 1 ครั้งก่อนจะถือว่าไม่สำเร็จจริง
+  let res = await apiPost({ action:'uploadPhoto', id: currentResultEntryId, checkpointKey: cpKey, condition: condKey, filename, mimeType, dataBase64: base64 });
+  if(!res || !res.url){
+    res = await apiPost({ action:'uploadPhoto', id: currentResultEntryId, checkpointKey: cpKey, condition: condKey, filename, mimeType, dataBase64: base64 });
+  }
+
+  document.getElementById(loadingId)?.remove();
+  if(res && res.url){
+    const photos = JSON.parse(cell.dataset.photos || '[]');
+    photos.push({url: res.url, fileId: res.fileId});
+    cell.dataset.photos = JSON.stringify(photos);
+    thumbWrap.innerHTML = photoThumbsHtml(pfx, photos);
+    dirtyCheckpoints.add(cpKey);
+  } else {
+    showToast(t('photoUploadFailed'));
+  }
+}
+
+// ลบรูปออกจากเซลล์ (แค่เอาออกจากรายการที่ผูกกับเซลล์นี้ — ตัวไฟล์จริงยังอยู่ใน Google Drive ตามเดิม ไม่ได้ลบถาวร)
+function removePhotoFromRow(pfx, idx){
+  const cell = document.querySelector(`.photo-matrix-cell[data-pfx="${pfx}"]`);
+  if(!cell) return;
+  const photos = JSON.parse(cell.dataset.photos || '[]');
+  photos.splice(idx, 1);
+  cell.dataset.photos = JSON.stringify(photos);
+  document.getElementById(`photothumbs_${pfx}`).innerHTML = photoThumbsHtml(pfx, photos);
+  dirtyCheckpoints.add(cell.dataset.cpkey);
+}
+
+// ก่อน re-render ตารางของ checkpoint นี้ใหม่ (ตอนเพิ่ม/ลบคอลัมน์วัดซ้ำ) ต้องดึงค่าที่พิมพ์ค้างไว้ในทุกเงื่อนไข
+// ของตารางนี้มาเก็บใน entry.results ก่อนเสมอ ไม่งั้นจะเสียข้อมูลที่เพิ่งพิมพ์ไปตอนสร้างตารางใหม่ทับของเดิม
+function snapshotCheckpointTableToEntry(entry, cpKey){
+  const table = document.getElementById(`cptable_${cpKey}`);
+  if(!table) return;
+  const condKeys = new Set();
+  table.querySelectorAll('th[data-condkey]').forEach(th=> condKeys.add(th.dataset.condkey));
+  entry.results = entry.results || {};
+  entry.results[cpKey] = entry.results[cpKey] || {};
+  condKeys.forEach(condKey=>{
+    entry.results[cpKey][condKey] = readConditionRowsFromDom(cpKey, condKey);
+  });
+}
+
+function rerenderCheckpointTable(entry, cpKey){
+  const cp = computeSchedule(entry).find(c=>c.key===cpKey);
+  if(!cp) return;
   const defaults = {...getDefaultViscMethod(entry), tester:lastTester};
-  const tbody = document.getElementById(`tbody_${cpKey}`);
-  const ridx = tbody.querySelectorAll(`tr[data-cond="${condKey}"]`).length;
-  const trigger = tbody.querySelector(`tr.add-row-tr[data-addfor="${condKey}"]`);
-  trigger.insertAdjacentHTML('beforebegin', buildConditionRowHtml(cpKey, condKey, ridx, {}, defaults));
+  const wrap = document.getElementById(`cptablewrap_${cpKey}`);
+  if(!wrap) return;
+  wrap.innerHTML = buildCheckpointTableHtml(entry, cp, defaults);
+}
+
+// เพิ่มคอลัมน์วัดซ้ำ (repeat measurement) ให้เงื่อนไขหนึ่งๆ ในตารางของ checkpoint นี้
+function addMatrixColumn(entryId, cpKey, condKey){
+  const entry = products.find(p=>p.id===entryId);
+  if(!entry) return;
+  snapshotCheckpointTableToEntry(entry, cpKey);
+  entry.results[cpKey] = entry.results[cpKey] || {};
+  const rows = entry.results[cpKey][condKey] || [];
+  rows.push({});
+  entry.results[cpKey][condKey] = rows;
   dirtyCheckpoints.add(cpKey);
+  rerenderCheckpointTable(entry, cpKey);
+}
+
+// ลบคอลัมน์วัดซ้ำที่ไม่ต้องการออก (ridx > 0 เท่านั้น — คอลัมน์แรกของแต่ละเงื่อนไขลบไม่ได้)
+function removeMatrixColumn(entryId, cpKey, condKey, ridx){
+  const entry = products.find(p=>p.id===entryId);
+  if(!entry) return;
+  snapshotCheckpointTableToEntry(entry, cpKey);
+  const rows = (entry.results[cpKey] && entry.results[cpKey][condKey]) || [];
+  rows.splice(ridx, 1);
+  entry.results[cpKey][condKey] = rows;
+  dirtyCheckpoints.add(cpKey);
+  rerenderCheckpointTable(entry, cpKey);
+}
+
+let activeResultTab = null; // checkpoint key ของแท็บวันที่ที่เปิดอยู่ในโมดัลบันทึกผล
+
+function switchResultTab(cpKey){
+  activeResultTab = cpKey;
+  document.querySelectorAll('#resultModalBody .cp-panel').forEach(p=>{
+    p.style.display = (p.dataset.cpkey === cpKey) ? '' : 'none';
+  });
+  document.querySelectorAll('#resultModalBody .cp-tab').forEach(b=>{
+    b.classList.toggle('active', b.dataset.cpkey === cpKey);
+  });
 }
 
 function renderResultModalBody(entryId){
   const entry = products.find(p=>p.id===entryId);
   if(!entry) return;
-  const schedule = computeSchedule(entry);
-  const statusLabelMap = {done:'✓ ตรวจครบแล้ว', today:'● ถึงกำหนดวันนี้', overdue:'⚠ เลยกำหนด', upcoming:'รอถึงกำหนด'};
   const body = document.getElementById('resultModalBody');
-  const defaults0 = getDefaultViscMethod(entry);
+  try{
+    const schedule = computeSchedule(entry);
+    const defaults = {...getDefaultViscMethod(entry), tester:lastTester};
 
-  const controlsHtml = `<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;">
-    <button class="btn btn-ghost btn-xs" onclick="expandAllCheckpoints(true)">⬇ ขยายทั้งหมด</button>
-    <button class="btn btn-ghost btn-xs" onclick="expandAllCheckpoints(false)">⬆ ย่อทั้งหมด</button>
-  </div>`;
+    // แท็บวันที่ (checkpoint) ด้านบน — คลิกเพื่อสลับดูของวันนั้น ค่าเริ่มต้นเปิดที่วันที่ถึงกำหนด/เลยกำหนดล่าสุด
+    // ถ้าไม่มีเลยก็เปิดวันแรก — ทำให้เห็นทีละวันแบบกะทัดรัด ไม่ต้องกางตารางใหญ่ทุกเงื่อนไขพร้อมกันจนรก
+    if(!activeResultTab || !schedule.some(cp=>cp.key===activeResultTab)){
+      const dueOrOverdue = schedule.find(cp=>cp.status==='overdue' || cp.status==='today');
+      activeResultTab = dueOrOverdue ? dueOrOverdue.key : (schedule[0] ? schedule[0].key : null);
+    }
 
-  const sectionsHtml = schedule.map(cp=>{
-    const applicableConds = CHECKPOINT_CONDITIONS[cp.key] || [];
-    const existing = (entry.results && entry.results[cp.key]) || {};
-    const remark = existing._remark || '';
-    const condChips = applicableConds.map(k=>CONDITIONS.find(c=>c.key===k).label).join(' / ');
-    const defaults = {...defaults0, tester:lastTester};
-    const shouldOpen = (cp.status === 'overdue' || cp.status === 'today');
+    const tabsHtml = `<div class="cp-tabs">${schedule.map(cp=>
+      `<button type="button" class="cp-tab ${cp.key===activeResultTab?'active':''} status-${cp.status}" data-cpkey="${cp.key}" onclick="switchResultTab('${cp.key}')">${cp.label}</button>`
+    ).join('')}</div>`;
 
-    let rowsHtml = '';
-    applicableConds.forEach(condKey=>{
-      const rows = normalizeConditionRows(existing[condKey]);
-      const rowsToShow = rows.length ? rows : [{}];
-      rowsToShow.forEach((d,i)=> rowsHtml += buildConditionRowHtml(cp.key, condKey, i, d, defaults));
-      rowsHtml += addRowTriggerHtml(cp.key, condKey);
-    });
-
-    const bodyHtml = applicableConds.length === 0
-      ? `<div class="cp-no-cond">checkpoint นี้ไม่มีเงื่อนไขที่ต้องทดสอบตามแผนงาน</div>`
-      : `<div class="result-table-wrap"><table class="result-table">
-          <thead>
-            <tr><th rowspan="2">เงื่อนไข</th><th colspan="2">TEXTURE &amp; PERFORMANCE</th><th rowspan="2">Color</th><th rowspan="2">Odor</th><th rowspan="2">pH</th><th rowspan="2">Viscosity</th><th rowspan="2">Spindle</th><th rowspan="2">RPM</th><th rowspan="2">Time (นาที)</th><th rowspan="2">ผู้บันทึก</th><th rowspan="2">ผู้พัฒนาสูตร</th><th rowspan="2"></th></tr>
-            <tr><th>หลังออกจากตู้</th><th>ตั้งทิ้งไว้อุณหภูมิห้อง</th></tr>
-          </thead>
-          <tbody id="tbody_${cp.key}">${rowsHtml}</tbody>
-        </table></div>
-        <textarea class="remark-box" id="remark_${cp.key}" placeholder="หมายเหตุสำหรับวันนี้ (ถ้ามี)…">${escapeHtml(remark)}</textarea>
+    const panelsHtml = schedule.map(cp=>{
+      const existing = (entry.results && entry.results[cp.key]) || {};
+      const remark = existing._remark || '';
+      const isActive = cp.key === activeResultTab;
+      return `<div class="cp-panel" data-cpkey="${cp.key}" style="${isActive?'':'display:none'}">
+        <div class="cp-panel-head">
+          <span class="cp-section-title">${cp.label}</span><span class="cp-section-date">${fmt(cp.date)}</span>
+          <span class="status-pill ${cp.status}">${statusLabel(cp.status)}</span>
+          <button class="mark-btn ${cp.tested?'marked':''}" onclick="toggleTested('${entryId}','${cp.key}','record')">${cp.tested?t('markBtnDone'):t('markBtnMark')}</button>
+        </div>
+        <div class="cptable-wrap" id="cptablewrap_${cp.key}">${buildCheckpointTableHtml(entry, cp, defaults)}</div>
+        <textarea class="remark-box" id="remark_${cp.key}" data-cpkey="${cp.key}" placeholder="${t('remarkPlaceholder')}">${escapeHtml(remark)}</textarea>
         <div style="margin-top:8px;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:8px;">
-          <span class="save-status" id="savestatus_${cp.key}">✓ บันทึกแล้ว</span>
-          <button class="btn btn-brand btn-xs" onclick="saveCheckpointResults('${entryId}','${cp.key}')">💾 บันทึก ${cp.label}</button>
-        </div>`;
-
-    return `<details class="cp-section" data-cpkey="${cp.key}" ${shouldOpen ? 'open' : ''}>
-      <summary class="cp-section-head">
-        <div><span class="cp-chevron">▶</span> <span class="cp-section-title">${cp.label}</span><span class="cp-section-date">${fmt(cp.date)}</span>
-          ${condChips ? `<div class="dli-conds">เงื่อนไขที่ต้องวัด: ${condChips}</div>` : ''}
+          <span class="save-status" id="savestatus_${cp.key}">${t('savedStatusLabel')}</span>
+          <button class="btn btn-brand btn-xs" onclick="saveCheckpointResults('${entryId}','${cp.key}')">${t('btnSaveCp')}${cp.label}</button>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span class="status-pill ${cp.status}">${statusLabelMap[cp.status]}</span>
-          <button class="mark-btn ${cp.tested?'marked':''}" onclick="event.preventDefault();event.stopPropagation();toggleTested('${entryId}','${cp.key}','record')">${cp.tested?'✓ ยกเลิกทำเครื่องหมาย':'ทำเครื่องหมายว่าตรวจแล้ว'}</button>
-        </div>
-      </summary>
-      <div class="cp-section-body">${bodyHtml}</div>
-    </details>`;
-  }).join('');
+      </div>`;
+    }).join('');
 
-  body.innerHTML = controlsHtml + sectionsHtml;
-
-  // ติดตาม "แก้ไขแล้วยังไม่บันทึก" ต่อ checkpoint ไว้ ใช้ตอนกดปิดโมดัลเพื่อบันทึกอัตโนมัติ
-  // และจำค่าผู้บันทึก/ผู้พัฒนาสูตรล่าสุดไว้ใช้เป็นค่าเริ่มต้นของแถวถัดไป
-  body.querySelectorAll('details.cp-section').forEach(sec=>{
-    sec.addEventListener('input', e=>{
-      dirtyCheckpoints.add(sec.dataset.cpkey);
-    });
-    sec.addEventListener('change', e=>{
-      dirtyCheckpoints.add(sec.dataset.cpkey);
-      if(e.target.dataset && e.target.dataset.f === 'tester') lastTester = e.target.value;
-    });
-  });
+    body.innerHTML = tabsHtml + panelsHtml;
+  }catch(err){
+    // กันไม่ให้หน้าจอว่างเปล่าแบบไม่รู้สาเหตุ — โชว์ข้อความ error ตรงๆ ไว้เผื่อแก้ไขปัญหาต่อได้
+    body.innerHTML = `<div class="cp-no-cond" style="color:var(--overdue);">⚠ เกิดข้อผิดพลาดตอนแสดงผล: ${escapeHtml(err.message || String(err))}<br><span style="font-size:11px;color:var(--muted);">ลองปิดแล้วเปิดใหม่ หรือรีเฟรชหน้าเว็บ ถ้ายังเจอปัญหาเดิม แจ้งข้อความนี้กลับมาได้เลย</span></div>`;
+    console.error('renderResultModalBody error:', err);
+  }
 }
 
+// ติดตาม "แก้ไขแล้วยังไม่บันทึก" ต่อ checkpoint (ใช้ data-cpkey ที่ติดไว้กับทุก input/select/หมายเหตุ) เพื่อใช้ตอน
+// กดปิดโมดัลให้บันทึกอัตโนมัติ — ผูก listener ไว้ที่ container ตัวเดียวครั้งเดียว (event delegation) ไม่ต้องผูกใหม่ทุกครั้งที่ re-render
+(function setupResultModalDirtyTracking(){
+  const body = document.getElementById('resultModalBody');
+  body.addEventListener('input', e=>{
+    const cpKey = e.target.dataset && e.target.dataset.cpkey;
+    if(cpKey) dirtyCheckpoints.add(cpKey);
+  });
+  body.addEventListener('change', e=>{
+    const cpKey = e.target.dataset && e.target.dataset.cpkey;
+    if(cpKey) dirtyCheckpoints.add(cpKey);
+    if(e.target.dataset && e.target.dataset.f === 'tester') lastTester = e.target.value;
+  });
+})();
+
+// อ่านข้อมูลของ (checkpoint, เงื่อนไข) หนึ่งคู่ จากตารางของ checkpoint นั้น — คืน array ของแถวข้อมูล
+// (รองรับหลายคอลัมน์ถ้ามีวัดซ้ำ เรียงตามลำดับ ridx) รูปแบบ return ตรงกับที่ saveCheckpointResults/closeResultModal
+// คาดหวังไว้พอดี จึงใช้ร่วมกันได้โดยไม่ต้องแก้ไขฟังก์ชันเหล่านั้นเลย
 function readConditionRowsFromDom(cpKey, condKey){
-  const tbody = document.getElementById(`tbody_${cpKey}`);
-  if(!tbody) return [];
-  return Array.from(tbody.querySelectorAll(`tr[data-cond="${condKey}"]`)).map(row=>{
+  const table = document.getElementById(`cptable_${cpKey}`);
+  if(!table) return [];
+  const ths = Array.from(table.querySelectorAll(`th[data-condkey="${condKey}"]`))
+    .sort((a,b)=> Number(a.dataset.ridx) - Number(b.dataset.ridx));
+  return ths.map(th=>{
+    const pfx = th.dataset.colpfx;
     const data = {};
-    row.querySelectorAll('[data-f]').forEach(el=>{ data[el.dataset.f] = el.value.trim ? el.value.trim() : el.value; });
+    table.querySelectorAll(`[data-pfx="${pfx}"]`).forEach(el=>{
+      if(el.classList && el.classList.contains('photo-matrix-cell')){
+        try{ const photos = JSON.parse(el.dataset.photos || '[]'); if(photos.length) data.photos = photos; }catch(e){ /* noop */ }
+        return;
+      }
+      if(el.dataset && el.dataset.f){ data[el.dataset.f] = el.value.trim ? el.value.trim() : el.value; }
+    });
     return data;
-  }).filter(d => Object.values(d).some(v=>v)); // ข้ามแถวที่ว่างเปล่าทั้งแถว
+  }).filter(d => Object.keys(d).some(k => { const v = d[k]; return Array.isArray(v) ? v.length>0 : v; })); // ข้ามแถวที่ว่างเปล่าทั้งแถว (แต่แถวที่มีแค่รูปให้เก็บไว้)
 }
 
 async function saveCheckpointResults(entryId, checkpointKey, silent){
@@ -1280,17 +1827,17 @@ async function saveCheckpointResults(entryId, checkpointKey, silent){
   }
   await apiPost({action:'saveRemark', id: entryId, checkpointKey, remark});
 
-  if(!silent) showToast(`บันทึกผลทดสอบของ ${CHECKPOINTS.find(c=>c.key===checkpointKey).label} เรียบร้อย`);
+  if(!silent) showToast(`${t('savedResultToast')}${CHECKPOINTS.find(c=>c.key===checkpointKey).label}${t('savedResultToastSuffix')}`);
 }
 
 async function closeResultModal(){
   const entryId = currentResultEntryId;
   if(entryId && dirtyCheckpoints.size > 0){
-    setSync('busy','กำลังบันทึกก่อนปิด…');
+    setSync('busy', t('syncSavingBeforeClose'));
     for(const cpKey of Array.from(dirtyCheckpoints)){
       await saveCheckpointResults(entryId, cpKey, true);
     }
-    setSync('ok','บันทึกและซิงค์เรียบร้อย');
+    setSync('ok', t('syncSavedSynced'));
   }
   closeModal('resultModal');
 }
@@ -1303,19 +1850,19 @@ function openPeopleModal(){
 
 function renderPeopleList(){
   const wrap = document.getElementById('peopleListWrap');
-  if(people.length === 0){ wrap.innerHTML = `<div class="helptext">ยังไม่มีรายชื่อ — เพิ่มด้านล่างได้เลย</div>`; return; }
+  if(people.length === 0){ wrap.innerHTML = `<div class="helptext">${t('peopleEmptyText')}</div>`; return; }
   wrap.innerHTML = people.map(p=>`
     <div class="people-row">
       <input id="person_${p.id}" value="${escapeHtml(p.name)}">
-      <button class="btn btn-ghost btn-xs" onclick="updatePersonUI('${p.id}')">💾 บันทึก</button>
-      <button class="btn btn-danger btn-xs" onclick="deletePersonUI('${p.id}')">🗑 ลบ</button>
+      <button class="btn btn-ghost btn-xs" onclick="updatePersonUI('${p.id}')">${t('btnSavePerson')}</button>
+      <button class="btn btn-danger btn-xs" onclick="deletePersonUI('${p.id}')">${t('btnDeletePerson')}</button>
     </div>`).join('');
 }
 
 async function addPersonUI(){
   const input = document.getElementById('f_newPersonName');
   const name = input.value.trim();
-  if(!name){ showToast('กรุณากรอกชื่อก่อน'); return; }
+  if(!name){ showToast(t('needPersonName')); return; }
   input.value = '';
   const tempId = 'temp_' + Date.now();
   people.push({id: tempId, name}); // optimistic — โผล่ในลิสต์ทันที
@@ -1324,49 +1871,278 @@ async function addPersonUI(){
   if(res){
     const p = people.find(x=>x.id===tempId);
     if(p) p.id = res.id; // แทนที่ id ชั่วคราวด้วย id จริงจาก backend
-    showToast('เพิ่มรายชื่อเรียบร้อย');
+    showToast(t('personAddedToast'));
   } else {
     people = people.filter(x=>x.id!==tempId); // ย้อนกลับถ้าไม่สำเร็จ
     renderPeopleList();
-    showToast('เพิ่มรายชื่อไม่สำเร็จ');
+    showToast(t('personAddFailToast'));
   }
 }
 
 async function updatePersonUI(id){
   const name = document.getElementById('person_' + id).value.trim();
-  if(!name){ showToast('กรุณากรอกชื่อ'); return; }
+  if(!name){ showToast(t('needPersonNameSimple')); return; }
   const p = people.find(x=>x.id===id);
   const previous = p ? p.name : '';
   if(p) p.name = name; // optimistic
   const res = await apiPost({action:'updatePerson', id, name});
-  if(res){ showToast('บันทึกชื่อเรียบร้อย'); }
-  else { if(p) p.name = previous; renderPeopleList(); showToast('บันทึกไม่สำเร็จ'); }
+  if(res){ showToast(t('personSavedToast')); }
+  else { if(p) p.name = previous; renderPeopleList(); showToast(t('personSaveFailToast')); }
 }
 
 async function deletePersonUI(id){
-  if(!confirm('ต้องการลบรายชื่อนี้ใช่หรือไม่?')) return;
+  if(!confirm(t('confirmDeletePerson'))) return;
   const backup = people.slice();
   people = people.filter(x=>x.id!==id); // optimistic
   renderPeopleList();
   const res = await apiPost({action:'deletePerson', id});
-  if(res){ showToast('ลบรายชื่อเรียบร้อย'); }
-  else { people = backup; renderPeopleList(); showToast('ลบไม่สำเร็จ'); }
+  if(res){ showToast(t('personDeletedToast')); }
+  else { people = backup; renderPeopleList(); showToast(t('personDeleteFailToast')); }
 }
 
 /* ───────────────────────── Reports ───────────────────────── */
 function openReportModal(entryId){
   document.getElementById('reportEntryId').value = entryId;
+  if(!reportSelectedFields){
+    reportSelectedFields = {};
+    REPORT_FIELD_DEFS.forEach(f=>{ reportSelectedFields[f.key] = true; }); // default = ติ๊กเลือกทุกอย่าง (เหมือนพฤติกรรมเดิม)
+  }
+  renderReportFieldsUI();
   document.getElementById('reportModal').classList.add('open');
+}
+
+const REPORT_FIELD_DEFS = [
+  {key:'textureOut',  labelKey:'reportFieldTextureOut'},
+  {key:'textureRoom', labelKey:'reportFieldTextureRoom'},
+  {key:'color',       labelKey:'reportFieldColor'},
+  {key:'odor',        labelKey:'reportFieldOdor'},
+  {key:'ph',          labelKey:'reportFieldPh'},
+  {key:'viscosity',   labelKey:'reportFieldViscosity'},
+  {key:'tester',      labelKey:'reportFieldTester'},
+  {key:'developer',   labelKey:'reportFieldDeveloper'},
+  {key:'remark',      labelKey:'reportFieldRemark'},
+  {key:'photos',      labelKey:'reportFieldPhotos'},
+];
+let reportSelectedFields = null; // null จนกว่าจะเปิดหน้ารายงานครั้งแรก แล้วจะตั้งเป็นติ๊กครบทุกอย่างเป็นค่าเริ่มต้น
+
+function renderReportFieldsUI(){
+  const wrap = document.getElementById('reportFieldsWrap');
+  wrap.innerHTML = `<div class="report-fields-title">${t('reportFieldsTitle')}</div>
+    <div class="report-fields-grid">${REPORT_FIELD_DEFS.map(f=>`
+      <label class="report-field-item">
+        <input type="checkbox" ${reportSelectedFields[f.key] ? 'checked' : ''} onchange="reportSelectedFields['${f.key}']=this.checked">
+        ${t(f.labelKey)}
+      </label>`).join('')}
+    </div>`;
 }
 
 function generateReport(style){
   const entryId = document.getElementById('reportEntryId').value;
   const entry = products.find(p=>p.id===entryId);
+  const fields = Object.assign({}, reportSelectedFields);
   closeModal('reportModal');
-  const html = style === 'form' ? buildFormReportHtml(entry) : buildSummaryReportHtml(entry);
+  const html = style === 'form' ? buildFormReportHtml(entry, fields) : buildSummaryReportHtml(entry, fields);
   const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
+}
+
+// Export ข้อมูลดิบทั้งหมด (ทั้ง "บรรยาย" และ "วิเคราะห์" — ไม่กรองตามติ๊กเลือกในหน้ารายงาน เพราะจุดประสงค์
+// คือสำรองข้อมูล/แก้ไขภายหลังให้ครบที่สุด) เป็นไฟล์ .xlsx หนึ่งแถวต่อหนึ่งแถวผลทดสอบ (รองรับวัดซ้ำหลายแถว)
+// Export เป็น Excel ให้หน้าตาเหมือนรายงาน PDF (Form Report) เป๊ะๆ — ใช้ fields ชุดเดียวกับหน้ารายงาน
+// (โชว์เฉพาะผลวิเคราะห์ ไม่ใช่ข้อมูลดิบทั้งบรรยาย+วิเคราะห์) และฝังรูปจริงลงในไฟล์ (ไม่ใช่ลิงก์) โดยขอ
+// base64 ของรูปจาก backend ทีละไฟล์ (ผ่าน endpoint เดียวกับที่ใช้เรียก API อื่นๆ อยู่แล้ว จึงไม่ติดปัญหา
+// CORS ที่มักเกิดถ้าจะดึงรูปตรงจาก Google Drive URL จากฝั่งเบราว์เซอร์โดยตรง)
+async function exportEntryToExcel(){
+  if(typeof ExcelJS === 'undefined'){ showToast(t('excelExportFailToast')); return; }
+  const entryId = document.getElementById('reportEntryId').value;
+  const entry = products.find(p=>p.id===entryId);
+  if(!entry) return;
+  const fields = Object.assign({textureOut:true,textureRoom:true,color:true,odor:true,ph:true,viscosity:true,tester:true,developer:true,remark:true,photos:true}, reportSelectedFields||{});
+  closeModal('reportModal');
+  showToast(t('excelExportingToast'));
+
+  try{
+    const showTextureOut = !!fields.textureOut;
+    const showTextureRoom = !!fields.textureRoom;
+    const showPhotos = !!fields.photos;
+    const simpleCols = [
+      {key:'color', label:'Color', show:fields.color, dataKey:'color_analysis'},
+      {key:'odor', label:'Odor', show:fields.odor, dataKey:'odor_analysis'},
+      {key:'ph', label:'pH', show:fields.ph, dataKey:'ph'},
+      {key:'viscosity', label:'Viscosity', show:fields.viscosity, dataKey:'viscosity_analysis'},
+      {key:'viscMethod', label:'Method (Spindle/RPM/Time)', show:fields.viscosity},
+      {key:'tester', label:'Recorded By', show:fields.tester, dataKey:'tester'},
+      {key:'developer', label:'Formulator', show:fields.developer, dataKey:'developer'},
+    ].filter(c=>c.show);
+
+    // สร้าง flatRows ด้วยตรรกะเดียวกับ buildFormReportHtml เป๊ะๆ (merge Checkpoint/Date/Condition แบบเดียวกัน)
+    const schedule = computeSchedule(entry);
+    const flatRows = [];
+    schedule.forEach(cp=>{
+      const applicableConds = CHECKPOINT_CONDITIONS[cp.key] || [];
+      const resultsForCp = (entry.results && entry.results[cp.key]) || {};
+      const remark = resultsForCp._remark || '';
+      const cpStartIdx = flatRows.length;
+      applicableConds.forEach(condKey=>{
+        const cond = CONDITIONS.find(c=>c.key===condKey);
+        const dataRows = normalizeConditionRows(resultsForCp[condKey]);
+        const condStartIdx = flatRows.length;
+        if(dataRows.length === 0){
+          flatRows.push({cpLabel:cp.label, cpDate:fmtEN(cp.date), condLabel:cond.label, data:null});
+        } else {
+          dataRows.forEach(d=> flatRows.push({cpLabel:cp.label, cpDate:fmtEN(cp.date), condLabel:cond.label, data:d}));
+        }
+        flatRows[condStartIdx].condSpan = flatRows.length - condStartIdx;
+      });
+      if(applicableConds.length > 0) flatRows[cpStartIdx].cpSpan = flatRows.length - cpStartIdx;
+      if(remark && fields.remark) flatRows.push({remarkRow:true, cpLabel:cp.label, remark});
+    });
+
+    // ดึง base64 ของรูปทั้งหมดที่ต้องใช้ล่วงหน้า (แคชกันเรียกซ้ำถ้ารูปเดียวกันโผล่หลายที่)
+    const photoCache = {};
+    if(showPhotos){
+      const allFileIds = new Set();
+      flatRows.forEach(r=>{ if(r.data && r.data.photos) r.data.photos.forEach(p=>{ if(p.fileId) allFileIds.add(p.fileId); }); });
+      for(const fileId of allFileIds){
+        try{
+          const res = await apiPost({action:'getPhotoBase64', fileId});
+          if(res && res.base64) photoCache[fileId] = res;
+        }catch(e){ /* ข้ามรูปที่ดึงไม่สำเร็จ ไปทำรูปถัดไป ไม่ให้ล้มทั้งไฟล์ */ }
+      }
+    }
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet((t('excelSheetName')||'Results').slice(0,31));
+    const HEADER_FILL = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF8FAFC'} };
+    const BORDER = { style:'thin', color:{argb:'FFE2E8F0'} };
+    const THIN_BORDERS = { top:BORDER, left:BORDER, bottom:BORDER, right:BORDER };
+
+    // หัวเอกสาร (ชื่อสินค้า/สูตร/ลูกค้า/วันผสม) — เหมือนหัวรายงาน PDF
+    ws.getCell('A1').value = 'Form Report — Stability Test Results'; ws.getCell('A1').font = {bold:true, size:14};
+    ws.getCell('A2').value = 'PRODUCT NAME'; ws.getCell('A2').font = {bold:true}; ws.getCell('B2').value = entry.productName || '';
+    ws.getCell('A3').value = 'FORMULATION NO.'; ws.getCell('A3').font = {bold:true}; ws.getCell('B3').value = entry.formNo || '-';
+    ws.getCell('A4').value = 'CUSTOMER'; ws.getCell('A4').font = {bold:true}; ws.getCell('B4').value = entry.customer || '-';
+    ws.getCell('A5').value = 'MIXING DATE'; ws.getCell('A5').font = {bold:true}; ws.getCell('B5').value = entry.mixDate ? fmtEN(toDate(entry.mixDate)) : '-';
+
+    const headerRow1Idx = 7, headerRow2Idx = 8;
+    let col = 1;
+    const colMap = {};
+    function setHeaderSingle(key, label){
+      ws.mergeCells(headerRow1Idx, col, headerRow2Idx, col);
+      ws.getCell(headerRow1Idx, col).value = label;
+      colMap[key] = col;
+      col++;
+    }
+    setHeaderSingle('checkpoint', 'Checkpoint');
+    setHeaderSingle('date', 'Date');
+    setHeaderSingle('condition', 'Condition');
+    if(showTextureOut || showTextureRoom){
+      const startCol = col;
+      if(showTextureOut){ ws.getCell(headerRow2Idx, col).value = 'After removal from chamber'; colMap.textureOut = col; col++; }
+      if(showTextureRoom){ ws.getCell(headerRow2Idx, col).value = 'After room temp equilibration'; colMap.textureRoom = col; col++; }
+      ws.mergeCells(headerRow1Idx, startCol, headerRow1Idx, col-1);
+      ws.getCell(headerRow1Idx, startCol).value = 'TEXTURE & PERFORMANCE';
+    }
+    simpleCols.forEach(c=> setHeaderSingle(c.key, c.label));
+    if(showPhotos) setHeaderSingle('photo', 'Photo');
+    const totalCols = col - 1;
+
+    [headerRow1Idx, headerRow2Idx].forEach(rowIdx=>{
+      for(let c=1;c<=totalCols;c++){
+        const cell = ws.getCell(rowIdx, c);
+        cell.font = {bold:true, size:10, color:{argb:'FF64748B'}};
+        cell.fill = HEADER_FILL;
+        cell.border = THIN_BORDERS;
+        cell.alignment = {vertical:'middle', horizontal:'left', wrapText:true};
+      }
+    });
+
+    let dataRowIdx = headerRow2Idx + 1;
+    if(flatRows.length === 0){
+      ws.mergeCells(dataRowIdx, 1, dataRowIdx, totalCols);
+      const cell = ws.getCell(dataRowIdx, 1);
+      cell.value = 'No test results recorded for this item yet.';
+      cell.font = {italic:true, color:{argb:'FF888888'}};
+      dataRowIdx++;
+    } else {
+      flatRows.forEach(rObj=>{
+        if(rObj.remarkRow){
+          ws.mergeCells(dataRowIdx, 1, dataRowIdx, totalCols);
+          const cell = ws.getCell(dataRowIdx, 1);
+          cell.value = `📝 Remark (${rObj.cpLabel}): ${rObj.remark}`;
+          cell.font = {italic:true};
+          cell.fill = HEADER_FILL;
+          dataRowIdx++;
+          return;
+        }
+        if(rObj.cpSpan){
+          if(rObj.cpSpan > 1){
+            ws.mergeCells(dataRowIdx, colMap.checkpoint, dataRowIdx + rObj.cpSpan - 1, colMap.checkpoint);
+            ws.mergeCells(dataRowIdx, colMap.date, dataRowIdx + rObj.cpSpan - 1, colMap.date);
+          }
+          ws.getCell(dataRowIdx, colMap.checkpoint).value = rObj.cpLabel;
+          ws.getCell(dataRowIdx, colMap.date).value = rObj.cpDate;
+        }
+        if(rObj.condSpan){
+          if(rObj.condSpan > 1) ws.mergeCells(dataRowIdx, colMap.condition, dataRowIdx + rObj.condSpan - 1, colMap.condition);
+          const cell = ws.getCell(dataRowIdx, colMap.condition);
+          cell.value = rObj.condLabel;
+          cell.font = {bold:true};
+        }
+
+        const d = rObj.data || {};
+        const viscMethod = rObj.data ? [d.spindle, d.rpm?`${d.rpm} rpm`:'', d.timeMin?`${d.timeMin} min`:''].filter(Boolean).join(' / ') : '';
+        if(showTextureOut) ws.getCell(dataRowIdx, colMap.textureOut).value = d.textureOut_analysis || d.textureOut || '-';
+        if(showTextureRoom) ws.getCell(dataRowIdx, colMap.textureRoom).value = d.textureRoom_analysis || d.textureRoom || '-';
+        simpleCols.forEach(c=>{
+          if(c.key === 'viscMethod') ws.getCell(dataRowIdx, colMap.viscMethod).value = viscMethod || '-';
+          else ws.getCell(dataRowIdx, colMap[c.key]).value = d[c.dataKey] || '-';
+        });
+
+        if(showPhotos){
+          const photos = d.photos || [];
+          if(photos.length){
+            ws.getRow(dataRowIdx).height = 42;
+            photos.slice(0, 4).forEach((p, pIdx)=>{
+              const cached = p.fileId && photoCache[p.fileId];
+              if(!cached) return;
+              try{
+                const ext = (cached.mimeType||'').includes('png') ? 'png' : 'jpeg';
+                const imgId = wb.addImage({ base64: `data:${cached.mimeType||'image/jpeg'};base64,${cached.base64}`, extension: ext });
+                ws.addImage(imgId, {
+                  tl: { col: (colMap.photo - 1) + pIdx * 0.55, row: (dataRowIdx - 1) + 0.05 },
+                  ext: { width: 40, height: 40 }
+                });
+              }catch(e){ /* ข้ามรูปที่ฝังไม่สำเร็จ ไม่ให้ล้มทั้งไฟล์ */ }
+            });
+          } else {
+            ws.getCell(dataRowIdx, colMap.photo).value = '-';
+          }
+        }
+
+        for(let c=1;c<=totalCols;c++){ ws.getCell(dataRowIdx, c).border = THIN_BORDERS; }
+        dataRowIdx++;
+      });
+    }
+
+    for(let c=1;c<=totalCols;c++){
+      ws.getColumn(c).width = (c===colMap.condition) ? 14 : ((c===colMap.checkpoint || c===colMap.date) ? 12 : 16);
+    }
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const safeName = (entry.productName||'product').replace(/[\\/:*?"<>|]/g, '_').slice(0,60);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${safeName}_${entry.formNo||''}_stability_report.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    showToast(t('excelExportedToast'));
+  }catch(e){
+    showToast(t('excelExportFailToast'));
+  }
 }
 
 function reportBaseStyle(){
@@ -1415,7 +2191,31 @@ function reportHeaderHtml(entry){
 }
 
 // รายงานแบบฟอร์ม — merge เซลล์ Checkpoint/วันที่ (คลุมทุกเงื่อนไขของวันนั้น) และเซลล์เงื่อนไข (คลุมแถววัดซ้ำของเงื่อนไขเดียวกัน) เหมือนฟอร์มกระดาษเดิม
-function buildFormReportHtml(entry){
+// fields: object ระบุว่าจะรวมข้อมูลคอลัมน์ไหนบ้างในรายงาน (มาจากติ๊กเลือกในหน้าสร้างรายงาน) — ไม่ระบุ = เอาทั้งหมด (พฤติกรรมเดิม)
+function buildFormReportHtml(entry, fields){
+  fields = Object.assign({textureOut:true,textureRoom:true,color:true,odor:true,ph:true,viscosity:true,tester:true,developer:true,remark:true,photos:true}, fields||{});
+
+  // คอลัมน์ Texture ทั้งสองช่องอยู่ใต้หัวข้อร่วม "TEXTURE & PERFORMANCE" — ถ้าติ๊กแค่ช่องเดียว ให้ colspan เหลือ 1
+  const showTextureOut = !!fields.textureOut;
+  const showTextureRoom = !!fields.textureRoom;
+  const showTextureGroup = showTextureOut || showTextureRoom;
+  const textureColspan = (showTextureOut?1:0) + (showTextureRoom?1:0);
+  const showPhotos = !!fields.photos;
+
+  // คอลัมน์เดี่ยวๆ ที่ติ๊กเลือกได้อิสระ — เรียงตามลำดับที่จะแสดงในตาราง (dataKey = ฟิลด์จริงที่ใช้ดึงค่ามาแสดง
+  // เป็นค่า "วิเคราะห์แล้ว" เสมอสำหรับพารามิเตอร์ที่มีบรรยาย/วิเคราะห์แยกกัน ยกเว้น pH ที่ใช้ค่าตรงๆ)
+  const simpleCols = [
+    {key:'color',        label:'Color',       show:fields.color,     dataKey:'color_analysis'},
+    {key:'odor',         label:'Odor',        show:fields.odor,      dataKey:'odor_analysis'},
+    {key:'ph',           label:'pH',          show:fields.ph,        dataKey:'ph'},
+    {key:'viscosity',    label:'Viscosity',   show:fields.viscosity, dataKey:'viscosity_analysis'},
+    {key:'viscMethod',   label:'Method (Spindle/RPM/Time)', show:fields.viscosity},
+    {key:'tester',       label:'Recorded By', show:fields.tester,    dataKey:'tester'},
+    {key:'developer',    label:'Formulator',  show:fields.developer, dataKey:'developer'},
+  ].filter(c=>c.show);
+
+  const totalCols = 3 + textureColspan + simpleCols.length + (showPhotos?1:0); // 3 = Checkpoint+Date+Condition
+
   const schedule = computeSchedule(entry);
   const flatRows = [];
 
@@ -1438,13 +2238,13 @@ function buildFormReportHtml(entry){
     });
 
     if(applicableConds.length > 0) flatRows[cpStartIdx].cpSpan = flatRows.length - cpStartIdx;
-    if(remark) flatRows.push({remarkRow:true, cpLabel:cp.label, remark});
+    if(remark && fields.remark) flatRows.push({remarkRow:true, cpLabel:cp.label, remark});
   });
 
   let rows = '';
   flatRows.forEach(r=>{
     if(r.remarkRow){
-      rows += `<tr><td colspan="12" class="left" style="background:#F8FAFC;font-style:italic;">📝 Remark (${r.cpLabel}): ${escapeHtml(r.remark)}</td></tr>`;
+      rows += `<tr><td colspan="${totalCols}" class="left" style="background:#F8FAFC;font-style:italic;">📝 Remark (${r.cpLabel}): ${escapeHtml(r.remark)}</td></tr>`;
       return;
     }
     let tds = '';
@@ -1452,13 +2252,32 @@ function buildFormReportHtml(entry){
     if(r.condSpan) tds += `<td rowspan="${r.condSpan}" class="left" style="font-weight:700">${r.condLabel}</td>`;
     const d = r.data || {};
     const viscMethod = r.data ? [d.spindle, d.rpm?`${d.rpm} rpm`:'', d.timeMin?`${d.timeMin} min`:''].filter(Boolean).join(' / ') : '';
-    tds += `<td>${escapeHtml(d.textureOut||'-')}</td><td>${escapeHtml(d.textureRoom||'-')}</td>
-      <td>${escapeHtml(d.color||'-')}</td><td>${escapeHtml(d.odor||'-')}</td>
-      <td>${escapeHtml(d.ph||'-')}</td><td>${escapeHtml(d.viscosity||'-')}</td><td style="font-size:9px">${escapeHtml(viscMethod||'-')}</td>
-      <td>${escapeHtml(d.tester||'-')}</td><td>${escapeHtml(d.developer||'-')}</td>`;
+    if(showTextureOut) tds += `<td>${escapeHtml(d.textureOut_analysis || d.textureOut || '-')}</td>`;
+    if(showTextureRoom) tds += `<td>${escapeHtml(d.textureRoom_analysis || d.textureRoom || '-')}</td>`;
+    simpleCols.forEach(c=>{
+      if(c.key === 'viscMethod') tds += `<td style="font-size:9px">${escapeHtml(viscMethod||'-')}</td>`;
+      else tds += `<td>${escapeHtml(d[c.dataKey]||'-')}</td>`;
+    });
+    if(showPhotos){
+      const photos = d.photos || [];
+      const photosHtml = photos.length
+        ? photos.map(p=>`<img src="${escapeHtml(p.url)}" style="width:44px;height:44px;object-fit:cover;border-radius:4px;margin:1px;">`).join('')
+        : '-';
+      tds += `<td>${photosHtml}</td>`;
+    }
     rows += `<tr>${tds}</tr>`;
   });
-  if(!rows) rows = `<tr><td colspan="12" class="left" style="color:#888">No test results recorded for this item yet.</td></tr>`;
+  if(!rows) rows = `<tr><td colspan="${totalCols}" class="left" style="color:#888">No test results recorded for this item yet.</td></tr>`;
+
+  const methodTh = simpleCols.some(c=>c.key==='viscMethod') ? `<th rowspan="2">Method (Spindle/RPM/Time)</th>` : '';
+  const headTopFull = `<th rowspan="2">Checkpoint</th><th rowspan="2">Date</th><th rowspan="2">Condition</th>`
+    + (showTextureGroup ? `<th colspan="${textureColspan}">TEXTURE &amp; PERFORMANCE</th>` : '')
+    + simpleCols.filter(c=>c.key!=='viscMethod').map(c=>{
+        const th = `<th rowspan="2">${c.label}</th>`;
+        return c.key==='viscosity' ? th + methodTh : th;
+      }).join('')
+    + (showPhotos ? `<th rowspan="2">Photo</th>` : '');
+  const headBottom = (showTextureOut ? `<th>After removal from chamber</th>` : '') + (showTextureRoom ? `<th>After room temp equilibration</th>` : '');
 
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Report — ${escapeHtml(entry.productName)}</title>${reportBaseStyle()}</head>
   <body>
@@ -1469,8 +2288,8 @@ function buildFormReportHtml(entry){
     ${reportHeaderHtml(entry)}
     <table>
       <thead>
-        <tr><th rowspan="2">Checkpoint</th><th rowspan="2">Date</th><th rowspan="2">Condition</th><th colspan="2">TEXTURE &amp; PERFORMANCE</th><th rowspan="2">Color</th><th rowspan="2">Odor</th><th rowspan="2">pH</th><th rowspan="2">Viscosity</th><th rowspan="2">Method (Spindle/RPM/Time)</th><th rowspan="2">Recorded By</th><th rowspan="2">Formulator</th></tr>
-        <tr><th>After removal from chamber</th><th>After room temp equilibration</th></tr>
+        <tr>${headTopFull}</tr>
+        ${headBottom ? `<tr>${headBottom}</tr>` : ''}
       </thead>
       <tbody>${rows}</tbody>
     </table>
@@ -1479,12 +2298,16 @@ function buildFormReportHtml(entry){
 }
 
 // ตารางสรุป — merge เซลล์ Test Item (คลุมทุกเงื่อนไขของรายการทดสอบนั้น) — รายการทดสอบ (แถว) x checkpoint (คอลัมน์)
-function buildSummaryReportHtml(entry){
+// fields: ใช้กรองว่าจะโชว์แถว "รายการทดสอบ" ไหนบ้าง (Texture/Color/Odor/pH/Viscosity) — ตัวเลือกอื่น (ผู้บันทึก/รูปภาพ ฯลฯ)
+// ไม่มีผลกับตารางสรุปนี้ เพราะเป็นตารางสรุปตัวเลขล้วนๆ ตามรูปแบบฟอร์มกระดาษเดิม
+function buildSummaryReportHtml(entry, fields){
+  fields = Object.assign({textureOut:true,textureRoom:true,color:true,odor:true,ph:true,viscosity:true}, fields||{});
+  const activeItems = RESULT_ITEMS.filter(item => fields[item.key] !== false);
   const schedule = computeSchedule(entry);
   const today = todayMidnight();
 
   let bodyRows = '';
-  RESULT_ITEMS.forEach(item=>{
+  activeItems.forEach(item=>{
     const applicableConditions = CONDITIONS.filter(cond =>
       schedule.some(cp => (CHECKPOINT_CONDITIONS[cp.key]||[]).includes(cond.key))
     );
@@ -1493,7 +2316,7 @@ function buildSummaryReportHtml(entry){
         const applicable = (CHECKPOINT_CONDITIONS[cp.key]||[]).includes(cond.key);
         if(!applicable) return '<span style="color:#bbb">—</span>';
         const dataRows = normalizeConditionRows(entry.results && entry.results[cp.key] && entry.results[cp.key][cond.key]);
-        const val = dataRows.length ? dataRows[0][item.key] : null; // ถ้าวัดซ้ำหลายแถว โชว์แถวแรกในตารางสรุป
+        const val = dataRows.length ? (dataRows[0][item.valueKey] || dataRows[0][item.key]) : null; // ถ้าวัดซ้ำหลายแถว โชว์แถวแรกในตารางสรุป (เผื่อข้อมูลเก่าก่อนแยกบรรยาย/วิเคราะห์ ใช้ item.key แทน)
         if(val) return escapeHtml(val) + (dataRows.length > 1 ? ` <span style="color:#999">(+${dataRows.length-1})</span>` : '');
         return daysBetween(today, cp.date) > 0 ? 'N/A' : 'U/T'; // ยังไม่ถึงกำหนด = N/A, ถึง/เลยกำหนดแล้วแต่ยังไม่บันทึก = U/T
       }).join('</td><td>');
@@ -1501,6 +2324,7 @@ function buildSummaryReportHtml(entry){
       bodyRows += `<tr>${itemCell}<td class="left">${cond.label}</td><td>${cells}</td></tr>`;
     });
   });
+  if(!bodyRows) bodyRows = `<tr><td colspan="${2+schedule.length}" class="left" style="color:#888">No test items selected for this report.</td></tr>`;
 
   const headerCols = schedule.map(cp=>`<th>${cp.label}</th>`).join('');
 
@@ -1545,8 +2369,9 @@ document.addEventListener('visibilitychange', () => {
   document.getElementById('spindleList').innerHTML = VISC_SPINDLES.map(v=>`<option value="${v}">`).join('');
   document.getElementById('rpmList').innerHTML = VISC_RPMS.map(v=>`<option value="${v}">`).join('');
   loadLocalSettings();
+  applyStaticI18n();
   if(!settings.backend){
-    setSync('err','ยังไม่ได้ตั้งค่า Backend URL — กด ⚙ ตั้งค่า');
+    setSync('err', t('syncNoBackend'));
     renderAll();
     openSettings();
     return;
