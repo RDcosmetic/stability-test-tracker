@@ -168,6 +168,8 @@ body{
 .modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
 .record-modal .modal-header{position:sticky;top:-24px;margin:-24px -24px 14px -24px;padding:20px 24px 12px;background:var(--surface);z-index:20;border-radius:14px 14px 0 0;border-bottom:1px solid var(--line);}
 .modal-header h3{margin-bottom:0;}
+.result-modal-title{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.result-header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto;}
 .modal-close{
   flex-shrink:0;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
   color:var(--muted);font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -270,10 +272,78 @@ body{
 .photo-btn{white-space:nowrap;font-size:10.5px !important;padding:4px 8px !important;}
 .add-row-btn{font-family:var(--sans);font-size:12px;padding:6px 14px;border-radius:7px;border:1px dashed var(--line);background:var(--surface);color:var(--ink);cursor:pointer;}
 .add-row-btn:hover{border-style:solid;border-color:var(--brand);color:var(--brand);background:var(--brand-soft);}
-.legend-box{font-size:11.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.6;}
+.legend-box{font-size:11.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:9px 11px;margin-bottom:10px;line-height:1.6;}
 .legend-box b{color:var(--ink);}
+.legend-intro{color:var(--ink);font-weight:600;margin-bottom:7px;}
+.legend-line{display:flex;align-items:baseline;gap:8px;margin-bottom:5px;}
+.legend-line:last-of-type{margin-bottom:0;}
+.legend-badge{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.2px;color:var(--brand);background:var(--brand-soft);border:1px solid var(--brand-soft-line);border-radius:999px;padding:3px 10px;white-space:nowrap;flex-shrink:0;}
 .save-status{font-size:12px;color:var(--done);margin-left:8px;opacity:0;transition:opacity .2s;}
 .save-status.show{opacity:1;}
+
+/* Record/Compare mode toggle — sits between the modal title and the close button */
+.result-mode-toggle{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px;flex-shrink:0;}
+.mode-btn{font-family:var(--sans);font-size:12.5px;font-weight:600;padding:6px 16px;border-radius:6px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.mode-btn:hover{color:var(--ink);}
+.mode-btn.active{background:var(--brand);color:#fff;box-shadow:var(--shadow-sm);}
+
+/* Condition blocks in the Record view — one bordered block per condition (4°C / RT / 40°C / SUN),
+   each with a compact table where parameters are columns and "ผลการสังเกต/ผลการวิเคราะห์" are rows */
+.cond-block{border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden;background:var(--surface);}
+.cond-block-head{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--ink);background:var(--surface-2);padding:9px 14px;border-bottom:1px solid var(--line);}
+.cond-measure-wrap{padding:10px 14px 4px;}
+.cond-measure-repeat-label{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.cond-record-table td.cell-disabled{background:var(--surface-2);color:var(--upcoming);text-align:center;font-size:11px;}
+.cond-record-table th{font-size:10px;padding:6px 8px;line-height:1.35;}
+.cond-record-table td{padding:4px 6px;}
+.cond-record-table input, .cond-record-table select{font-size:11px;padding:4px 6px;min-width:62px;}
+.cond-block-addrow{margin:8px 14px 12px;}
+.cond-block{scroll-margin-top:100px;}
+.cond-nav{position:sticky;top:60px;z-index:15;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;padding:8px 0;background:var(--surface);}
+.cond-nav-pill{display:flex;align-items:center;gap:6px;font-family:var(--sans);font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;}
+.cond-nav-pill:hover{border-color:var(--brand-soft-line);color:var(--ink);background:var(--brand-soft);}
+.cond-nav-dot{width:6px;height:6px;border-radius:50%;background:var(--upcoming-soft);border:1px solid var(--upcoming);flex-shrink:0;}
+.cond-nav-pill.filled{color:var(--ink);}
+.cond-nav-pill.filled .cond-nav-dot{background:var(--done);border-color:var(--done);}
+
+/* Checkpoint-level "ผู้บันทึก / ผู้ตรวจสอบ" fields — shown once per Day/Week tab */
+.cp-people-fields{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto;}
+.cp-people-field{display:flex;flex-direction:column;gap:3px;}
+.cp-people-field label{font-size:10.5px;font-weight:600;color:var(--muted);}
+.cp-people-field select{font-family:var(--sans);font-size:12.5px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);outline:none;min-width:120px;}
+.cp-people-field select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);}
+
+/* Compare view */
+.cmp-status-bar{display:flex;align-items:center;flex-wrap:wrap;gap:10px 22px;border:1px solid var(--line);border-radius:10px;padding:12px 16px;background:var(--surface);margin-bottom:14px;}
+.cmp-status-title{font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--muted);text-transform:uppercase;flex-shrink:0;}
+.cmp-status-cards{display:flex;gap:14px;flex-wrap:wrap;}
+.cmp-status-card{display:flex;align-items:center;gap:6px;}
+.cmp-status-cond{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink);}
+.cmp-firstchange-inline{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;padding-left:16px;border-left:1px solid var(--line);}
+.cmp-fc-text{color:var(--ink);font-weight:600;}
+.cmp-param-tabs{margin-bottom:14px;}
+.cmp-export-bar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;}
+.cmp-section{margin-bottom:16px;}
+.cmp-col-title{font-family:var(--serif);font-size:15px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.cmp-cur-cp{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--muted);}
+.cmp-trend-table td, .cmp-delta-table td{text-align:center;}
+.cmp-trend-table td.param-label, .cmp-delta-table td.param-label{text-align:left;}
+.cmp-trend-table td, .cmp-trend-table th{padding:9px 12px;}
+.cmp-pct{color:var(--muted);font-size:10.5px;}
+.cmp-delta-details{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden;}
+.cmp-delta-details summary{cursor:pointer;list-style:none;padding:11px 16px;font-family:var(--serif);font-size:14px;font-weight:700;color:var(--ink);background:var(--surface-2);display:flex;align-items:center;gap:8px;}
+.cmp-delta-details summary::-webkit-details-marker{display:none;}
+.cmp-delta-details summary::before{content:'▸';font-size:11px;color:var(--muted);transition:transform .15s;}
+.cmp-delta-details[open] summary::before{transform:rotate(90deg);}
+.cmp-delta-details .cmp-delta-body{padding:12px 16px 14px;}
+.cmp-delta-table td, .cmp-delta-table th{padding:7px 10px;font-size:12px;}
+/* Photo comparison — large side-scrolling thumbnails per condition, grouped by checkpoint */
+/* Photo comparison table — same condition×checkpoint grid as other params, but with real thumbnails
+   so both axes stay comparable at a glance: across a row = change over time within one condition,
+   down a column = difference between conditions at the same checkpoint */
+.cmp-photo-table td.cmp-photo-td{padding:6px;}
+.cmp-photo-cell{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;max-width:170px;margin:0 auto;}
+.cmp-photo-cell img{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:pointer;}
 
 /* People management */
 .people-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
@@ -424,15 +494,23 @@ body{
 <div class="modal-backdrop record-modal" id="resultModal">
   <div class="modal" id="resultModalInner">
     <div class="modal-header">
-      <h3 id="resultModalTitle">บันทึกผลทดสอบ</h3>
-      <button class="modal-close" onclick="closeResultModal()" data-i18n-title="resultModalCloseTitle" title="ปิด (จะบันทึกข้อมูลที่แก้ไว้ให้อัตโนมัติ)">✕</button>
+      <h3 id="resultModalTitle" class="result-modal-title">บันทึกผลทดสอบ</h3>
+      <div class="result-header-actions">
+        <div class="result-mode-toggle">
+          <button type="button" class="mode-btn active" id="modeBtnRecord" onclick="switchResultMode('record')" data-i18n="modeBtnRecord">Record</button>
+          <button type="button" class="mode-btn" id="modeBtnCompare" onclick="switchResultMode('compare')" data-i18n="modeBtnCompare">Compare</button>
+        </div>
+        <button class="modal-close" onclick="closeResultModal()" data-i18n-title="resultModalCloseTitle" title="ปิด (จะบันทึกข้อมูลที่แก้ไว้ให้อัตโนมัติ)">✕</button>
+      </div>
     </div>
-    <div class="legend-box">
-      <b data-i18n="legendTitle">เกณฑ์การอ่านผล Texture/Color/Odor/Viscosity:</b> <span id="legendBody" data-i18n-html="legendBody">เปรียบเทียบกับ reference ที่เก็บที่อุณหภูมิห้อง —
-      0 = ไม่เปลี่ยนแปลง &nbsp;|&nbsp; -1 = ลดลงเล็กน้อย, -2 = ลดลงปานกลาง, -3 = ลดลงมาก &nbsp;|&nbsp; +1 = เพิ่มขึ้นเล็กน้อย, +2 = เพิ่มขึ้นปานกลาง, +3 = เพิ่มขึ้นมาก</span><br>
-      <span data-i18n-html="legendDualNote" style="display:inline-block;margin-top:4px;"></span>
+    <div id="resultModeHeaderExtras">
+      <div class="legend-box">
+        <div class="legend-intro" data-i18n="legendTitle">เกณฑ์การอ่านผล: เปรียบเทียบทุกภาวะกับ reference ซึ่งเก็บที่อุณหภูมิห้อง และกำหนดเป็นสัญลักษณ์การอ่านผลดังนี้</div>
+        <div class="legend-line"><span class="legend-badge" data-i18n="legendBadgeObs">ผลการสังเกต</span><span data-i18n="legendObsDesc">บันทึกการเปลี่ยนแปลงทางกายภาพที่สังเกตได้ (สี, กลิ่น, เนื้อสัมผัส, ตะกอน/แยกชั้น)</span></div>
+        <div class="legend-line"><span class="legend-badge" data-i18n="legendBadgeAna">ผลการวิเคราะห์</span><span data-i18n-html="legendAnaScale">0 = ไม่เปลี่ยนแปลง &nbsp;|&nbsp; -1/-2/-3 = ลดลงเล็กน้อย/ปานกลาง/มาก &nbsp;|&nbsp; +1/+2/+3 = เพิ่มขึ้นเล็กน้อย/ปานกลาง/มาก</span></div>
+      </div>
+      <div class="helptext" style="margin-bottom:12px;" data-i18n="resultHelptext">แต่ละ checkpoint แสดงเฉพาะเงื่อนไขที่ต้องทดสอบจริงตามแผนงาน — กด "บันทึก" ในแต่ละช่วงเพื่อบันทึกทีละ checkpoint ได้เลย หรือกด ✕ มุมบนขวาเพื่อบันทึกทั้งหมดแล้วปิดในทีเดียว</div>
     </div>
-    <div class="helptext" style="margin-bottom:12px;" data-i18n="resultHelptext">แต่ละ checkpoint แสดงเฉพาะเงื่อนไขที่ต้องทดสอบจริงตามแผนงาน — กด "บันทึก" ในแต่ละช่วงเพื่อบันทึกทีละ checkpoint ได้เลย หรือกด ✕ มุมบนขวาเพื่อบันทึกทั้งหมดแล้วปิดในทีเดียว</div>
     <div id="resultModalBody"></div>
   </div>
 </div>
@@ -542,30 +620,34 @@ const RESULT_ITEMS = [
   {key:'viscosity',   label:'Viscosity', valueKey:'viscosity_analysis'},
 ];
 
-// พารามิเตอร์ที่บันทึกแบบ "บรรยายตามจริง" (_desc) คู่กับ "ผลวิเคราะห์ตามเกณฑ์" (_analysis) — ทุกตัวยกเว้น pH
-// ที่ใส่แค่ค่าตรงๆ เหมือนเดิม (pH เป็นตัวเลขวัดจริงอยู่แล้ว ไม่ต้องตีความ)
-const DUAL_FIELD_PARAMS = ['textureOut', 'textureRoom', 'color', 'odor', 'viscosity'];
+// พารามิเตอร์ที่บันทึกแบบ "ผลการสังเกต" (_desc) คู่กับ "ผลการวิเคราะห์ตามเกณฑ์" (_analysis) —
+// เฉพาะ Texture (2 แบบ) / Color / Odor เท่านั้น ส่วน pH/Spindle/rpm/Time/Viscosity กรอกค่าที่วัดได้ตรงๆ แถวเดียว
+const DUAL_FIELD_PARAMS = ['textureOut', 'textureRoom', 'color', 'odor'];
 
-// รายการแถว (พารามิเตอร์) ที่แสดงในตารางเปรียบเทียบต่อเงื่อนไข — checkpoint เป็นคอลัมน์ ทำให้เห็นแนวโน้ม
-// ตามเวลาได้ง่าย (อ่านไปตามแถว) และเทียบกับเงื่อนไขอื่นในวันเดียวกันได้ (สลับดูตารางของอีกเงื่อนไข)
-const PARAM_ROWS = [
-  {key:'textureOut_desc',     labelKey:'thTexturePerf', subLabelKey:'thAfterChamber', type:'desc'},
-  {key:'textureOut_analysis', labelKey:'thTexturePerf', subLabelKey:'thAfterChamber', type:'analysis'},
-  {key:'textureRoom_desc',     labelKey:'thTexturePerf', subLabelKey:'thAfterRoom', type:'desc'},
-  {key:'textureRoom_analysis', labelKey:'thTexturePerf', subLabelKey:'thAfterRoom', type:'analysis'},
-  {key:'color_desc',     labelKey:'thColor', type:'desc'},
-  {key:'color_analysis', labelKey:'thColor', type:'analysis'},
-  {key:'odor_desc',     labelKey:'thOdor', type:'desc'},
-  {key:'odor_analysis', labelKey:'thOdor', type:'analysis'},
-  {key:'ph',            labelKey:'thPh', type:'ph'},
-  {key:'viscosity_desc',     labelKey:'thViscosity', type:'desc'},
-  {key:'viscosity_analysis', labelKey:'thViscosity', type:'analysis'},
-  {key:'spindle', labelKey:'thSpindle', type:'spindle'},
-  {key:'rpm',     labelKey:'thRpm', type:'rpm'},
-  {key:'timeMin', labelKey:'thTimeMin', type:'timeMin'},
-  {key:'tester',    labelKey:'thTester', type:'tester'},
-  {key:'developer', labelKey:'thDeveloper', type:'developer'},
-  {key:'photo',     labelKey:'thPhoto', type:'photo'},
+// คอลัมน์พารามิเตอร์ของหน้าบันทึกผล (หน้า "record") — 1 บล็อกต่อเงื่อนไข (4°C/RT/40°C/SUN) มี 2 แถว
+// คือ "ผลการสังเกต" กับ "ผลการวิเคราะห์" โดยพารามิเตอร์ที่ไม่ใช่ dual (pH/Spindle/rpm/Time/Viscosity/รูป)
+// จะกรอกในแถว "ผลการสังเกต" แถวเดียว ส่วนแถว "ผลการวิเคราะห์" ของคอลัมน์นั้นจะเป็นช่องที่กรอกไม่ได้
+const RECORD_COLUMNS = [
+  {key:'textureOut',  labelKey:'thTexturePerf', subLabelKey:'thAfterChamber', dual:true},
+  {key:'textureRoom', labelKey:'thTexturePerf', subLabelKey:'thAfterRoom',    dual:true},
+  {key:'color',       labelKey:'thColor', dual:true},
+  {key:'odor',        labelKey:'thOdor',  dual:true},
+  {key:'ph',          labelKey:'thPh',        dual:false},
+  {key:'spindle',     labelKey:'thSpindle',   dual:false},
+  {key:'rpm',         labelKey:'thRpm',       dual:false},
+  {key:'timeMin',     labelKey:'thTimeMin',   dual:false},
+  {key:'viscosity',   labelKey:'thViscosity', dual:false},
+  {key:'photo',       labelKey:'thPhoto',     dual:false},
+];
+
+// แท็บพารามิเตอร์ของหน้า "compare" — เลือกดูแนวโน้มของพารามิเตอร์เดียวต่อครั้ง (เงื่อนไขเป็นแถว, checkpoint เป็นคอลัมน์)
+const COMPARE_PARAM_TABS = [
+  {key:'texture',   labelKey:'cmpTabTexture'},
+  {key:'color',     labelKey:'cmpTabColor'},
+  {key:'odor',      labelKey:'cmpTabOdor'},
+  {key:'ph',        labelKey:'cmpTabPh'},
+  {key:'viscosity', labelKey:'cmpTabViscosity'},
+  {key:'photo',     labelKey:'cmpTabPhoto'},
 ];
 
 // แต่ละ checkpoint ทดสอบเฉพาะเงื่อนไขที่กำหนดไว้จริงตามแผนงาน (อ้างอิงฟอร์มกระดาษเดิม)
@@ -700,9 +782,12 @@ const STRINGS = {
 
   resultModalTitlePrefix: {th:'บันทึกผลทดสอบ — ', en:'Record Results — '},
   resultModalCloseTitle: {th:'ปิด (จะบันทึกข้อมูลที่แก้ไว้ให้อัตโนมัติ)', en:'Close (unsaved edits will be saved automatically)'},
-  legendTitle: {th:'เกณฑ์การอ่านผล Texture/Color/Odor/Viscosity:', en:'Texture/Color/Odor/Viscosity rating criteria:'},
-  legendBody: {th:'เปรียบเทียบกับ reference ที่เก็บที่อุณหภูมิห้อง — 0 = ไม่เปลี่ยนแปลง &nbsp;|&nbsp; -1 = ลดลงเล็กน้อย, -2 = ลดลงปานกลาง, -3 = ลดลงมาก &nbsp;|&nbsp; +1 = เพิ่มขึ้นเล็กน้อย, +2 = เพิ่มขึ้นปานกลาง, +3 = เพิ่มขึ้นมาก',
-    en:'Compared to the reference stored at room temperature — 0 = No change &nbsp;|&nbsp; -1 = Slight decrease, -2 = Moderate decrease, -3 = Large decrease &nbsp;|&nbsp; +1 = Slight increase, +2 = Moderate increase, +3 = Large increase'},
+  legendTitle: {th:'เกณฑ์การอ่านผล: เปรียบเทียบทุกภาวะกับ reference ซึ่งเก็บที่อุณหภูมิห้อง และกำหนดเป็นสัญลักษณ์การอ่านผลดังนี้',
+    en:'Rating criteria: every condition is compared against the reference stored at room temperature, using the scoring symbols below'},
+  legendObsDesc: {th:'บันทึกการเปลี่ยนแปลงทางกายภาพที่สังเกตได้ (สี, กลิ่น, เนื้อสัมผัส, ตะกอน/แยกชั้น)',
+    en:'Records the physical changes actually observed (color, smell, texture, sediment/separation)'},
+  legendAnaScale: {th:'0 = ไม่เปลี่ยนแปลง &nbsp;|&nbsp; -1 = ลดลงเล็กน้อย, -2 = ลดลงปานกลาง, -3 = ลดลงมาก &nbsp;|&nbsp; +1 = เพิ่มขึ้นเล็กน้อย, +2 = เพิ่มขึ้นปานกลาง, +3 = เพิ่มขึ้นมาก',
+    en:'0 = No change &nbsp;|&nbsp; -1 = Slight decrease, -2 = Moderate decrease, -3 = Large decrease &nbsp;|&nbsp; +1 = Slight increase, +2 = Moderate increase, +3 = Large increase'},
   resultHelptext: {th:'คลิกแท็บวันที่ด้านบนเพื่อสลับดู/กรอกผลของแต่ละ checkpoint — แต่ละวันแสดงเฉพาะเงื่อนไขที่ต้องทดสอบจริงตามแผนงาน กด "บันทึก" ท้ายตารางเพื่อบันทึกวันนั้น หรือกด ✕ มุมบนขวาเพื่อบันทึกทุกวันที่แก้ไว้แล้วปิดในทีเดียว',
     en:'Click a date tab above to switch to/fill in that checkpoint — each date only shows the conditions actually required by the protocol. Click "Save" below the table to save that date, or click ✕ at the top right to save every edited date and close at once'},
   condsRequiredPrefix: {th:'เงื่อนไขที่ต้องวัด: ', en:'Conditions to measure: '},
@@ -730,8 +815,8 @@ const STRINGS = {
   dualDescLabel: {th:'บรรยาย', en:'Desc.'},
   dualAnalysisLabel: {th:'วิเคราะห์', en:'Analysis'},
   phDescribe: {th:'บรรยายตามจริง เช่น เหลวขึ้นเล็กน้อย', en:'Describe as observed'},
-  legendDualNote: {th:'ทุกพารามิเตอร์ (ยกเว้น pH) บันทึก 2 ช่อง: "บรรยาย" คือสิ่งที่เห็นจริงตามลักษณะ และ "วิเคราะห์" คือแปลงเป็นเกณฑ์คะแนนด้านล่าง — ตอน export รายงานจะโชว์เฉพาะช่อง "วิเคราะห์" เท่านั้น',
-    en:'Every parameter (except pH) has 2 fields: "Desc." is what was actually observed, and "Analysis" converts it to the rating scale below — exported reports show only the "Analysis" value'},
+  legendBadgeObs: {th:'ผลการสังเกต', en:'Observation'},
+  legendBadgeAna: {th:'ผลการวิเคราะห์', en:'Analysis'},
   phDash: {th:'-', en:'-'},
   phValue: {th:'ค่า', en:'value'},
   phType: {th:'พิมพ์…', en:'type…'},
@@ -746,6 +831,39 @@ const STRINGS = {
   titleRemovePhoto: {th:'ลบรูปนี้ (รูปจะยังอยู่ในระบบ ไม่ได้ลบถาวร)', en:'Remove this photo (photo stays stored on the server, not permanently deleted)'},
   photoUploading: {th:'กำลังอัปโหลด…', en:'Uploading…'},
   photoUploadFailed: {th:'อัปโหลดรูปไม่สำเร็จ ลองใหม่อีกครั้ง', en:'Photo upload failed, please try again'},
+
+  modeBtnRecord: {th:'บันทึกผล', en:'Record'},
+  modeBtnCompare: {th:'เปรียบเทียบ', en:'Compare'},
+  rowLabelHead: {th:'รายการ', en:'Item'},
+  rowObservation: {th:'ผลการสังเกต', en:'Observation'},
+  rowAnalysis: {th:'ผลการวิเคราะห์', en:'Analysis'},
+  thReviewer: {th:'ผู้ตรวจสอบ', en:'Reviewed By'},
+  btnAddRepeat: {th:'+ เพิ่มแถวเพื่อวัดซ้ำ', en:'+ Add repeat measurement'},
+  phViscosity: {th:'เช่น 12,500 cPs', en:'e.g. 12,500 cPs'},
+
+  cmpTabTexture: {th:'Texture & Performance', en:'Texture & Performance'},
+  cmpTabColor: {th:'Color', en:'Color'},
+  cmpTabOdor: {th:'Odor', en:'Odor'},
+  cmpTabPh: {th:'pH', en:'pH'},
+  cmpTabViscosity: {th:'Viscosity', en:'Viscosity'},
+  cmpTabPhoto: {th:'Photo', en:'Photo'},
+  cmpCondHead: {th:'เงื่อนไข', en:'Condition'},
+  cmpParamHead: {th:'พารามิเตอร์', en:'Parameter'},
+  cmpStabilityTitle: {th:'BULK STABILITY STATUS', en:'BULK STABILITY STATUS'},
+  cmpStatusStable: {th:'Stable', en:'Stable'},
+  cmpStatusChanged: {th:'Changed', en:'Changed'},
+  cmpStatusNA: {th:'ยังไม่มีข้อมูล', en:'No data yet'},
+  cmpFirstChangeTitle: {th:'FIRST CHANGE', en:'FIRST CHANGE'},
+  cmpNoChangeYet: {th:'ยังไม่พบการเปลี่ยนแปลง', en:'No change detected yet'},
+  cmpNoPhotos: {th:'ยังไม่มีรูปถ่ายบันทึกไว้', en:'No photos recorded yet'},
+  cmpExportPdf: {th:'ส่งออก PDF', en:'Export PDF'},
+  cmpExportExcel: {th:'ส่งออก Excel', en:'Export Excel'},
+  cmpChangeFromDay0Title: {th:'CHANGE FROM DAY 0', en:'CHANGE FROM DAY 0'},
+  cmpRowTexture: {th:'Texture', en:'Texture'},
+  cmpRowColor: {th:'Color', en:'Color'},
+  cmpRowOdor: {th:'Odor', en:'Odor'},
+  cmpRowPh: {th:'pH', en:'pH'},
+  cmpRowViscosity: {th:'Viscosity', en:'Viscosity'},
 
   reportModalTitle: {th:'สร้างรายงาน', en:'Generate Report'},
   reportModalHelptext: {th:'เลือกรูปแบบรายงานที่ต้องการ — จะเปิดเป็นแท็บใหม่ พร้อมปุ่มพิมพ์/บันทึกเป็น PDF', en:'Choose the report format you want — it will open in a new tab with a print/save-as-PDF button'},
@@ -885,8 +1003,9 @@ async function apiList(){
 
 let pendingWrites = new Set();
 
-async function apiPost(payload){
-  if(!settings.backend){ showToast(t('needBackendUrlToast')); return null; }
+async function apiPost(payload, opts){
+  const silent = opts && opts.silent;
+  if(!settings.backend){ if(!silent) showToast(t('needBackendUrlToast')); return null; }
   const marker = {};
   pendingWrites.add(marker);
   try{
@@ -899,11 +1018,36 @@ async function apiPost(payload){
     if(!data.ok) throw new Error(data.error || 'unknown error');
     return data;
   }catch(e){
-    showToast(t('backendConnFail') + e.message);
+    if(!silent) showToast(t('backendConnFail') + e.message);
     return null;
   } finally {
     pendingWrites.delete(marker);
   }
+}
+
+// ดึง base64 ของรูปหลายรูปพร้อมกัน — แบ่งเป็นชุดละ ~20 fileId ต่อคำขอ (ลด round-trip เทียบกับดึงทีละรูป)
+// แล้วยิงหลายชุดพร้อมกันจำกัด concurrency ไว้ (เร็วขึ้นมากตอนมีรูปเยอะ และไม่สแปม toast error ถ้าบางชุดพลาด)
+async function fetchPhotosBase64Batch(fileIds){
+  const photoCache = {};
+  if(!fileIds || !fileIds.length) return photoCache;
+  const CHUNK_SIZE = 20, CONCURRENCY = 3;
+  const chunks = [];
+  for(let i=0;i<fileIds.length;i+=CHUNK_SIZE) chunks.push(fileIds.slice(i, i+CHUNK_SIZE));
+  let nextIdx = 0;
+  async function worker(){
+    while(nextIdx < chunks.length){
+      const chunk = chunks[nextIdx++];
+      const res = await apiPost({action:'getPhotosBase64', fileIds: chunk}, {silent:true});
+      if(res && res.results){
+        chunk.forEach(fileId=>{
+          const r = res.results[fileId];
+          if(r && r.base64) photoCache[fileId] = r;
+        });
+      }
+    }
+  }
+  await Promise.all(Array.from({length: Math.min(CONCURRENCY, chunks.length)}, worker));
+  return photoCache;
 }
 
 // รอให้การบันทึกที่ยังค้างอยู่ (ถ้ามี) เสร็จก่อน แล้วค่อยดึงข้อมูลใหม่ — กันไม่ให้ "รีเฟรช" ไปเจอข้อมูลเก่าที่ยังบันทึกไม่เสร็จ แล้วดูเหมือนต้องกดซ้ำ
@@ -931,7 +1075,7 @@ function fmt(date){
   const m = String(date.getMonth()+1).padStart(2,'0');
   return `${d}/${m}/${date.getFullYear()}`;
 }
-function fmtEN(date){ return date.toLocaleDateString('en-GB', {year:'numeric', month:'short', day:'numeric'}); } // ใช้เฉพาะในรายงาน (ต้องเป็นภาษาอังกฤษล้วน)
+function fmtEN(date){ return fmt(date); } // ใช้เฉพาะในรายงาน — ให้เป็น DD/MM/YYYY เหมือนกับที่แสดงในแอปทุกที่
 function addDays(date, n){ const d = new Date(date); d.setDate(d.getDate()+n); return d; }
 function addMonths(date, n){ const d = new Date(date); d.setMonth(d.getMonth()+n); return d; }
 function daysBetween(a, b){ return Math.round((b - a) / 86400000); }
@@ -1422,7 +1566,7 @@ function getDefaultViscMethod(entry){
   if(!entry.results) return out;
   for(const cpKey in entry.results){
     for(const condKey in entry.results[cpKey]){
-      if(condKey === '_remark') continue;
+      if(condKey === '_remark' || condKey === '_meta') continue;
       const rows = entry.results[cpKey][condKey];
       const arr = Array.isArray(rows) ? rows : (rows && Object.keys(rows).length ? [rows] : []);
       for(const r of arr){
@@ -1444,15 +1588,41 @@ function normalizeConditionRows(raw){
   return [];
 }
 
+let resultViewMode = 'record';       // 'record' | 'compare' — โหมดของหน้าบันทึกผล
+let activeCompareParam = 'texture';  // แท็บพารามิเตอร์ที่เลือกอยู่ในหน้า compare
+let lastRenderedResultEntryId = null; // ใช้เช็คว่า renderResultModalBody รอบนี้เป็นการวาด "ทับของเดิม" ของสินค้าเดิมไหม
+                                       // ถ้าใช่ ต้อง snapshot ค่าที่พิมพ์/เลือกค้างไว้ในจอกลับเข้า entry.results ก่อนเสมอ
+                                       // ไม่งั้นจะเสียข้อมูลทุกครั้งที่มีการวาดหน้าใหม่ทับ (สลับโหมด record/compare, กดทำเครื่องหมายตรวจแล้ว ฯลฯ)
+
 function openResultModal(entryId){
   currentResultEntryId = entryId;
   dirtyCheckpoints.clear();
   activeResultTab = null; // เปิดสินค้าใหม่ ให้เลือกแท็บวันที่ถึงกำหนด/เลยกำหนดให้อัตโนมัติใหม่เสมอ
+  resultViewMode = 'record';
+  activeCompareParam = 'texture';
+  lastRenderedResultEntryId = null; // เปิดใหม่ — ห้าม snapshot DOM เก่าที่ค้างจากสินค้าอื่น/ตอนก่อนหน้าทับข้อมูลจริงที่เพิ่งโหลดมา
+  document.getElementById('modeBtnRecord').classList.add('active');
+  document.getElementById('modeBtnCompare').classList.remove('active');
+  document.getElementById('resultModeHeaderExtras').style.display = '';
   const entry = products.find(p=>p.id===entryId);
   document.getElementById('resultModalTitle').textContent = `${t('resultModalTitlePrefix')}${entry.productName} (${entry.formNo||'-'})`;
   renderResultModalBody(entryId);
   document.getElementById('resultModal').classList.add('open');
   document.getElementById('resultModalInner').scrollTop = 0; // เปิดมาแล้วต้องเห็นด้านบนสุดก่อนเสมอ
+}
+
+// สลับระหว่างหน้า "record" (กรอกผลดิบ) กับ "compare" (เปรียบเทียบ/อ่านผลง่าย)
+function switchResultMode(mode){
+  resultViewMode = mode;
+  document.getElementById('modeBtnRecord').classList.toggle('active', mode==='record');
+  document.getElementById('modeBtnCompare').classList.toggle('active', mode==='compare');
+  document.getElementById('resultModeHeaderExtras').style.display = (mode==='record') ? '' : 'none';
+  renderResultModalBody(currentResultEntryId);
+}
+
+function switchCompareParam(key){
+  activeCompareParam = key;
+  renderResultModalBody(currentResultEntryId);
 }
 
 // รูปที่แนบต่อแถว เก็บเป็น array [{url, fileId}] ไว้ใน data-photos ของ <tr> เอง (เก็บชั่วคราวในหน้าเว็บ
@@ -1463,89 +1633,500 @@ function photoThumbsHtml(pfx, photos){
   ).join('');
 }
 
-// สร้าง 1 เซลล์ในตารางของ checkpoint หนึ่งๆ ตาม type ของพารามิเตอร์แถวนั้น (desc/analysis/ph/spindle/rpm/timeMin/tester/developer/photo)
-function matrixCellHtml(param, pfx, d, defaults, cpKey, condKey){
-  const key = param.key;
-  if(key === 'photo'){
+// สร้าง 1 เซลล์ของตารางบันทึกผล (คอลัมน์ = พารามิเตอร์ตาม RECORD_COLUMNS, แถว = "ผลการสังเกต"/"ผลการวิเคราะห์")
+// rowType: 'obs' = แถวผลการสังเกต, 'ana' = แถวผลการวิเคราะห์ (พารามิเตอร์ที่ไม่ใช่ dual จะไม่มีช่องกรอกในแถวนี้)
+function recordCellHtml(col, rowType, pfx, d, defaults, cpKey, condKey, ridx){
+  const attrs = `data-pfx="${pfx}" data-cpkey="${cpKey}" data-condkey="${condKey}" data-ridx="${ridx}"`;
+  if(col.key === 'photo'){
+    if(rowType === 'ana') return `<td class="cell-disabled">–</td>`;
     const photos = d.photos || [];
-    return `<td class="photo-matrix-cell" data-pfx="${pfx}" data-cpkey="${cpKey}" data-photos='${escapeHtml(JSON.stringify(photos))}'>
+    return `<td class="photo-matrix-cell photo-cell" ${attrs} data-photos='${escapeHtml(JSON.stringify(photos))}'>
       <div class="photo-thumbs" id="photothumbs_${pfx}">${photoThumbsHtml(pfx, photos)}</div>
       <button type="button" class="add-row-btn photo-btn" onclick="document.getElementById('photoinput_${pfx}').click()">${t('btnAddPhoto')}</button>
       <input type="file" accept="image/*" capture="environment" style="display:none" id="photoinput_${pfx}" onchange="handlePhotoSelected(event,'${cpKey}','${condKey}','${pfx}')">
     </td>`;
   }
-  if(key === 'tester' || key === 'developer'){
-    return `<td><select data-f="${key}" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_${key}">${peopleOptionsHtml(d[key]||defaults[key]||'')}</select></td>`;
+  if(!col.dual){
+    if(rowType === 'ana') return `<td class="cell-disabled">–</td>`;
+    let listAttr = '', placeholder = '';
+    let val = d[col.key] || '';
+    if(col.key === 'spindle'){ listAttr = 'list="spindleList"'; val = d.spindle || defaults.spindle || ''; }
+    else if(col.key === 'rpm'){ listAttr = 'list="rpmList"'; val = d.rpm || defaults.rpm || ''; }
+    else if(col.key === 'timeMin'){ placeholder = t('phMinutes'); val = d.timeMin || defaults.timeMin || ''; }
+    else if(col.key === 'ph'){ placeholder = t('phDash'); }
+    else if(col.key === 'viscosity'){
+      // เผื่อข้อมูลเก่าก่อนแยกเป็นแบบตัวเลขล้วน (เคยเป็น viscosity_analysis/viscosity_desc)
+      placeholder = t('phViscosity');
+      if(!val) val = d.viscosity_analysis || d.viscosity_desc || '';
+    }
+    return `<td><input data-f="${col.key}" ${attrs} id="${pfx}_${col.key}" ${listAttr} value="${escapeHtml(val)}" placeholder="${placeholder}"></td>`;
   }
-  if(key === 'spindle'){
-    return `<td><input data-f="spindle" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_spindle" list="spindleList" value="${escapeHtml(d.spindle||defaults.spindle||'')}"></td>`;
-  }
-  if(key === 'rpm'){
-    return `<td><input data-f="rpm" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_rpm" list="rpmList" value="${escapeHtml(d.rpm||defaults.rpm||'')}"></td>`;
-  }
-  if(key === 'timeMin'){
-    return `<td><input data-f="timeMin" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_timeMin" value="${escapeHtml(d.timeMin||defaults.timeMin||'')}" placeholder="${t('phMinutes')}"></td>`;
-  }
-  if(key === 'ph'){
-    return `<td><input data-f="ph" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_ph" value="${escapeHtml(d.ph||'')}" placeholder="${t('phDash')}"></td>`;
-  }
-  // ช่อง desc/analysis (textureOut_desc, textureOut_analysis, ..., viscosity_analysis)
-  // เผื่อข้อมูลเก่าก่อนแยกเป็น 2 ช่อง: ถ้ายังไม่มี _analysis แต่มีค่าตัวเก่า (ไม่มี suffix) อยู่ ให้ดึงมาใส่ช่องวิเคราะห์
-  let val = d[key] || '';
-  if(param.type === 'analysis'){
-    const baseKey = key.replace('_analysis','');
-    val = (d[key] !== undefined && d[key] !== '') ? d[key] : (d[baseKey] || '');
-  }
-  const placeholder = param.type === 'analysis' ? t('phTextureVal') : t('phDescribe');
-  return `<td><input data-f="${key}" data-pfx="${pfx}" data-cpkey="${cpKey}" id="${pfx}_${key}" value="${escapeHtml(val)}" placeholder="${placeholder}"></td>`;
+  // คอลัมน์ dual (textureOut/textureRoom/color/odor) — แถว obs ใช้ ${key}_desc, แถว ana ใช้ ${key}_analysis
+  const field = rowType === 'obs' ? `${col.key}_desc` : `${col.key}_analysis`;
+  const val = d[field] || '';
+  const placeholder = rowType === 'ana' ? t('phTextureVal') : t('phDescribe');
+  return `<td><input data-f="${field}" ${attrs} id="${pfx}_${field}" value="${escapeHtml(val)}" placeholder="${placeholder}"></td>`;
 }
 
-// สร้างตารางของ 1 checkpoint (1 วัน) — เงื่อนไข (4°C/RT/40°C/SUN) ที่ต้องวัดวันนั้นกลายเป็นคอลัมน์ (มีไม่เกิน 4
-// คอลัมน์ ตารางจึงเล็กกะทัดรัด) ถ้ามีวัดซ้ำมากกว่า 1 ครั้งต่อเงื่อนไข จะแตกเป็นคอลัมน์ย่อยติดกัน (เช่น "RT (#2)")
-function buildCheckpointTableHtml(entry, cp, defaults){
+// สร้างตาราง 2 แถว (ผลการสังเกต / ผลการวิเคราะห์) x คอลัมน์พารามิเตอร์ทั้งหมด สำหรับ 1 การวัด (1 ridx)
+function buildConditionMeasurementTable(entry, cp, condKey, ridx, d, defaults, canRemove){
+  const pfx = `cx_${cp.key}_${condKey}_${ridx}`;
+  const headerCells = RECORD_COLUMNS.map(col=>{
+    const label = col.subLabelKey ? `${t(col.labelKey)}<br><span class="matrix-col-date">${t(col.subLabelKey)}</span>` : t(col.labelKey);
+    return `<th>${label}</th>`;
+  }).join('');
+  const obsCells = RECORD_COLUMNS.map(col=>recordCellHtml(col, 'obs', pfx, d, defaults, cp.key, condKey, ridx)).join('');
+  const anaCells = RECORD_COLUMNS.map(col=>recordCellHtml(col, 'ana', pfx, d, defaults, cp.key, condKey, ridx)).join('');
+  const removeBtn = canRemove
+    ? `<button type="button" class="remove-col-btn" onclick="removeMatrixColumn('${entry.id}','${cp.key}','${condKey}',${ridx})" title="${t('titleRemoveColumn')}">✕</button>`
+    : '';
+  return `<div class="cond-measure-wrap">
+    ${ridx > 0 ? `<div class="cond-measure-repeat-label">#${ridx+1}${removeBtn}</div>` : ''}
+    <div class="matrix-wrap">
+      <table class="matrix-table cond-record-table" data-cpkey="${cp.key}" data-condkey="${condKey}" data-ridx="${ridx}">
+        <thead><tr><th class="param-col-head">${t('rowLabelHead')}</th>${headerCells}</tr></thead>
+        <tbody>
+          <tr class="param-row-desc"><td class="param-label">${t('rowObservation')}</td>${obsCells}</tr>
+          <tr class="param-row-analysis"><td class="param-label">${t('rowAnalysis')}</td>${anaCells}</tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// บล็อกของ 1 เงื่อนไข (เช่น "4°C") — หัวข้อ + ตารางการวัด (รองรับหลายแถวถ้าวัดซ้ำ) + ปุ่มเพิ่มแถววัดซ้ำ
+function buildConditionBlockHtml(entry, cp, condKey, defaults){
+  const cond = CONDITIONS.find(c=>c.key===condKey);
+  const resultsForCp = (entry.results && entry.results[cp.key]) || {};
+  const rows = normalizeConditionRows(resultsForCp[condKey]);
+  const rowsToShow = rows.length ? rows : [{}];
+  const tablesHtml = rowsToShow.map((d, ridx)=> buildConditionMeasurementTable(entry, cp, condKey, ridx, d, defaults, ridx > 0)).join('');
+  return `<div class="cond-block" id="condblock_${cp.key}_${condKey}">
+    <div class="cond-block-head">${cond.label}</div>
+    ${tablesHtml}
+    <div class="cond-block-addrow">
+      <button type="button" class="add-row-btn" onclick="addMatrixColumn('${entry.id}','${cp.key}','${condKey}')">${t('btnAddRepeat')}</button>
+    </div>
+  </div>`;
+}
+
+// มีข้อมูลบันทึกไว้แล้วหรือยังสำหรับ (checkpoint, เงื่อนไข) คู่นี้ — ใช้ทำจุดสถานะ (●) บนแถบนำทางเงื่อนไขด้านบน
+function conditionHasData(entry, cpKey, condKey){
+  const rows = normalizeConditionRows(entry.results && entry.results[cpKey] && entry.results[cpKey][condKey]);
+  return rows.some(d => Object.keys(d).some(k=>{ if(k === 'photos') return false; const v = d[k]; return v !== undefined && v !== null && v !== ''; }));
+}
+
+// เลื่อนไปยังบล็อกของเงื่อนไขที่เลือกจากแถบนำทาง
+function scrollToConditionBlock(cpKey, condKey){
+  const el = document.getElementById(`condblock_${cpKey}_${condKey}`);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// รวมบล็อกของทุกเงื่อนไขที่ต้องวัดใน checkpoint นี้ตามแผนงาน — ถ้ามีมากกว่า 1 เงื่อนไข แสดงแถบนำทางไว้ด้านบนเสมอ
+// เพื่อให้เห็นชัดว่ามีกี่เงื่อนไขต้องกรอก และกรอกไปแล้วกี่อัน (จุดสีเขียว) โดยไม่ต้องเลื่อนหาเอง
+function buildCheckpointConditionsHtml(entry, cp, defaults){
   const applicableConds = CHECKPOINT_CONDITIONS[cp.key] || [];
   if(applicableConds.length === 0) return `<div class="cp-no-cond">${t('noApplicableCond')}</div>`;
+  const navHtml = applicableConds.length > 1
+    ? `<div class="cond-nav">${applicableConds.map(condKey=>{
+        const cond = CONDITIONS.find(c=>c.key===condKey);
+        const filled = conditionHasData(entry, cp.key, condKey);
+        return `<button type="button" class="cond-nav-pill ${filled?'filled':''}" data-cpkey="${cp.key}" data-condkey="${condKey}" onclick="scrollToConditionBlock('${cp.key}','${condKey}')"><span class="cond-nav-dot"></span>${cond.label}</button>`;
+      }).join('')}</div>`
+    : '';
+  const blocksHtml = applicableConds.map(condKey => buildConditionBlockHtml(entry, cp, condKey, defaults)).join('');
+  return navHtml + blocksHtml;
+}
 
-  const resultsForCp = (entry.results && entry.results[cp.key]) || {};
-  const columns = [];
-  applicableConds.forEach(condKey=>{
-    const cond = CONDITIONS.find(c=>c.key===condKey);
-    const rows = normalizeConditionRows(resultsForCp[condKey]);
-    const rowsToShow = rows.length ? rows : [{}];
-    rowsToShow.forEach((d, ridx)=>{
-      columns.push({condKey, condLabel: cond.label, ridx, data: d, isLastForCond: ridx === rowsToShow.length - 1});
+
+/* ─────────────────────── Compare view ─────────────────────── */
+function firstRowOf(entry, cpKey, condKey){
+  const rows = normalizeConditionRows(entry.results && entry.results[cpKey] && entry.results[cpKey][condKey]);
+  return rows[0] || {};
+}
+function parseScoreVal(v){
+  if(v === undefined || v === null || v === '') return null;
+  const n = parseFloat(String(v).replace(/^\+/, ''));
+  return isNaN(n) ? null : n;
+}
+function parseNumVal(v){
+  if(v === undefined || v === null || v === '') return null;
+  const n = parseFloat(String(v).replace(/,/g, ''));
+  return isNaN(n) ? null : n;
+}
+function fmtScoreVal(n){ if(n === null) return '–'; if(n === 0) return '0'; return (n > 0 ? '+' : '') + n; }
+function fmtDeltaNum(n, decimals){ if(n === null) return '–'; return (n > 0 ? '+' : '') + n.toFixed(decimals); }
+function fmtDeltaVisc(n){ if(n === null) return '–'; return (n > 0 ? '+' : '') + Math.round(n).toLocaleString(); }
+
+// ดัชนี checkpoint (ใน CHECKPOINTS) ล่าสุดที่มีข้อมูลบันทึกไว้จริง ไม่ว่าจะเงื่อนไขไหนก็ตาม — ใช้เป็น "checkpoint ปัจจุบัน"
+function findCurrentCheckpointIndex(entry){
+  let idx = -1;
+  CHECKPOINTS.forEach((cp, i)=>{
+    const conds = CHECKPOINT_CONDITIONS[cp.key] || [];
+    const hasData = conds.some(condKey=>{
+      const rows = normalizeConditionRows(entry.results && entry.results[cp.key] && entry.results[cp.key][condKey]);
+      return rows.some(d => Object.keys(d).some(k=>{ if(k === 'photos') return false; const v = d[k]; return v !== undefined && v !== null && v !== ''; }));
     });
+    if(hasData) idx = i;
   });
+  return idx;
+}
 
-  const headerCells = columns.map(col=>{
-    const pfx = `cx_${cp.key}_${col.condKey}_${col.ridx}`;
-    const label = col.ridx > 0 ? `${col.condLabel} (#${col.ridx+1})` : col.condLabel;
-    const btn = col.ridx > 0
-      ? `<button class="remove-col-btn" onclick="removeMatrixColumn('${entry.id}','${cp.key}','${col.condKey}',${col.ridx})" title="${t('titleRemoveColumn')}">✕</button>`
-      : (col.isLastForCond ? `<button class="add-col-btn" onclick="addMatrixColumn('${entry.id}','${cp.key}','${col.condKey}')" title="${t('titleAddColumn')}">+</button>` : '');
-    return `<th data-colpfx="${pfx}" data-condkey="${col.condKey}" data-ridx="${col.ridx}">
-      <div class="matrix-col-head">
-        <span class="matrix-col-head-text">${label}</span>
-        ${btn}
-      </div>
-    </th>`;
-  }).join('');
+// ค่าล่าสุดของฟิลด์หนึ่ง (ไล่ fields ตามลำดับ fallback) สำหรับเงื่อนไขหนึ่งๆ นับถอยจาก checkpoint ที่ uptoIdx ลงมา
+function latestFieldValue(entry, condKey, uptoIdx, fields){
+  for(let i = uptoIdx; i >= 0; i--){
+    const cp = CHECKPOINTS[i];
+    if(!(CHECKPOINT_CONDITIONS[cp.key] || []).includes(condKey)) continue;
+    const d = firstRowOf(entry, cp.key, condKey);
+    for(const f of fields){
+      const v = d[f];
+      if(v !== undefined && v !== null && v !== '') return {value: v, cp};
+    }
+  }
+  return null;
+}
+function day0Baseline(entry, field){
+  const d = firstRowOf(entry, 'day0', 'room');
+  return parseNumVal(d[field]);
+}
 
-  const bodyRows = PARAM_ROWS.map(param=>{
-    const label = param.subLabelKey ? `${t(param.labelKey)} — ${t(param.subLabelKey)}` : t(param.labelKey);
-    const cells = columns.map(col=>{
-      const pfx = `cx_${cp.key}_${col.condKey}_${col.ridx}`;
-      return matrixCellHtml(param, pfx, col.data, defaults, cp.key, col.condKey);
+// ตารางแนวโน้ม (ซ้าย) — 1 พารามิเตอร์ที่เลือกจากแท็บ, แถว = เงื่อนไข, คอลัมน์ = checkpoint
+function buildTrendTableHtml(entry, paramKey){
+  const headCells = CHECKPOINTS.map(cp=>`<th>${cp.label}</th>`).join('');
+  const bodyRows = CONDITIONS.map(cond=>{
+    const cells = CHECKPOINTS.map(cp=>{
+      const applicable = (CHECKPOINT_CONDITIONS[cp.key] || []).includes(cond.key);
+      if(!applicable) return `<td class="cell-disabled">–</td>`;
+      const d = firstRowOf(entry, cp.key, cond.key);
+      let display = '–';
+      if(paramKey === 'texture') display = fmtScoreVal(parseScoreVal(d.textureRoom_analysis));
+      else if(paramKey === 'color') display = fmtScoreVal(parseScoreVal(d.color_analysis));
+      else if(paramKey === 'odor') display = fmtScoreVal(parseScoreVal(d.odor_analysis));
+      else if(paramKey === 'ph'){ const n = parseNumVal(d.ph); display = n === null ? '–' : n.toFixed(2); }
+      else if(paramKey === 'viscosity'){ const n = parseNumVal(d.viscosity || d.viscosity_analysis || d.viscosity_desc); display = n === null ? '–' : Math.round(n).toLocaleString(); }
+      else if(paramKey === 'photo'){
+        const photos = d.photos || [];
+        display = photos.length
+          ? `<div class="cmp-photo-cell">${photos.map(p=>`<img src="${escapeHtml(p.url)}" alt="" loading="lazy" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ccc;cursor:pointer;" onclick="window.open('${escapeHtml(p.url)}','_blank')">`).join('')}</div>`
+          : '–';
+      }
+      return `<td class="${paramKey==='photo'?'cmp-photo-td':''}">${display}</td>`;
     }).join('');
-    return `<tr class="param-row-${param.type}"><td class="param-label">${label}</td>${cells}</tr>`;
+    return `<tr><td class="param-label">${cond.label}</td>${cells}</tr>`;
   }).join('');
+  return `<div class="matrix-wrap"><table class="matrix-table cmp-trend-table ${paramKey==='photo'?'cmp-photo-table':''}">
+    <thead><tr><th class="param-col-head">${t('cmpCondHead')}</th>${headCells}</tr></thead>
+    <tbody>${bodyRows}</tbody>
+  </table></div>`;
+}
 
-  return `<div class="matrix-wrap">
-    <table class="matrix-table" id="cptable_${cp.key}">
-      <thead><tr><th class="param-col-head">${t('paramColHead')}</th>${headerCells}</tr></thead>
+// ตาราง "CHANGE FROM DAY 0" (ขวา) — แถว = พารามิเตอร์หลัก, คอลัมน์ = เงื่อนไข — เทียบค่าล่าสุด ณ checkpoint ปัจจุบัน กับ Day0/RT
+function buildDeltaTableHtml(entry){
+  const curIdx = findCurrentCheckpointIndex(entry);
+  const rows = [
+    {labelKey:'cmpRowTexture',   kind:'score', fields:['textureRoom_analysis']},
+    {labelKey:'cmpRowColor',     kind:'score', fields:['color_analysis']},
+    {labelKey:'cmpRowOdor',      kind:'score', fields:['odor_analysis']},
+    {labelKey:'cmpRowPh',        kind:'num',   fields:['ph'], decimals:2, baseField:'ph'},
+    {labelKey:'cmpRowViscosity', kind:'visc',  fields:['viscosity','viscosity_analysis','viscosity_desc'], baseField:'viscosity'},
+  ];
+  const bodyRows = rows.map(row=>{
+    const cells = CONDITIONS.map(cond=>{
+      if(curIdx < 0) return `<td class="cell-disabled">–</td>`;
+      const latest = latestFieldValue(entry, cond.key, curIdx, row.fields);
+      if(!latest) return `<td class="cell-disabled">–</td>`;
+      if(row.kind === 'score') return `<td>${fmtScoreVal(parseScoreVal(latest.value))}</td>`;
+      const curNum = parseNumVal(latest.value);
+      const base = day0Baseline(entry, row.baseField);
+      if(curNum === null || base === null) return `<td class="cell-disabled">–</td>`;
+      const delta = curNum - base;
+      if(row.kind === 'num') return `<td>${fmtDeltaNum(delta, row.decimals)}</td>`;
+      const pct = base !== 0 ? (delta / base * 100) : null;
+      const pctStr = pct === null ? '' : ` <span class="cmp-pct">(${fmtDeltaNum(pct,0)}%)</span>`;
+      return `<td>${fmtDeltaVisc(delta)}${pctStr}</td>`;
+    }).join('');
+    return `<tr><td class="param-label">${t(row.labelKey)}</td>${cells}</tr>`;
+  }).join('');
+  const headCells = CONDITIONS.map(c=>`<th>${c.label}</th>`).join('');
+  const curLabel = curIdx >= 0 ? CHECKPOINTS[curIdx].label : null;
+  return {
+    html: `<div class="matrix-wrap"><table class="matrix-table cmp-delta-table">
+      <thead><tr><th class="param-col-head">${t('cmpParamHead')}</th>${headCells}</tr></thead>
       <tbody>${bodyRows}</tbody>
-    </table>
+    </table></div>`,
+    curLabel
+  };
+}
+
+// สถานะ Stable/Changed ของแต่ละเงื่อนไข ณ checkpoint ปัจจุบัน — เปลี่ยนถ้าคะแนน Texture/Color/Odor ≠ 0
+// หรือ pH เปลี่ยนจาก baseline ≥0.2 หรือ Viscosity เปลี่ยน ≥10% จาก baseline (Day0/RT)
+function computeConditionStatus(entry, condKey, curIdx){
+  if(curIdx < 0) return null;
+  const scores = ['textureRoom_analysis','color_analysis','odor_analysis'].map(f=>{
+    const latest = latestFieldValue(entry, condKey, curIdx, [f]);
+    return latest ? parseScoreVal(latest.value) : null;
+  });
+  const scoreChanged = scores.some(s => s !== null && s !== 0);
+  let phChanged = false;
+  const phLatest = latestFieldValue(entry, condKey, curIdx, ['ph']);
+  const phBase = day0Baseline(entry, 'ph');
+  if(phLatest && phBase !== null){ phChanged = Math.abs(parseNumVal(phLatest.value) - phBase) >= 0.2; }
+  let viscChanged = false;
+  const viscLatest = latestFieldValue(entry, condKey, curIdx, ['viscosity','viscosity_analysis','viscosity_desc']);
+  const viscBase = day0Baseline(entry, 'viscosity');
+  if(viscLatest && viscBase){ viscChanged = Math.abs((parseNumVal(viscLatest.value) - viscBase) / viscBase * 100) >= 10; }
+  return (scoreChanged || phChanged || viscChanged) ? 'changed' : 'stable';
+}
+
+// แถบสถานะรวม — Stable/Changed ของทุกเงื่อนไข + สรุป "จุดเปลี่ยนแรก" แบบย่อในบรรทัดเดียวกัน (ไม่ใช่จุดสำคัญหลัก จึงย่อให้เล็ก)
+function buildStatusBarHtml(entry){
+  const curIdx = findCurrentCheckpointIndex(entry);
+  const cards = CONDITIONS.map(cond=>{
+    const status = computeConditionStatus(entry, cond.key, curIdx);
+    const label = status === 'changed' ? t('cmpStatusChanged') : (status === 'stable' ? t('cmpStatusStable') : t('cmpStatusNA'));
+    const cls = status === 'changed' ? 'overdue' : (status === 'stable' ? 'done' : 'upcoming');
+    return `<div class="cmp-status-card"><span class="cmp-status-cond">${cond.label}</span><span class="status-pill ${cls}">${label}</span></div>`;
+  }).join('');
+  const firstChange = findFirstChange(entry);
+  const fcText = firstChange ? escapeHtml(firstChange) : t('cmpNoChangeYet');
+  return `<div class="cmp-status-bar">
+    <span class="cmp-status-title">${t('cmpStabilityTitle')}</span>
+    <div class="cmp-status-cards">${cards}</div>
+    <div class="cmp-firstchange-inline"><span class="cmp-status-title">${t('cmpFirstChangeTitle')}</span><span class="cmp-fc-text">${fcText}</span></div>
   </div>`;
+}
+
+// หา checkpoint/เงื่อนไขแรกสุดที่เริ่มเห็นการเปลี่ยนแปลง (ไล่ตามลำดับเวลา) เพื่อสรุปเป็นข้อความ "FIRST CHANGE"
+function findFirstChange(entry){
+  const phBase = day0Baseline(entry, 'ph');
+  const viscBase = day0Baseline(entry, 'viscosity');
+  for(const cp of CHECKPOINTS){
+    const conds = CHECKPOINT_CONDITIONS[cp.key] || [];
+    for(const condKey of conds){
+      const d = firstRowOf(entry, cp.key, condKey);
+      if(!Object.keys(d).length) continue;
+      const changes = [];
+      const tex = parseScoreVal(d.textureRoom_analysis);
+      if(tex) changes.push(`${t('cmpRowTexture')} ${fmtScoreVal(tex)}`);
+      const col = parseScoreVal(d.color_analysis);
+      if(col) changes.push(`${t('cmpRowColor')} ${fmtScoreVal(col)}`);
+      const odr = parseScoreVal(d.odor_analysis);
+      if(odr) changes.push(`${t('cmpRowOdor')} ${fmtScoreVal(odr)}`);
+      const phVal = parseNumVal(d.ph);
+      if(phBase !== null && phVal !== null && Math.abs(phVal - phBase) >= 0.2) changes.push(`${t('cmpRowPh')} ${fmtDeltaNum(phVal-phBase,2)}`);
+      const viscVal = parseNumVal(d.viscosity || d.viscosity_analysis || d.viscosity_desc);
+      if(viscBase && viscVal !== null){
+        const pct = (viscVal - viscBase) / viscBase * 100;
+        if(Math.abs(pct) >= 10) changes.push(`${t('cmpRowViscosity')} ${fmtDeltaNum(pct,0)}%`);
+      }
+      if(changes.length){
+        const condLabel = CONDITIONS.find(c=>c.key===condKey).label;
+        return `${condLabel} · ${cp.label} → ${changes.join(' · ')}`;
+      }
+    }
+  }
+  return null;
+}
+
+function buildCompareViewHtml(entry){
+  const statusBarHtml = buildStatusBarHtml(entry);
+  const tabsHtml = `<div class="cp-tabs cmp-param-tabs">${COMPARE_PARAM_TABS.map(p=>
+    `<button type="button" class="cp-tab ${p.key===activeCompareParam?'active':''}" onclick="switchCompareParam('${p.key}')">${t(p.labelKey)}</button>`
+  ).join('')}</div>`;
+  const paramTab = COMPARE_PARAM_TABS.find(p=>p.key===activeCompareParam) || COMPARE_PARAM_TABS[0];
+
+  // ตารางภาพรวม (เต็มความกว้าง) — เงื่อนไขเป็นแถว, checkpoint เป็นคอลัมน์ เหมือนกันทุกแท็บรวมถึง Photo
+  // (แบบตารางทำให้เทียบข้ามเงื่อนไขในเวลาเดียวกันได้ในแนวตั้ง และเทียบข้ามเวลาในเงื่อนไขเดียวกันได้ในแนวนอน พร้อมกัน)
+  const mainSectionHtml = buildTrendTableHtml(entry, activeCompareParam);
+
+  // ตาราง "CHANGE FROM DAY 0" เป็นสรุปรอง — พับเก็บได้เพื่อให้พื้นที่กับตารางภาพรวมด้านบน
+  const delta = buildDeltaTableHtml(entry);
+  const curTag = delta.curLabel ? ` · <span class="cmp-cur-cp">→ ${escapeHtml(delta.curLabel)}</span>` : '';
+
+  return `${statusBarHtml}
+    <div class="cmp-export-bar">
+      <button type="button" class="btn btn-ghost btn-xs" onclick="exportCompareToPdf()">🖨 ${t('cmpExportPdf')}</button>
+      <button type="button" class="btn btn-ghost btn-xs" onclick="exportCompareToExcel()">📊 ${t('cmpExportExcel')}</button>
+    </div>
+    ${tabsHtml}
+    <div class="cmp-section">
+      <div class="cmp-col-title">${t(paramTab.labelKey)}</div>
+      ${mainSectionHtml}
+    </div>
+    <details class="cmp-delta-details" open>
+      <summary>${t('cmpChangeFromDay0Title')}${curTag}</summary>
+      <div class="cmp-delta-body">${delta.html}</div>
+    </details>`;
+}
+
+// รายงาน Compare แบบพิมพ์/บันทึกเป็น PDF — ใช้ chrome ของรายงานชุดเดียวกับ Form/Summary Report (reportBaseStyle
+// เป็นต้น) และ "ยืม" ตาราง HTML ที่ buildTrendTableHtml/buildDeltaTableHtml สร้างไว้แล้วมาใช้ตรงๆ เลย เพราะ CSS
+// ของรายงาน (reportBaseStyle) ตี style ตรงๆ ที่ table/th/td อยู่แล้ว ไม่สนใจ class จึงใช้ร่วมกันได้ทันทีไม่ต้องเขียนใหม่
+function buildComparePdfHtml(entry){
+  const curIdx = findCurrentCheckpointIndex(entry);
+  const statusRows = CONDITIONS.map(cond=>{
+    const status = computeConditionStatus(entry, cond.key, curIdx);
+    const label = status === 'changed' ? 'Changed' : (status === 'stable' ? 'Stable' : 'No data yet');
+    return `<tr><td class="left"><b>${cond.label}</b></td><td class="left">${label}</td></tr>`;
+  }).join('');
+  const firstChange = findFirstChange(entry) || 'No change detected yet';
+  const delta = buildDeltaTableHtml(entry);
+  const curLabel = delta.curLabel || '';
+
+  const paramLabels = {texture:'Texture &amp; Performance', color:'Color', odor:'Odor', ph:'pH', viscosity:'Viscosity', photo:'Photo'};
+  const paramSections = COMPARE_PARAM_TABS.map(p=>
+    `<h2 style="font-size:12px;margin:16px 0 6px;">${paramLabels[p.key]}</h2>${buildTrendTableHtml(entry, p.key)}`
+  ).join('');
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Compare Report — ${escapeHtml(entry.productName)}</title>${reportBaseStyle()}</head>
+  <body>
+    <div class="print-bar"><button onclick="window.print()">🖨 Print / Save as PDF</button></div>
+    ${reportTopHtml()}
+    <h1>Compare Report — Stability Test Results</h1>
+    <div class="meta">Printed on ${new Date().toLocaleString('en-GB')}</div>
+    ${reportHeaderHtml(entry)}
+    <h2 style="font-size:12px;margin:10px 0 6px;">Bulk Stability Status</h2>
+    <table style="max-width:320px;"><tbody>${statusRows}</tbody></table>
+    <div style="font-size:11px;margin-bottom:6px;"><b>First change:</b> ${escapeHtml(firstChange)}</div>
+    ${paramSections}
+    <h2 style="font-size:12px;margin:16px 0 6px;">Change from Day 0${curLabel ? ` (&rarr; ${escapeHtml(curLabel)})` : ''}</h2>
+    ${delta.html}
+    ${reportFooterHtml()}
+  </body></html>`;
+}
+
+function exportCompareToPdf(){
+  const entry = products.find(p=>p.id===currentResultEntryId);
+  if(!entry) return;
+  const w = window.open('', '_blank');
+  w.document.write(buildComparePdfHtml(entry));
+  w.document.close();
+}
+
+// Export หน้า Compare เป็น .xlsx — ตารางแนวโน้มของทุกพารามิเตอร์ (Texture/Color/Odor/pH/Viscosity) เงื่อนไข x checkpoint
+// บวกตารางรูปถ่ายจริง (ฝังรูปแบบเดียวกับ exportEntryToExcel — ดึง base64 แบบ batch ให้เร็ว) และตาราง Change from Day 0
+async function exportCompareToExcel(){
+  if(typeof ExcelJS === 'undefined'){ showToast(t('excelExportFailToast')); return; }
+  const entry = products.find(p=>p.id===currentResultEntryId);
+  if(!entry) return;
+  showToast(t('excelExportingToast'));
+
+  try{
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Compare');
+    const HEADER_FILL = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF8FAFC'} };
+    const BORDER = { style:'thin', color:{argb:'FFE2E8F0'} };
+    const THIN_BORDERS = { top:BORDER, left:BORDER, bottom:BORDER, right:BORDER };
+
+    ws.getCell('A1').value = 'Compare Report — Stability Test Results'; ws.getCell('A1').font = {bold:true, size:14};
+    ws.getCell('A2').value = 'PRODUCT NAME'; ws.getCell('A2').font = {bold:true}; ws.getCell('B2').value = entry.productName || '';
+    ws.getCell('A3').value = 'FORMULATION NO.'; ws.getCell('A3').font = {bold:true}; ws.getCell('B3').value = entry.formNo || '-';
+    ws.getCell('A4').value = 'CUSTOMER'; ws.getCell('A4').font = {bold:true}; ws.getCell('B4').value = entry.customer || '-';
+    ws.getCell('A5').value = 'MIXING DATE'; ws.getCell('A5').font = {bold:true}; ws.getCell('B5').value = entry.mixDate ? fmtEN(toDate(entry.mixDate)) : '-';
+
+    let r = 7;
+    const curIdx = findCurrentCheckpointIndex(entry);
+    ws.getCell(r,1).value = 'BULK STABILITY STATUS'; ws.getCell(r,1).font = {bold:true, size:12}; r++;
+    CONDITIONS.forEach(cond=>{
+      const status = computeConditionStatus(entry, cond.key, curIdx);
+      ws.getCell(r,1).value = cond.label; ws.getCell(r,1).font = {bold:true};
+      ws.getCell(r,2).value = status === 'changed' ? 'Changed' : (status === 'stable' ? 'Stable' : 'No data yet');
+      r++;
+    });
+    r++;
+    ws.getCell(r,1).value = 'FIRST CHANGE'; ws.getCell(r,1).font = {bold:true, size:12}; r++;
+    ws.getCell(r,1).value = findFirstChange(entry) || 'No change detected yet';
+    r += 2;
+
+    // ตารางแนวโน้ม 1 ตารางต่อพารามิเตอร์ — เงื่อนไขเป็นแถว, checkpoint เป็นคอลัมน์
+    function writeTrendGrid(title, paramKey){
+      ws.getCell(r,1).value = title; ws.getCell(r,1).font = {bold:true, size:12}; r++;
+      const headerRowIdx = r;
+      ws.getCell(r,1).value = 'Condition';
+      CHECKPOINTS.forEach((cp,i)=>{ ws.getCell(r, 2+i).value = cp.label; });
+      r++;
+      CONDITIONS.forEach(cond=>{
+        ws.getCell(r,1).value = cond.label; ws.getCell(r,1).font = {bold:true};
+        CHECKPOINTS.forEach((cp,i)=>{
+          const cell = ws.getCell(r, 2+i);
+          if(!(CHECKPOINT_CONDITIONS[cp.key]||[]).includes(cond.key)){ cell.value = '-'; return; }
+          const d = firstRowOf(entry, cp.key, cond.key);
+          if(paramKey==='texture') cell.value = fmtScoreVal(parseScoreVal(d.textureRoom_analysis));
+          else if(paramKey==='color') cell.value = fmtScoreVal(parseScoreVal(d.color_analysis));
+          else if(paramKey==='odor') cell.value = fmtScoreVal(parseScoreVal(d.odor_analysis));
+          else if(paramKey==='ph'){ const n = parseNumVal(d.ph); cell.value = n===null ? '-' : n.toFixed(2); }
+          else if(paramKey==='viscosity'){ const n = parseNumVal(d.viscosity || d.viscosity_analysis || d.viscosity_desc); cell.value = n===null ? '-' : Math.round(n); }
+        });
+        r++;
+      });
+      for(let c=1;c<=1+CHECKPOINTS.length;c++) for(let rr=headerRowIdx; rr<r; rr++){
+        const cell = ws.getCell(rr,c);
+        cell.border = THIN_BORDERS;
+        if(rr===headerRowIdx){ cell.font = {bold:true,size:10,color:{argb:'FF64748B'}}; cell.fill = HEADER_FILL; }
+      }
+      r += 2;
+    }
+    writeTrendGrid('Texture & Performance', 'texture');
+    writeTrendGrid('Color', 'color');
+    writeTrendGrid('Odor', 'odor');
+    writeTrendGrid('pH', 'ph');
+    writeTrendGrid('Viscosity', 'viscosity');
+
+    // ตารางรูปถ่าย — ฝังรูปจริง (ดึง base64 แบบ batch ล่วงหน้าทั้งหมดก่อน แล้วค่อยวาง ให้เร็วและไม่สแปม error)
+    ws.getCell(r,1).value = 'Photo'; ws.getCell(r,1).font = {bold:true, size:12}; r++;
+    const photoHeaderRowIdx = r;
+    ws.getCell(r,1).value = 'Condition';
+    CHECKPOINTS.forEach((cp,i)=>{ ws.getCell(r, 2+i).value = cp.label; });
+    r++;
+    const allFileIds = new Set();
+    CONDITIONS.forEach(cond=> CHECKPOINTS.forEach(cp=>{
+      if(!(CHECKPOINT_CONDITIONS[cp.key]||[]).includes(cond.key)) return;
+      (firstRowOf(entry, cp.key, cond.key).photos || []).forEach(p=>{ if(p.fileId) allFileIds.add(p.fileId); });
+    }));
+    const photoCache = await fetchPhotosBase64Batch(Array.from(allFileIds));
+
+    CONDITIONS.forEach(cond=>{
+      ws.getCell(r,1).value = cond.label; ws.getCell(r,1).font = {bold:true};
+      ws.getRow(r).height = 46;
+      CHECKPOINTS.forEach((cp,i)=>{
+        const col = 2+i;
+        if(!(CHECKPOINT_CONDITIONS[cp.key]||[]).includes(cond.key)){ ws.getCell(r,col).value = '-'; return; }
+        const photo = (firstRowOf(entry, cp.key, cond.key).photos || [])[0];
+        const cached = photo && photo.fileId && photoCache[photo.fileId];
+        if(cached){
+          try{
+            const ext = (cached.mimeType||'').includes('png') ? 'png' : 'jpeg';
+            const imgId = wb.addImage({ base64: `data:${cached.mimeType||'image/jpeg'};base64,${cached.base64}`, extension: ext });
+            ws.addImage(imgId, { tl:{col: col-1, row: r-1}, ext:{width:42, height:42} });
+          }catch(e){ /* ข้ามรูปที่ฝังไม่สำเร็จ ไม่ให้ล้มทั้งไฟล์ */ }
+        } else if(!photo){
+          ws.getCell(r,col).value = '-';
+        }
+      });
+      r++;
+    });
+    for(let c=1;c<=1+CHECKPOINTS.length;c++) for(let rr=photoHeaderRowIdx; rr<r; rr++){
+      const cell = ws.getCell(rr,c);
+      cell.border = THIN_BORDERS;
+      if(rr===photoHeaderRowIdx){ cell.font = {bold:true,size:10,color:{argb:'FF64748B'}}; cell.fill = HEADER_FILL; }
+    }
+
+    for(let c=1;c<=1+CHECKPOINTS.length;c++) ws.getColumn(c).width = (c===1) ? 12 : 11;
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const safeName = (entry.productName||'product').replace(/[\\/:*?"<>|]/g, '_').slice(0,60);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${safeName}_${entry.formNo||''}_compare_report.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    showToast(t('excelExportedToast'));
+  }catch(e){
+    console.error('exportCompareToExcel error:', e);
+    showToast(t('excelExportFailToast'));
+  }
 }
 
 // แปลงไฟล์รูปเป็น JPEG ที่ย่อขนาด/บีบอัดแล้ว (base64) ก่อนอัปโหลด — กันไม่ให้ไฟล์ใหญ่เกินไป อัปโหลดช้า/ค้าง
@@ -1637,6 +2218,7 @@ async function handlePhotoSelected(event, cpKey, condKey, pfx){
     cell.dataset.photos = JSON.stringify(photos);
     thumbWrap.innerHTML = photoThumbsHtml(pfx, photos);
     dirtyCheckpoints.add(cpKey);
+    updateConditionNavDot(cpKey, condKey);
   } else {
     showToast(t('photoUploadFailed'));
   }
@@ -1651,19 +2233,42 @@ function removePhotoFromRow(pfx, idx){
   cell.dataset.photos = JSON.stringify(photos);
   document.getElementById(`photothumbs_${pfx}`).innerHTML = photoThumbsHtml(pfx, photos);
   dirtyCheckpoints.add(cell.dataset.cpkey);
+  updateConditionNavDot(cell.dataset.cpkey, cell.dataset.condkey);
 }
 
-// ก่อน re-render ตารางของ checkpoint นี้ใหม่ (ตอนเพิ่ม/ลบคอลัมน์วัดซ้ำ) ต้องดึงค่าที่พิมพ์ค้างไว้ในทุกเงื่อนไข
-// ของตารางนี้มาเก็บใน entry.results ก่อนเสมอ ไม่งั้นจะเสียข้อมูลที่เพิ่งพิมพ์ไปตอนสร้างตารางใหม่ทับของเดิม
+// ก่อน re-render บล็อกของ checkpoint นี้ใหม่ (ตอนเพิ่ม/ลบแถววัดซ้ำ) ต้องดึงค่าที่พิมพ์ค้างไว้ในทุกเงื่อนไข
+// ของ checkpoint นี้มาเก็บใน entry.results ก่อนเสมอ ไม่งั้นจะเสียข้อมูลที่เพิ่งพิมพ์ไปตอนสร้างตารางใหม่ทับของเดิม
 function snapshotCheckpointTableToEntry(entry, cpKey){
-  const table = document.getElementById(`cptable_${cpKey}`);
-  if(!table) return;
+  const panel = document.querySelector(`.cp-panel[data-cpkey="${cpKey}"]`);
+  if(!panel) return;
   const condKeys = new Set();
-  table.querySelectorAll('th[data-condkey]').forEach(th=> condKeys.add(th.dataset.condkey));
+  panel.querySelectorAll('[data-condkey]').forEach(el=> condKeys.add(el.dataset.condkey));
   entry.results = entry.results || {};
   entry.results[cpKey] = entry.results[cpKey] || {};
   condKeys.forEach(condKey=>{
     entry.results[cpKey][condKey] = readConditionRowsFromDom(cpKey, condKey);
+  });
+}
+
+// เก็บค่าที่พิมพ์/เลือกค้างไว้ (ยังไม่ได้กด "บันทึก") ของทุก checkpoint ที่มีอยู่ใน DOM ตอนนี้ กลับเข้า entry.results
+// ก่อนที่หน้าจอจะถูกวาดทับใหม่ทั้งหมด (สลับโหมด record/compare, กดทำเครื่องหมายตรวจแล้ว ฯลฯ) — ครอบคลุมทั้งผลตรวจของ
+// แต่ละเงื่อนไข, หมายเหตุ, และผู้บันทึก/ผู้ตรวจสอบ เพื่อไม่ให้ข้อมูลที่กรอกไว้แล้วหายไปเฉยๆ ก่อนได้กดบันทึกจริง
+function snapshotAllPanelsToEntry(entry){
+  document.querySelectorAll('#resultModalBody .cp-panel[data-cpkey]').forEach(panel=>{
+    const cpKey = panel.dataset.cpkey;
+    snapshotCheckpointTableToEntry(entry, cpKey);
+    entry.results[cpKey] = entry.results[cpKey] || {};
+    const remarkEl = document.getElementById(`remark_${cpKey}`);
+    if(remarkEl) entry.results[cpKey]._remark = remarkEl.value.trim();
+    const testerEl = document.getElementById(`tester_${cpKey}`);
+    const reviewerEl = document.getElementById(`reviewer_${cpKey}`);
+    if(testerEl || reviewerEl){
+      const prevMeta = entry.results[cpKey]._meta || {};
+      entry.results[cpKey]._meta = {
+        tester: testerEl ? testerEl.value : (prevMeta.tester || ''),
+        reviewer: reviewerEl ? reviewerEl.value : (prevMeta.reviewer || '')
+      };
+    }
   });
 }
 
@@ -1673,7 +2278,7 @@ function rerenderCheckpointTable(entry, cpKey){
   const defaults = {...getDefaultViscMethod(entry), tester:lastTester};
   const wrap = document.getElementById(`cptablewrap_${cpKey}`);
   if(!wrap) return;
-  wrap.innerHTML = buildCheckpointTableHtml(entry, cp, defaults);
+  wrap.innerHTML = buildCheckpointConditionsHtml(entry, cp, defaults);
 }
 
 // เพิ่มคอลัมน์วัดซ้ำ (repeat measurement) ให้เงื่อนไขหนึ่งๆ ในตารางของ checkpoint นี้
@@ -1717,7 +2322,18 @@ function renderResultModalBody(entryId){
   const entry = products.find(p=>p.id===entryId);
   if(!entry) return;
   const body = document.getElementById('resultModalBody');
+
+  // ถ้ากำลังจะวาดทับของเดิมของสินค้าตัวเดียวกัน (ไม่ใช่เปิด modal ใหม่) ต้องดึงค่าที่พิมพ์/เลือกค้างไว้ในจอ
+  // กลับเข้า entry.results ก่อนเสมอ ไม่งั้นจะเสียข้อมูลทุกครั้งที่มีการวาดหน้าใหม่ทับ (ดู snapshotAllPanelsToEntry)
+  if(lastRenderedResultEntryId === entryId) snapshotAllPanelsToEntry(entry);
+  lastRenderedResultEntryId = entryId;
+
   try{
+    if(resultViewMode === 'compare'){
+      body.innerHTML = buildCompareViewHtml(entry);
+      return;
+    }
+
     const schedule = computeSchedule(entry);
     const defaults = {...getDefaultViscMethod(entry), tester:lastTester};
 
@@ -1735,14 +2351,19 @@ function renderResultModalBody(entryId){
     const panelsHtml = schedule.map(cp=>{
       const existing = (entry.results && entry.results[cp.key]) || {};
       const remark = existing._remark || '';
+      const meta = existing._meta || {};
       const isActive = cp.key === activeResultTab;
       return `<div class="cp-panel" data-cpkey="${cp.key}" style="${isActive?'':'display:none'}">
         <div class="cp-panel-head">
           <span class="cp-section-title">${cp.label}</span><span class="cp-section-date">${fmt(cp.date)}</span>
           <span class="status-pill ${cp.status}">${statusLabel(cp.status)}</span>
           <button class="mark-btn ${cp.tested?'marked':''}" onclick="toggleTested('${entryId}','${cp.key}','record')">${cp.tested?t('markBtnDone'):t('markBtnMark')}</button>
+          <div class="cp-people-fields">
+            <div class="cp-people-field"><label>${t('thTester')}</label><select data-cpkey="${cp.key}" id="tester_${cp.key}">${peopleOptionsHtml(meta.tester||defaults.tester||'')}</select></div>
+            <div class="cp-people-field"><label>${t('thReviewer')}</label><select data-cpkey="${cp.key}" id="reviewer_${cp.key}">${peopleOptionsHtml(meta.reviewer||'')}</select></div>
+          </div>
         </div>
-        <div class="cptable-wrap" id="cptablewrap_${cp.key}">${buildCheckpointTableHtml(entry, cp, defaults)}</div>
+        <div class="cptable-wrap" id="cptablewrap_${cp.key}">${buildCheckpointConditionsHtml(entry, cp, defaults)}</div>
         <textarea class="remark-box" id="remark_${cp.key}" data-cpkey="${cp.key}" placeholder="${t('remarkPlaceholder')}">${escapeHtml(remark)}</textarea>
         <div style="margin-top:8px;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:8px;">
           <span class="save-status" id="savestatus_${cp.key}">${t('savedStatusLabel')}</span>
@@ -1766,27 +2387,50 @@ function renderResultModalBody(entryId){
   body.addEventListener('input', e=>{
     const cpKey = e.target.dataset && e.target.dataset.cpkey;
     if(cpKey) dirtyCheckpoints.add(cpKey);
+    const condKey = e.target.dataset && e.target.dataset.condkey;
+    if(cpKey && condKey) updateConditionNavDot(cpKey, condKey);
   });
   body.addEventListener('change', e=>{
     const cpKey = e.target.dataset && e.target.dataset.cpkey;
     if(cpKey) dirtyCheckpoints.add(cpKey);
     if(e.target.dataset && e.target.dataset.f === 'tester') lastTester = e.target.value;
+    const condKey = e.target.dataset && e.target.dataset.condkey;
+    if(cpKey && condKey) updateConditionNavDot(cpKey, condKey);
   });
 })();
 
-// อ่านข้อมูลของ (checkpoint, เงื่อนไข) หนึ่งคู่ จากตารางของ checkpoint นั้น — คืน array ของแถวข้อมูล
-// (รองรับหลายคอลัมน์ถ้ามีวัดซ้ำ เรียงตามลำดับ ridx) รูปแบบ return ตรงกับที่ saveCheckpointResults/closeResultModal
-// คาดหวังไว้พอดี จึงใช้ร่วมกันได้โดยไม่ต้องแก้ไขฟังก์ชันเหล่านั้นเลย
+// อัปเดตจุดสถานะ (●) บนแถบนำทางเงื่อนไข ให้ตรงกับที่กรอกจริงในจอ "แบบเรียลไทม์" ทันทีที่พิมพ์/เลือก/แนบรูป
+// โดยไม่ต้องรอบันทึกหรือสลับแท็บ — เช็คจาก DOM ตรงๆ (ไม่ใช่ entry.results ที่ยังไม่อัปเดตจนกว่าจะ snapshot/บันทึก)
+function updateConditionNavDot(cpKey, condKey){
+  const panel = document.querySelector(`.cp-panel[data-cpkey="${cpKey}"]`);
+  if(!panel) return;
+  const pill = panel.querySelector(`.cond-nav-pill[data-condkey="${condKey}"]`);
+  if(!pill) return;
+  let filled = false;
+  panel.querySelectorAll(`[data-condkey="${condKey}"][data-ridx]`).forEach(el=>{
+    if(filled) return;
+    if(el.classList && el.classList.contains('photo-cell')){
+      try{ if(JSON.parse(el.dataset.photos || '[]').length) filled = true; }catch(e){ /* noop */ }
+      return;
+    }
+    if((el.tagName === 'INPUT' || el.tagName === 'SELECT') && el.value && el.value.trim()) filled = true;
+  });
+  pill.classList.toggle('filled', filled);
+}
+
+// อ่านข้อมูลของ (checkpoint, เงื่อนไข) หนึ่งคู่ จากบล็อกของ checkpoint นั้นใน DOM — คืน array ของแถวข้อมูล
+// (รองรับหลายแถวถ้ามีวัดซ้ำ เรียงตามลำดับ ridx) — ไม่ผูกกับโครงสร้างตารางแบบใดแบบหนึ่ง อาศัยแค่ data-condkey/data-ridx
+// ที่ติดอยู่กับทุก field ในบล็อกของ checkpoint นั้น จึงใช้ได้ทั้งกับ layout แบบคอลัมน์เดิมและแบบบล็อกเงื่อนไขใหม่
 function readConditionRowsFromDom(cpKey, condKey){
-  const table = document.getElementById(`cptable_${cpKey}`);
-  if(!table) return [];
-  const ths = Array.from(table.querySelectorAll(`th[data-condkey="${condKey}"]`))
-    .sort((a,b)=> Number(a.dataset.ridx) - Number(b.dataset.ridx));
-  return ths.map(th=>{
-    const pfx = th.dataset.colpfx;
+  const panel = document.querySelector(`.cp-panel[data-cpkey="${cpKey}"]`);
+  if(!panel) return [];
+  const ridxSet = new Set();
+  panel.querySelectorAll(`[data-condkey="${condKey}"][data-ridx]`).forEach(el=> ridxSet.add(el.dataset.ridx));
+  const ridxs = Array.from(ridxSet).map(Number).sort((a,b)=>a-b);
+  return ridxs.map(ridx=>{
     const data = {};
-    table.querySelectorAll(`[data-pfx="${pfx}"]`).forEach(el=>{
-      if(el.classList && el.classList.contains('photo-matrix-cell')){
+    panel.querySelectorAll(`[data-condkey="${condKey}"][data-ridx="${ridx}"]`).forEach(el=>{
+      if(el.classList && el.classList.contains('photo-cell')){
         try{ const photos = JSON.parse(el.dataset.photos || '[]'); if(photos.length) data.photos = photos; }catch(e){ /* noop */ }
         return;
       }
@@ -1803,17 +2447,34 @@ async function saveCheckpointResults(entryId, checkpointKey, silent){
   entry.results = entry.results || {};
   entry.results[checkpointKey] = entry.results[checkpointKey] || {};
 
-  const remarkEl = document.getElementById(`remark_${checkpointKey}`);
-  const remark = remarkEl ? remarkEl.value.trim() : '';
+  // แผงบันทึกผลของ checkpoint นี้อาจไม่ได้อยู่ใน DOM ตอนนี้ (เช่น ผู้ใช้สลับไปหน้า compare แล้วกด ✕ ปิดเลย
+  // โดยที่ยังไม่ได้กลับมาหน้า record) — ถ้าไม่มีแผงอยู่จริง ต้องใช้ค่าที่เคย snapshot ไว้ล่าสุดใน entry.results
+  // แทนการอ่านจาก DOM ตรงๆ ไม่งั้นจะได้ค่าว่างแล้วเขียนทับข้อมูลจริงที่กรอกไว้จนหายหมด
+  const panelInDom = document.querySelector(`.cp-panel[data-cpkey="${checkpointKey}"]`);
+
+  let remark, meta;
+  if(panelInDom){
+    const remarkEl = document.getElementById(`remark_${checkpointKey}`);
+    remark = remarkEl ? remarkEl.value.trim() : (entry.results[checkpointKey]._remark || '');
+    const testerEl = document.getElementById(`tester_${checkpointKey}`);
+    const reviewerEl = document.getElementById(`reviewer_${checkpointKey}`);
+    const prevMeta = entry.results[checkpointKey]._meta || {};
+    meta = { tester: testerEl ? testerEl.value : (prevMeta.tester || ''), reviewer: reviewerEl ? reviewerEl.value : (prevMeta.reviewer || '') };
+  } else {
+    remark = entry.results[checkpointKey]._remark || '';
+    meta = entry.results[checkpointKey]._meta || { tester:'', reviewer:'' };
+  }
+  if(meta.tester) lastTester = meta.tester;
 
   // อัปเดต local state ทันที (optimistic) ให้ผู้ใช้เห็นผลไว ไม่ต้องรอ network
   const payloads = [];
   for(const condKey of conds){
-    const rows = readConditionRowsFromDom(checkpointKey, condKey);
+    const rows = panelInDom ? readConditionRowsFromDom(checkpointKey, condKey) : (entry.results[checkpointKey][condKey] || []);
     entry.results[checkpointKey][condKey] = rows;
     payloads.push({condKey, rows});
   }
   entry.results[checkpointKey]._remark = remark;
+  entry.results[checkpointKey]._meta = meta;
 
   if(!silent){
     const statusEl = document.getElementById(`savestatus_${checkpointKey}`);
@@ -1821,10 +2482,12 @@ async function saveCheckpointResults(entryId, checkpointKey, silent){
   }
   dirtyCheckpoints.delete(checkpointKey);
 
-  // ส่งขึ้น backend เบื้องหลัง (ไม่บล็อก UI ที่อัปเดตไปแล้ว)
+  // ส่งขึ้น backend เบื้องหลัง (ไม่บล็อก UI ที่อัปเดตไปแล้ว) — ผู้บันทึก/ผู้ตรวจสอบเก็บผ่าน condition พิเศษ '_meta'
+  // (ใช้ action 'saveResult' เดิมที่รองรับ condition เป็นสตริงใดก็ได้อยู่แล้ว ไม่ต้องแก้ backend)
   for(const p of payloads){
     await apiPost({action:'saveResult', id: entryId, checkpointKey, condition: p.condKey, data: p.rows});
   }
+  await apiPost({action:'saveResult', id: entryId, checkpointKey, condition:'_meta', data: meta});
   await apiPost({action:'saveRemark', id: entryId, checkpointKey, remark});
 
   if(!silent) showToast(`${t('savedResultToast')}${CHECKPOINTS.find(c=>c.key===checkpointKey).label}${t('savedResultToastSuffix')}`);
@@ -1999,17 +2662,12 @@ async function exportEntryToExcel(){
       if(remark && fields.remark) flatRows.push({remarkRow:true, cpLabel:cp.label, remark});
     });
 
-    // ดึง base64 ของรูปทั้งหมดที่ต้องใช้ล่วงหน้า (แคชกันเรียกซ้ำถ้ารูปเดียวกันโผล่หลายที่)
+    // ดึง base64 ของรูปทั้งหมดที่ต้องใช้ล่วงหน้า (แบบ batch หลายรูปต่อคำขอ + ยิงพร้อมกันหลายชุด ให้เร็วขึ้นมากเมื่อมีรูปเยอะ)
     const photoCache = {};
     if(showPhotos){
       const allFileIds = new Set();
       flatRows.forEach(r=>{ if(r.data && r.data.photos) r.data.photos.forEach(p=>{ if(p.fileId) allFileIds.add(p.fileId); }); });
-      for(const fileId of allFileIds){
-        try{
-          const res = await apiPost({action:'getPhotoBase64', fileId});
-          if(res && res.base64) photoCache[fileId] = res;
-        }catch(e){ /* ข้ามรูปที่ดึงไม่สำเร็จ ไปทำรูปถัดไป ไม่ให้ล้มทั้งไฟล์ */ }
-      }
+      Object.assign(photoCache, await fetchPhotosBase64Batch(Array.from(allFileIds)));
     }
 
     const wb = new ExcelJS.Workbook();
@@ -2097,7 +2755,7 @@ async function exportEntryToExcel(){
         if(showTextureRoom) ws.getCell(dataRowIdx, colMap.textureRoom).value = d.textureRoom_analysis || d.textureRoom || '-';
         simpleCols.forEach(c=>{
           if(c.key === 'viscMethod') ws.getCell(dataRowIdx, colMap.viscMethod).value = viscMethod || '-';
-          else ws.getCell(dataRowIdx, colMap[c.key]).value = d[c.dataKey] || '-';
+          else ws.getCell(dataRowIdx, colMap[c.key]).value = (c.key==='viscosity' ? (d.viscosity || d.viscosity_analysis || d.viscosity_desc) : d[c.dataKey]) || '-';
         });
 
         if(showPhotos){
@@ -2256,7 +2914,7 @@ function buildFormReportHtml(entry, fields){
     if(showTextureRoom) tds += `<td>${escapeHtml(d.textureRoom_analysis || d.textureRoom || '-')}</td>`;
     simpleCols.forEach(c=>{
       if(c.key === 'viscMethod') tds += `<td style="font-size:9px">${escapeHtml(viscMethod||'-')}</td>`;
-      else tds += `<td>${escapeHtml(d[c.dataKey]||'-')}</td>`;
+      else tds += `<td>${escapeHtml((c.key==='viscosity' ? (d.viscosity || d.viscosity_analysis || d.viscosity_desc) : d[c.dataKey])||'-')}</td>`;
     });
     if(showPhotos){
       const photos = d.photos || [];
