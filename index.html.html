@@ -384,7 +384,7 @@ body{
 .cmp-range-select{padding:5px 8px;border-radius:8px;border:1px solid var(--line,#d9dee7);font:inherit}.cmp-pct{color:var(--muted);font-size:.85em}
 .lock-banner{background:#e0e7ff;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:13px}
 #resultModalBody.is-locked .cptable-wrap,#resultModalBody.is-locked .remark-box,#resultModalBody.is-locked .cp-people-fields,#resultModalBody.is-locked .mark-btn{pointer-events:none;opacity:.6}
-#reportModal .modal{max-width:920px;width:96vw;max-height:92vh;overflow:auto}#toast{z-index:100000!important;max-width:min(92vw,560px)}#toast.err{background:#b91c1c!important;color:#fff!important}.cmp-chg{background:#fee2e2;font-weight:700;color:#991b1b}.sg-raw{font-size:11px;color:#475569}.matrix-table select{padding:3px 6px;border-radius:6px;border:1px solid #cbd5e1;font:inherit}
+#resultModalBody .cond-record-table th{white-space:nowrap;overflow:hidden;vertical-align:bottom}#resultModalBody .cond-record-table th .matrix-col-date{display:block;white-space:nowrap}#resultModalBody .matrix-wrap{overflow-x:auto}#resultModalBody .cond-record-table td input{width:100%;min-width:0;box-sizing:border-box}#reportModal .modal{max-width:920px;width:96vw;max-height:92vh;overflow:auto}#toast{z-index:100000!important;max-width:min(92vw,560px)}#toast.err{background:#b91c1c!important;color:#fff!important}.cmp-chg{background:#fee2e2;font-weight:700;color:#991b1b}.sg-raw{font-size:11px;color:#475569}.matrix-table select{padding:3px 6px;border-radius:6px;border:1px solid #cbd5e1;font:inherit}
 .rpt-doc{border:1px solid var(--line,#d9dee7);border-radius:10px;padding:10px 12px;margin:10px 0}.rpt-doc-title{font-weight:700;margin-bottom:2px}.rpt-btns{display:flex;gap:8px;margin-top:8px}.fin-docs{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px}
 .matrix-col-date,.matrix-table th,.cmp-trend-table th{text-transform:none}
 .chip-final{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;color:#fff;margin-left:4px}.chip-final.pass{background:#16a34a}.chip-final.fail{background:#dc2626}
@@ -505,6 +505,7 @@ body{
         </label>
       </div>
     </div>
+    <div class="field"><label data-i18n="labelOwner">เจ้าของสูตร</label><select id="f_owner" style="width:100%"></select><div class="helptext" data-i18n="ownerHelp"></div></div>
     <div class="field"><label data-i18n="labelProtocol">Stability Protocol</label><select id="f_protocol" style="width:100%"></select><div class="helptext" id="f_protocolNote" style="margin-top:3px"></div></div>
     <div class="helptext" data-i18n="productHelptext">คำนวณวันตรวจถัดไปให้อัตโนมัติจาก Day 0</div>
     <div class="modal-actions">
@@ -562,6 +563,7 @@ body{
     <div class="helptext" style="margin-bottom:12px;" data-i18n="peopleModalHelptext">รายชื่อในนี้ใช้เป็นตัวเลือกในช่อง "ผู้บันทึก" และ "ผู้พัฒนาสูตร" ตอนบันทึกผลทดสอบ — เพิ่ม/แก้ไข/ลบได้ตลอด และเก็บไว้กลางให้ทุกคนเห็นชุดเดียวกัน</div>
     <div id="peopleListWrap"></div>
     <div class="people-row" style="margin-top:10px;">
+      <input id="f_newPersonEmail" type="email" data-i18n-ph="phNewPersonEmail" placeholder="อีเมล" style="max-width:240px">
       <input id="f_newPersonName" data-i18n-ph="phNewPersonName" placeholder="ชื่อคนใหม่…">
       <button class="btn btn-brand btn-xs" data-i18n="btnAddPerson" onclick="addPersonUI()">+ เพิ่ม</button>
     </div>
@@ -975,8 +977,8 @@ function makeBuiltinProtocol(){
     conditions:[ {key:'c4',label:'4°C',formLabel:'4 oC'}, {key:'room',label:'RT',formLabel:'ROOM TEMP'}, {key:'c40',label:'40°C',formLabel:'40 oC'}, {key:'sunlight',label:'SUN',formLabel:'SUNLIGHT'} ],
     methods:{ brookfield: makeBrookfield() },
     parameters:[
-      {key:'textureOut', label:'TEXTURE & PERFORMANCE (Post-Condition Storage)', group:'TEXTURE & PERFORMANCE', sub:'Post-Condition Storage', formLabel:'TEXTURE & PERFORMANCE', xlsxSub:'หลังออกจากตู้', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:22.25},
-      {key:'textureRoom', label:'TEXTURE & PERFORMANCE (After Resting at Room Temperature)', group:'TEXTURE & PERFORMANCE', sub:'After Resting at Room Temperature', formLabel:'TEXTURE & PERFORMANCE', xlsxSub:'ตั้งทิ้งไว้อุณหภูมิห้อง', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:21.625},
+      {key:'textureOut', label:'Texture & Performance (Post-Condition Storage)', group:'Texture & Performance', formGroup:'TEXTURE & PERFORMANCE', sub:'Post-Condition Storage', subTh:'หลังออกจากตู้', formLabel:'TEXTURE & PERFORMANCE', xlsxSub:'หลังออกจากตู้', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:22.25},
+      {key:'textureRoom', label:'Texture & Performance (After Resting at Room Temperature)', group:'Texture & Performance', formGroup:'TEXTURE & PERFORMANCE', sub:'After Resting at Room Temperature', subTh:'ตั้งทิ้งไว้อุณหภูมิห้อง', formLabel:'TEXTURE & PERFORMANCE', xlsxSub:'ตั้งทิ้งไว้อุณหภูมิห้อง', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:21.625},
       {key:'color', label:'Color', formLabel:'COLOR', xlsxSub:'', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:15.25},
       {key:'odor', label:'Odor', formLabel:'ODOR', xlsxSub:'', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:14.25},
       {key:'ph', label:'pH', formLabel:'pH', xlsxSub:'(25 oC)', outputs:{observation:false,analysis:false,value:true}, method:'', numeric:true, decimals:2, sheet:{mode:'raw'}, width:7.625},
@@ -1016,7 +1018,7 @@ const DEFAULT_CONFIG = {
             ph:{mode:'abs',threshold:0.2}, viscosity:{mode:'pct',threshold:10} },
     overRange:'change'   // ค่าเกินลิมิตเครื่อง (เช่น Brookfield แสดง EEE): 'change' = นับเป็นเปลี่ยนแปลง · 'ignore' = ไม่ตรวจ
   },
-  general:{ defaultProtocolId:BUILTIN_PROTOCOL_ID }
+  general:{ defaultProtocolId:BUILTIN_PROTOCOL_ID, emailOnTested:true, emailCc:'', appUrl:'', ownerDigestEnabled:true, ownerDigestHour:9, ownerDigestOverdue:true }
 };
 function deepMerge(base, over){
   if(Array.isArray(base) || typeof base!=='object' || base===null) return (over===undefined||over===null) ? base : over;
@@ -1037,6 +1039,11 @@ function protoInUseCount(id){ return products.filter(p=>(p.protocolId||BUILTIN_P
 function condDef(proto,key){ return (proto.conditions||[]).find(c=>c.key===key) || {key,label:key,formLabel:key}; }
 function condsOf(entry,cpKey){ const cp=protoOf(entry).checkpoints.find(c=>c.key===cpKey); return cp ? (cp.conditions||[]) : []; }
 function cpDef(entry,cpKey){ return protoOf(entry).checkpoints.find(c=>c.key===cpKey); }
+const SUB_TH={'Post-Condition Storage':'หลังออกจากตู้','After Resting at Room Temperature':'ตั้งทิ้งไว้อุณหภูมิห้อง'};
+function pSub(p){ const s=p.sub||''; return (currentLang==='th') ? (p.subTh||SUB_TH[s]||s) : s; }
+function pGroup(p){ return p.group==='TEXTURE & PERFORMANCE' ? 'Texture & Performance' : (p.group||''); }
+function pGroupForm(p){ return p.formGroup||p.group||''; }
+function pLabel(p){ return p.group ? `${pGroup(p)} (${pSub(p)})` : p.label; }
 function degLabel(s){ return String(s||'').replace(/(\d)\s*o\s*C\b/g,'$1 °C'); } // "40 oC" → "40 °C" (หน้าจอ/PDF)
 
 /* ── parameter helpers ── */
@@ -1092,7 +1099,7 @@ function ruleFor(p){
 // คืนข้อความการเปลี่ยนแปลงของ param นี้ (หรือ null ถ้ายังไม่ถึงเกณฑ์) — d = ข้อมูลที่เทียบ, base = baseline
 function isOverRange(v){ return /^\s*E{3,}\s*$/i.test(String(v==null?'':v)); }
 function detectChange(p,d,base){
-  const rule=ruleFor(p); if(!d||rule.mode==='off') return null; const T=Number(rule.threshold)||0; const name=p.formLabel&&!p.group?p.label:p.label.replace(/\s*\(.*\)$/,'')+(p.sub?` (${p.sub})`:'');
+  const rule=ruleFor(p); if(!d||rule.mode==='off') return null; const T=Number(rule.threshold)||0; const name=pLabel(p);
   if(rule.mode==='score'){ const n=scoreMag(d[pAnaKey(p)]); return (n!==null && Math.abs(n)>=Math.max(T,0.0001)) ? `${name} ${/^[A-Da-d]$/.test(String(d[pAnaKey(p)]).trim())?String(d[pAnaKey(p)]).trim().toUpperCase():fmtScoreVal(n)}` : null; }
   const rawV=paramValue(p,d), rawB=base?paramValue(p,base):'';
   if(isOverRange(rawV)){ // EEE = %torque เกินลิมิตเครื่อง → เทียบกับ baseline ที่วัดได้จริงเท่านั้น
@@ -1546,6 +1553,60 @@ Object.assign(STRINGS,{
   admOverChange:{th:"นับเป็น \"เปลี่ยนแปลง\" (ถ้า baseline วัดได้จริง)", en:"Count as \"changed\" (if the baseline was measurable)"},
   admOverIgnore:{th:"ไม่ตรวจ (ถือว่าเปรียบเทียบไม่ได้)", en:"Ignore (cannot be compared)"}
 });
+Object.assign(STRINGS,{
+  emailSentToast:{th:"ส่งอีเมลแจ้ง {name} แล้ว", en:"Email sent to {name}"},
+  emailNoEmailToast:{th:"ไม่ได้ส่งอีเมล: {name} ยังไม่มีอีเมลในรายชื่อ (เมนูจัดการรายชื่อ)", en:"Email not sent: {name} has no email in the people list"},
+  emailNoRecipientToast:{th:"ไม่ได้ส่งอีเมล: ยังไม่ได้เลือก \"ผู้พัฒนาสูตร\" ของ checkpoint นี้", en:"Email not sent: no formulator selected for this checkpoint"},
+  emailErrorToast:{th:"ส่งอีเมลไม่สำเร็จ", en:"Sending email failed"},
+  phNewPersonEmail:{th:"อีเมล (ใช้แจ้งเตือนผู้พัฒนาสูตร)", en:"Email (for formulator alerts)"},
+  admMailTitle:{th:"อีเมลแจ้งผู้พัฒนาสูตร", en:"Formulator email alert"},
+  admMailHelp:{th:"เมื่อผู้บันทึกกดติ๊ก \"ตรวจเสร็จแล้ว\" ระบบส่งอีเมลถึงผู้พัฒนาสูตรที่เลือกไว้ใน checkpoint นั้น (ต้องใส่อีเมลในเมนูจัดการรายชื่อ) พร้อมสรุปผลที่ถึงเกณฑ์เปลี่ยนแปลง", en:"When a recorder marks a checkpoint as tested, an email goes to the formulator selected on that checkpoint (email set in the people list), with a summary of changes."},
+  admMailEnable:{th:"เปิดการส่งอีเมลแจ้งเตือน", en:"Enable email alerts"},
+  admMailCc:{th:"CC (ไม่บังคับ — คั่นด้วย ,)", en:"CC (optional, comma-separated)"},
+  admAppUrl:{th:"ลิงก์เปิดระบบในอีเมล (URL ของหน้าเว็บแอป)", en:"App link shown in the email (URL of this web app)"}
+});
+Object.assign(STRINGS,{
+  labelOwner:{th:"เจ้าของสูตร (ผู้รับอีเมลแจ้งเตือน) *", en:"Formula owner (receives email alerts) *"},
+  ownerHelp:{th:"เลือกจากรายชื่อ — ระบบจะส่งอีเมลถึงคนนี้เมื่อผู้บันทึกกดตรวจเสร็จทุก checkpoint (ต้องมีอีเมลในเมนูจัดการรายชื่อ)", en:"Pick from the people list — this person receives an email whenever a checkpoint is marked tested (set their email in the people menu)."},
+  ownerRequired:{th:"กรุณาเลือกเจ้าของสูตร (เพิ่มรายชื่อได้ที่เมนูจัดการรายชื่อ)", en:"Please choose the formula owner (add names in the people menu)"},
+  emailNoRecipientToast:{th:"ไม่ได้ส่งอีเมล: สินค้านี้ยังไม่ได้ระบุเจ้าของสูตร (กดแก้ไขสินค้าเพื่อเลือก)", en:"Email not sent: this formula has no owner (edit the formula to choose one)"},
+  admMailHelp:{th:"เมื่อผู้บันทึกกดติ๊ก \"ตรวจเสร็จแล้ว\" ระบบส่งอีเมลถึง \"เจ้าของสูตร\" ที่ระบุไว้ตอนเพิ่มสินค้า (ต้องใส่อีเมลในเมนูจัดการรายชื่อ) พร้อมสรุปผลที่ถึงเกณฑ์เปลี่ยนแปลง", en:"When a checkpoint is marked tested, the formula owner chosen when the formula was added receives an email (email set in the people menu) with the change summary."}
+});
+Object.assign(STRINGS,{
+  emailNoRecipientToast:{th:"ไม่ได้ส่งอีเมล: สินค้านี้ไม่มีเจ้าของสูตร และยังไม่ได้เลือกผู้พัฒนาสูตรของ checkpoint นี้", en:"Email not sent: no formula owner and no formulator selected for this checkpoint"},
+  admMailHelp:{th:"เมื่อผู้บันทึกกดติ๊ก \"ตรวจเสร็จแล้ว\" ระบบส่งอีเมลถึง \"เจ้าของสูตร\" ที่ระบุตอนเพิ่มสินค้า ถ้าสินค้าไม่มีเจ้าของสูตร (สินค้าเดิม) จะส่งถึงผู้พัฒนาสูตรที่เลือกใน checkpoint นั้น (ต้องใส่อีเมลในเมนูจัดการรายชื่อ)", en:"On \"tested\", the email goes to the formula owner chosen when the formula was added; formulas without an owner (older ones) fall back to the formulator selected on that checkpoint. Emails are set in the people menu."},
+  ownerHelp:{th:"เลือกจากรายชื่อ — ระบบจะส่งอีเมลถึงคนนี้เมื่อผู้บันทึกกดตรวจเสร็จทุก checkpoint (ต้องมีอีเมลในเมนูจัดการรายชื่อ) ถ้าไม่เลือก (สินค้าเดิม) จะส่งถึงผู้พัฒนาสูตรของแต่ละ checkpoint", en:"Pick from the people list — this person gets an email at every tested checkpoint. If blank (older formulas), the formulator of each checkpoint is used."}
+});
+Object.assign(STRINGS,{
+  admMailSender:{th:"อีเมลผู้ส่ง (กล่อง Outlook ขององค์กร)", en:"Sender mailbox (Outlook)"},
+  admMailGraphHelp:{th:"การส่งในนามกล่อง Outlook ต้องให้ IT ตั้งค่า Microsoft Graph (App registration) แล้วใส่ MS_TENANT_ID / MS_CLIENT_ID / MS_CLIENT_SECRET ใน Apps Script → Project Settings → Script properties · ถ้ายังไม่ตั้ง ระบบส่งผ่าน Gmail ของบัญชีที่ Deploy และตั้ง Reply-To เป็นกล่องนี้", en:"Sending as the Outlook mailbox needs IT to set up Microsoft Graph (app registration) and add MS_TENANT_ID / MS_CLIENT_ID / MS_CLIENT_SECRET as Script properties. Otherwise mail goes via the deploying Gmail account with Reply-To set to this mailbox."},
+  admMailTest:{th:"ส่งอีเมลทดสอบ", en:"Send test email"},
+  admMailTestNeed:{th:"ใส่อีเมลปลายทางสำหรับทดสอบ", en:"Enter a test recipient"},
+  admMailTesting:{th:"กำลังส่งอีเมลทดสอบ…", en:"Sending test email…"},
+  admMailTestOk:{th:"ส่งผ่าน", en:"Sent via"},
+  admMailTestFallback:{th:"ส่งสำเร็จแต่ผ่านทางสำรอง", en:"Sent via fallback"}
+});
+Object.assign(STRINGS,{
+  admMailJunkHelp:{th:"ถ้าอีเมลเข้า Junk: ให้ผู้รับกด \"Not junk\" และเพิ่มผู้ส่งใน Safe senders ของ Outlook (หรือให้ IT ตั้งกฎอนุญาตผู้ส่งนี้ทั้งองค์กร) · ลิงก์ในอีเมลจะแสดงก็ต่อเมื่อใส่ URL ด้านบน — ถ้าเข้า Junk บ่อยให้ลองเว้นว่างไว้", en:"If mail lands in Junk: recipients click \"Not junk\" and add the sender to Safe senders (or IT allow-lists the sender org-wide). The link shows only if the URL above is filled — leave it blank if Junk keeps happening."},
+  admMailTestOk:{th:"ส่งทดสอบสำเร็จ จาก", en:"Test sent from"}
+});
+Object.assign(STRINGS,{
+  admDigestTitle:{th:"อีเมลสรุปเช้าถึงเจ้าของสูตร", en:"Morning email to formula owners"},
+  admDigestHelp:{th:"ทุกเช้าระบบส่งอีเมลหาเจ้าของสูตรแต่ละคน บอกว่าวันนี้มี Stability Test ของสูตรตัวเองที่ต้องตรวจอะไรบ้าง · ต้องกด \"ติดตั้งเวลาส่ง\" หนึ่งครั้ง (เวลาเป็นเขตเวลา Asia/Bangkok และ Google ส่งใกล้เคียงเวลาที่ตั้ง ±15 นาที) · สูตรที่ไม่มีเจ้าของสูตรหรือเจ้าของไม่มีอีเมลจะไม่ถูกส่ง", en:"Each morning every formula owner gets an email listing today’s stability tests for their formulas. Press \"Install schedule\" once (time zone Asia/Bangkok; Google fires within about ±15 minutes). Formulas without an owner, or owners without an email, are skipped."},
+  admDigestEnable:{th:"เปิดใช้อีเมลสรุปเช้า", en:"Enable morning email"},
+  admDigestOverdue:{th:"แนบรายการที่เลยกำหนดด้วย", en:"Include overdue items"},
+  admDigestHour:{th:"เวลาส่ง", en:"Send time"},
+  admDigestNow:{th:"ส่งตอนนี้ (ทดสอบ)", en:"Send now (test)"},
+  admDigestRemove:{th:"ยกเลิกการตั้งเวลา", en:"Remove schedule"},
+  admDigestInstall:{th:"ติดตั้งเวลาส่ง", en:"Install schedule"},
+  admDigestInstalled:{th:"ตั้งเวลาส่งอีเมลสรุปเช้าแล้ว ทุกวันเวลา", en:"Morning email scheduled daily at"},
+  admDigestRemoved:{th:"ยกเลิกการตั้งเวลาแล้ว", en:"Schedule removed"},
+  admDigestSent:{th:"ส่งแล้ว", en:"Sent to"},
+  admDigestPeople:{th:"คน", en:"people"},
+  admDigestSkipped:{th:"ข้าม (ไม่มีอีเมล)", en:"skipped (no email)"},
+  admDigestNoOwner:{th:"รายการไม่มีเจ้าของสูตร", en:"items without owner"},
+  admParamSubTh:{th:"หัวย่อย (ภาษาไทย)", en:"Sub header (Thai)"}
+});
 
 /* ═════ core (i18n, state, API, calendar, list, product) ═════ */
 function t(key){
@@ -1982,6 +2043,7 @@ function openProductModal(id){
   const sel=document.getElementById('f_protocol'); const cur = id ? ((products.find(x=>x.id===id)||{}).protocolId||BUILTIN_PROTOCOL_ID) : (config.general.defaultProtocolId||BUILTIN_PROTOCOL_ID);
   const hasRes = id && (()=>{ const e=products.find(x=>x.id===id); return e && e.results && Object.keys(e.results).length>0; })();
   sel.innerHTML = allProtocols().filter(p=>p.status!=='archived'||p.id===cur).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${escapeHtml(protoLabel(p))}</option>`).join('');
+  document.getElementById('f_owner').innerHTML = peopleOptionsHtml(id ? ((products.find(x=>x.id===id)||{}).owner||'') : '');
   sel.disabled = !!hasRes; document.getElementById('f_protocolNote').textContent = hasRes ? t('protocolLockedNote') : '';
   document.getElementById('productModal').classList.add('open');
 }
@@ -2016,9 +2078,10 @@ async function saveProduct(){
   const data = {
     seq: document.getElementById('f_seq').value.trim(), productName,
     formNo: document.getElementById('f_formNo').value.trim(), customer: document.getElementById('f_customer').value.trim(),
-    mixDate: mixDateISO, day0: day0ISO,
+    mixDate: mixDateISO, day0: day0ISO, owner: document.getElementById('f_owner').value,
     protocolId: (document.getElementById('f_protocol').value===BUILTIN_PROTOCOL_ID?'':document.getElementById('f_protocol').value),
   };
+  if(!id && !data.owner){ showToast(t('ownerRequired')); return; }
   // บันทึกแบบ optimistic: ปิดหน้าต่าง + อัปเดตหน้าจอทันที แล้วค่อยส่ง backend ในพื้นหลัง (ไม่ต้อง refresh ทั้งชีทอีก)
   closeModal('productModal'); setSync('busy', t('syncSaving'));
   if(id){
@@ -2086,8 +2149,11 @@ async function toggleTested(id, checkpointKey, source){
   if(source === 'record') renderResultModalBody(id);
   if(source === 'day') renderDayModalBody();
 
-  const res = await apiPost({action:'toggleTested', id, checkpointKey});
+  if(nowMarking && dirtyCheckpoints.has(checkpointKey)) await saveCheckpointResults(id, checkpointKey, true); // ให้ชื่อผู้พัฒนาสูตรที่เลือกไว้ถูกบันทึกก่อนส่งอีเมล
+  const notice = nowMarking ? buildReviewNotice(entry, checkpointKey) : undefined;
+  const res = await apiPost({action:'toggleTested', id, checkpointKey, notify: notice});
   if(res){
+    if(res.emailStatus) emailStatusToast(res.emailStatus);
     // ใช้ค่าที่ backend เก็บจริงเป็นหลัก (โดยเฉพาะ testedDate ที่ต้องคงอยู่ข้ามการรีเฟรชหน้า
     // เพื่อให้รายการที่เพิ่งตรวจวันนี้ยังโชว์ในปฏิทินจนกว่าจะข้ามวันนั้นไปจริงๆ)
     if(res.tested) entry.tested = res.tested;
@@ -2228,6 +2294,29 @@ function sheetGradeParams(entry,fields){ return protoOf(entry).parameters.filter
 function docCtlFooter(dc){ return (dc&&dc.enabled) ? {left:`${dc.effectiveLabel||'Effective Date :'} ${dc.effective||''}`.trim(), right:`${dc.docNo||''}  ${dc.rev||''}`.trim()} : null; }
 function sheetFor(entry){ return Object.assign({}, config.sheet, (entry && entry.final && entry.final.sheet) || {}); }
 
+/* ── อีเมลแจ้งผู้พัฒนาสูตรเมื่อติ๊กตรวจเสร็จ ── */
+function rawRecorded(proto,p,d){ // ค่าดิบที่ผู้บันทึกกรอก (ไม่ตีความ)
+  if(!d) return ''; const o=p.outputs, parts=[];
+  if(o.observation && d[pObsKey(p)]) parts.push(`สังเกต: ${d[pObsKey(p)]}`);
+  if(o.analysis && d[pAnaKey(p)]) parts.push(`วิเคราะห์: ${d[pAnaKey(p)]}`);
+  if(o.value){ const v=paramValue(p,d); if(v){ const m=methodText(proto,p,d); parts.push(m?`${v} (${m})`:v); } }
+  return parts.join(' · ');
+}
+function buildReviewNotice(entry,cpKey){
+  const proto=protoOf(entry), cp=cpDef(entry,cpKey)||{}; const meta=(entry.results&&entry.results[cpKey]&&entry.results[cpKey]._meta)||{};
+  const conds=(cp.conditions||[]); const rows=[];
+  proto.parameters.forEach(p=>{ const cells=conds.map(ck=>rawRecorded(proto,p,firstRowOf(entry,cpKey,ck))||'–'); if(cells.some(x=>x!=='–')) rows.push({param:p.label,cells}); });
+  return {formulator:meta.reviewer||'',recorder:meta.tester||actorName(),productName:entry.productName,formNo:entry.formNo||'',customer:entry.customer||'',checkpointLabel:cp.label||cpKey,protocol:protoLabel(proto),
+    table:{conds:conds.map(ck=>condDef(proto,ck).label),rows},appUrl:String(location.href).split('#')[0].split('?')[0]};
+}
+function emailStatusToast(r){
+  if(!r) return; const n=r.name||'';
+  if(r.status==='sent'){ showToast(t('emailSentToast').replace('{name}',n)); }
+  else if(r.status==='no-email') showToast(t('emailNoEmailToast').replace('{name}',n),6000);
+  else if(r.status==='no-recipient') showToast(t('emailNoRecipientToast'),6000);
+  else if(r.status==='error') showToast(t('emailErrorToast')+' '+(r.error||''),8000);
+}
+
 /* ───────────────────────── Minimal ZIP reader/writer (ไม่ต้องพึ่ง JSZip/CDN) ───────────────────────── */
 const ZIPX = (function(){
   const crcT=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
@@ -2326,8 +2415,8 @@ function recordColumns(proto){
 function recordRowTypes(proto){ const rows=['obs','ana']; if(proto.parameters.some(p=>p.outputs.observation&&p.outputs.analysis&&p.outputs.value)) rows.push('val'); return rows; }
 function recordHeaderHtml(col){
   if(col.kind==='photo') return t('thPhoto');
-  if(col.kind==='method') return `${escapeHtml(col.field.label)}<br><span class="matrix-col-date">${escapeHtml(col.param.label)}</span>`;
-  const p=col.param; return p.group ? `${escapeHtml(p.group)}<br><span class="matrix-col-date">(${escapeHtml(p.sub||'')})</span>` : escapeHtml(p.label);
+  if(col.kind==='method') return `${escapeHtml(col.field.label)}<br><span class="matrix-col-date">${escapeHtml(pLabel(col.param))}</span>`;
+  const p=col.param; return p.group ? `${escapeHtml(pGroup(p))}<br><span class="matrix-col-date">(${escapeHtml(pSub(p))})</span>` : escapeHtml(p.label);
 }
 function recordCellHtml(col,rowType,pfx,d,defaults,cpKey,condKey,ridx){
   const attrs=`data-pfx="${pfx}" data-cpkey="${cpKey}" data-condkey="${condKey}" data-ridx="${ridx}"`;
@@ -2357,13 +2446,20 @@ function recordCellHtml(col,rowType,pfx,d,defaults,cpKey,condKey,ridx){
 }
 function buildConditionMeasurementTable(entry,cp,condKey,ridx,d,defaults,canRemove){
   const proto=protoOf(entry); const pfx=`cx_${cp.key}_${condKey}_${ridx}`; const cols=recordColumns(proto); const rowTypes=recordRowTypes(proto);
-  const head=cols.map(c=>`<th>${recordHeaderHtml(c)}</th>`).join('');
+  // ความกว้างคอลัมน์ = ขนาดขั้นต่ำที่ทำให้หัวคอลัมน์อยู่บรรทัดเดียว "ที่ขนาดตัวอักษรเดิม" ไม่ซ้อนกัน
+  // (วัดจากความยาวข้อความหัว) · ถ้าจอกว้างกว่าผลรวม คอลัมน์จะขยายตามสัดส่วน · ถ้าแคบกว่า ตารางจะเลื่อนซ้าย-ขวาได้
+  const hdrPx=p=>Math.ceil(Math.max(String(p.group?pGroup(p):p.label).length, p.group?pSub(p).length+2:0)*7.8+24);
+  const minPx=c=>c.kind==='photo'?100 : c.kind==='method'?70 : (c.param.outputs.observation||c.param.outputs.analysis) ? Math.max(c.param.group?200:112,hdrPx(c.param)) : Math.max(methodOfParam(proto,c.param)?130:(c.param.numeric?64:100),hdrPx(c.param));
+  const LABEL_PX=80; const minTotal=LABEL_PX+cols.reduce((s,c)=>s+minPx(c),0); const pct=w=>(w/minTotal*100).toFixed(2)+'%';
+  const widths=cols.map(c=>pct(minPx(c))); const total=pct(LABEL_PX);
+
+  const head=cols.map((c,i)=>`<th style="width:${widths[i]}">${recordHeaderHtml(c)}</th>`).join('');
   const rowLabel={obs:t('rowObservation'),ana:t('rowAnalysis'),val:t('rowValue')}; const rowCls={obs:'param-row-desc',ana:'param-row-analysis',val:'param-row-value'};
   const body=rowTypes.map(rt=>`<tr class="${rowCls[rt]}"><td class="param-label">${rowLabel[rt]}</td>${cols.map(c=>recordCellHtml(c,rt,pfx,d,defaults,cp.key,condKey,ridx)).join('')}</tr>`).join('');
   const removeBtn = canRemove ? `<button type="button" class="remove-col-btn" onclick="removeMatrixColumn('${entry.id}','${cp.key}','${condKey}',${ridx})" title="${t('titleRemoveColumn')}">✕</button>`:'';
   return `<div class="cond-measure-wrap">${ridx>0?`<div class="cond-measure-repeat-label">#${ridx+1}${removeBtn}</div>`:''}
-    <div class="matrix-wrap"><table class="matrix-table cond-record-table" data-cpkey="${cp.key}" data-condkey="${condKey}" data-ridx="${ridx}">
-      <thead><tr><th class="param-col-head">${t('rowLabelHead')}</th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+    <div class="matrix-wrap"><table class="matrix-table cond-record-table" style="table-layout:fixed;width:100%;min-width:${minTotal}px" data-cpkey="${cp.key}" data-condkey="${condKey}" data-ridx="${ridx}">
+      <thead><tr><th class="param-col-head" style="width:${total}">${t('rowLabelHead')}</th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
 function buildConditionBlockHtml(entry,cp,condKey,defaults){
   const proto=protoOf(entry); const cond=condDef(proto,condKey);
@@ -2447,7 +2543,7 @@ function buildDeltaTableHtml(entry,range){
       const delta=cur-base; let s=p.thousands?((delta>0?'+':'')+Math.round(delta).toLocaleString('en-US')):fmtDeltaNum(delta,p.decimals||2);
       if(ruleFor(p).mode==='pct' && base!==0) s+=` <span class="cmp-pct">(${fmtDeltaNum(delta/Math.abs(base)*100,0)}%)</span>`;
       return `<td>${s}</td>`; }).join('');
-    return `<tr><td class="param-label">${escapeHtml(p.label)}</td>${cells}</tr>`; }).join('');
+    return `<tr><td class="param-label">${escapeHtml(pLabel(p))}</td>${cells}</tr>`; }).join('');
   return `<div class="matrix-wrap"><table class="matrix-table cmp-delta-table"><thead><tr><th class="param-col-head">${t('cmpParamHead')}</th>${conds.map(c=>`<th>${escapeHtml(c.label)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function rangeLabels(entry){ const cps=protoOf(entry).checkpoints; const r=resolveRange(entry); return {from:cps[r.fi]?cps[r.fi].label:'-', to:cps[r.ti]?cps[r.ti].label:'-', r}; }
@@ -2478,7 +2574,7 @@ function buildStatusBarHtml(entry){
 }
 function buildCompareViewHtml(entry){
   const proto=protoOf(entry); const cps=proto.checkpoints;
-  const tabs=[...proto.parameters.map(p=>({key:p.key,label:p.label})),{key:'photo',label:t('cmpTabPhoto')}];
+  const tabs=[...proto.parameters.map(p=>({key:p.key,label:pLabel(p)})),{key:'photo',label:t('cmpTabPhoto')}];
   if(!tabs.some(x=>x.key===activeCompareParam)) activeCompareParam=tabs[0].key;
   const tabsHtml=`<div class="cp-tabs cmp-param-tabs">${tabs.map(x=>`<button type="button" class="cp-tab ${x.key===activeCompareParam?'active':''}" onclick="switchCompareParam('${x.key}')">${escapeHtml(x.label)}</button>`).join('')}</div>`;
   const cur=tabs.find(x=>x.key===activeCompareParam);
@@ -2539,7 +2635,7 @@ function sheetParams(entry,fields){ return protoOf(entry).parameters.filter(p=>f
 function sheetLogoHtml(sh){ return (sh.showLogo && (config.logo||LOGO_B64)) ? `<img class="sh-logo" src="${config.logo||('data:image/png;base64,'+LOGO_B64)}">` : ''; }
 function sheetItemHtml(entry,p){
   const mh=methodOfParam(protoOf(entry),p)?methodHeaderText(entry,p):'';
-  const main = p.group ? `${escapeHtml(p.group)}<div class="sh-sub">(${escapeHtml(p.sub||'')})</div>` : escapeHtml(p.formLabel||p.label);
+  const main = p.group ? `${escapeHtml(pGroupForm(p))}<div class="sh-sub">(${escapeHtml(p.sub||'')})</div>` : escapeHtml(p.formLabel||p.label);
   return `<b>${main}</b>${mh?`<div class="sh-sub">${escapeHtml(mh)}</div>`:''}`;
 }
 function sheetModel(entry,fields){
@@ -2648,7 +2744,7 @@ async function exportSheetToExcel(entryArg,viaModal){
     showToast(t('excelExportedToast'));
   }catch(e){ console.error(e); showToast(t('excelExportFailToast')+' '+(e.message||'')); }
 }
-function sheetItemText(entry,p){ const mh=methodOfParam(protoOf(entry),p)?methodHeaderText(entry,p):''; return (p.group?`${p.group}\n(${p.sub||''})`:(p.formLabel||p.label))+(mh?`\n${mh}`:''); }
+function sheetItemText(entry,p){ const mh=methodOfParam(protoOf(entry),p)?methodHeaderText(entry,p):''; return (p.group?`${pGroupForm(p)}\n(${p.sub||''})`:(p.formLabel||p.label))+(mh?`\n${mh}`:''); }
 
 /* ── กรอกเกรด A–D ตอนสร้างเอกสาร (ไม่อยู่ในหน้าบันทึกผลปกติ) ── */
 let sheetDraft = {};
@@ -2665,7 +2761,7 @@ function renderSheetGradesUI(){
   const fields=reportFieldsFor(entry); const gps=sheetGradeParams(entry,fields); if(!gps.length){ wrap.innerHTML=''; return; }
   const M=sheetModel(entry,fields);
   wrap.innerHTML=`<div class="adm-h">${t('shGradeTitle')}</div><div class="helptext">${t('shGradeHelp')}</div>`+gps.map(p=>{
-    const head=`<tr><th class="param-col-head">${escapeHtml(p.label)}</th>${M.others.map(cp=>`<th>${escapeHtml(sheetColLabel(cp))}</th>`).join('')}</tr>`;
+    const head=`<tr><th class="param-col-head">${escapeHtml(pLabel(p))}</th>${M.others.map(cp=>`<th>${escapeHtml(sheetColLabel(cp))}</th>`).join('')}</tr>`;
     const rows=M.conds.map(c=>`<tr><td class="param-label">${escapeHtml(degLabel(c.formLabel||c.label))}</td>${M.others.map(cp=>{
       if(!(cp.conditions||[]).includes(c.key)) return '<td class="cell-disabled">N/A</td>';
       const d=firstRowOf(entry,cp.key,c.key); const raw=paramValue(p,d); if(!raw) return '<td class="cell-disabled">U/T</td>';
@@ -3106,7 +3202,7 @@ function renderPeopleList(){
   if(people.length === 0){ wrap.innerHTML = `<div class="helptext">${t('peopleEmptyText')}</div>`; return; }
   wrap.innerHTML = people.map(p=>`
     <div class="people-row">
-      <input id="person_${p.id}" value="${escapeHtml(p.name)}">
+      <input id="person_${p.id}" value="${escapeHtml(p.name)}"><input id="personmail_${p.id}" type="email" value="${escapeHtml(p.email||'')}" placeholder="email" style="max-width:240px">
       <button class="btn btn-ghost btn-xs" onclick="updatePersonUI('${p.id}')">${t('btnSavePerson')}</button>
       <button class="btn btn-danger btn-xs" onclick="deletePersonUI('${p.id}')">${t('btnDeletePerson')}</button>
     </div>`).join('');
@@ -3114,13 +3210,13 @@ function renderPeopleList(){
 
 async function addPersonUI(){
   const input = document.getElementById('f_newPersonName');
-  const name = input.value.trim();
+  const name = input.value.trim(); const email = document.getElementById('f_newPersonEmail').value.trim();
   if(!name){ showToast(t('needPersonName')); return; }
-  input.value = '';
+  input.value = ''; document.getElementById('f_newPersonEmail').value = '';
   const tempId = 'temp_' + Date.now();
-  people.push({id: tempId, name}); // optimistic — โผล่ในลิสต์ทันที
+  people.push({id: tempId, name, email}); // optimistic — โผล่ในลิสต์ทันที
   renderPeopleList();
-  const res = await apiPost({action:'addPerson', name});
+  const res = await apiPost({action:'addPerson', name, email});
   if(res){
     const p = people.find(x=>x.id===tempId);
     if(p) p.id = res.id; // แทนที่ id ชั่วคราวด้วย id จริงจาก backend
@@ -3135,12 +3231,13 @@ async function addPersonUI(){
 async function updatePersonUI(id){
   const name = document.getElementById('person_' + id).value.trim();
   if(!name){ showToast(t('needPersonNameSimple')); return; }
+  const email = document.getElementById('personmail_' + id).value.trim();
   const p = people.find(x=>x.id===id);
-  const previous = p ? p.name : '';
-  if(p) p.name = name; // optimistic
-  const res = await apiPost({action:'updatePerson', id, name});
+  const previous = p ? {name:p.name,email:p.email} : null;
+  if(p){ p.name = name; p.email = email; } // optimistic
+  const res = await apiPost({action:'updatePerson', id, name, email});
   if(res){ showToast(t('personSavedToast')); }
-  else { if(p) p.name = previous; renderPeopleList(); showToast(t('personSaveFailToast')); }
+  else { if(p && previous){ p.name = previous.name; p.email = previous.email; } renderPeopleList(); showToast(t('personSaveFailToast')); }
 }
 
 async function deletePersonUI(id){
@@ -3157,7 +3254,7 @@ async function deletePersonUI(id){
 /* ───────────────────────── Reports: shared model ───────────────────────── */
 let reportSelectedFields = null;
 function reportFieldDefs(proto){
-  return [...proto.parameters.map(p=>({key:p.key,label:p.label})),
+  return [...proto.parameters.map(p=>({key:p.key,label:pLabel(p)})),
     {key:'tester',label:t('reportFieldTester')},{key:'developer',label:t('reportFieldDeveloper')},{key:'remark',label:t('reportFieldRemark')},{key:'photos',label:t('reportFieldPhotos')}];
 }
 function reportFieldsFor(entry){
@@ -3287,7 +3384,7 @@ function formTableHtml(entry,params,blocks,idxs){
   let cols=`<col style="width:7%"><col style="width:8%"><col style="width:8%"><col style="width:9%">`+params.map(p=>`<col style="width:${wPct(p)}%">`).join('');
   let h1='<th rowspan="2">TIME</th><th rowspan="2">วันที่<br>นำเข้า</th><th rowspan="2">วันที่<br>นำออก</th><th rowspan="2">INSPECTION<br>CONDITION</th>', h2='';
   for(let j=0;j<params.length;){ const p=params[j]; let e=j; if(p.group){ while(e+1<params.length && params[e+1].group===p.group) e++; }
-    if(e>j){ h1+=`<th colspan="${e-j+1}">${escapeHtml(p.group)}</th>`; for(let k=j;k<=e;k++) h2+=`<th>${escapeHtml(paramHeaderRow2(entry,params[k]))}</th>`; }
+    if(e>j){ h1+=`<th colspan="${e-j+1}">${escapeHtml(pGroupForm(p))}</th>`; for(let k=j;k<=e;k++) h2+=`<th>${escapeHtml(paramHeaderRow2(entry,params[k]))}</th>`; }
     else { const r2=paramHeaderRow2(entry,p); if(r2){ h1+=`<th>${escapeHtml(p.formLabel||p.label)}</th>`; h2+=`<th>${escapeHtml(r2)}</th>`; } else h1+=`<th rowspan="2">${escapeHtml(p.formLabel||p.label)}</th>`; }
     j=e+1; }
   const doc=docFor(entry); let body='';
@@ -3341,7 +3438,7 @@ let templateCache=null;
 async function loadTemplateFiles(){ if(!templateCache) templateCache=await ZIPX.read(b64ToU8(XLSX_TEMPLATE_B64)); return Object.assign({},templateCache); }
 function buildXlsxModel(entry,fields,photoPages){
   const doc=docFor(entry); const params=activeParams(entry,fields); const blocks=reportBlocks(entry,fields,params);
-  const xp=params.map(p=>({key:p.key,formLabel:p.formLabel||p.label,group:p.group||'',xlsxSub:(methodHeaderText(entry,p)||p.xlsxSub||''),width:p.width}));
+  const xp=params.map(p=>({key:p.key,formLabel:p.formLabel||p.label,group:pGroupForm(p),xlsxSub:(methodHeaderText(entry,p)||p.xlsxSub||''),width:p.width}));
   return {doc:{title:doc.title,effectiveLabel:doc.effectiveLabel,effective:doc.effective,docNo:doc.docNo,rev:doc.rev,recorderLabel:doc.recorderLabel,formulatorLabel:doc.formulatorLabel,legend:doc.legend,remarkLabel:doc.remarkLabel,signoff:doc.signoff},
     info:{productName:entry.productName||'',formNo:entry.formNo||'',customer:entry.customer||'',mixSerial:entry.mixDate?XL.serialFromYmd(entry.mixDate):null},
     day0Serial:XL.serialFromYmd(entry.day0),params:xp,blocks,pages:pageGroups(blocks),remarkLines:remarkLinesOf(blocks),signoffTitle:signoffTitleOf(entry),
@@ -3517,8 +3614,9 @@ function admProtoEditorHtml(){
   const mopts=(sel)=>`<option value="">— ${t('admNoMethod')} —</option>`+Object.values(p.methods).map(m=>`<option value="${m.key}" ${sel===m.key?'selected':''}>${ink(m.label)}</option>`).join('');
   const params=p.parameters.map((q,i)=>`<div class="adm-param"><div class="adm-grid">
       <label class="adm-f"><span>${t('admParamName')}</span><input value="${ink(q.label)}" oninput="admParamLabel(${i},this.value)"></label>
-      <label class="adm-f"><span>${t('admParamGroup')}</span><input value="${ink(q.group||'')}" oninput="adm.proto.parameters[${i}].group=this.value||undefined;if(this.value)adm.proto.parameters[${i}].formLabel=this.value"></label>
+      <label class="adm-f"><span>${t('admParamGroup')}</span><input value="${ink(q.group||'')}" oninput="adm.proto.parameters[${i}].group=this.value||undefined;adm.proto.parameters[${i}].formGroup=this.value||undefined;if(this.value)adm.proto.parameters[${i}].formLabel=this.value"></label>
       <label class="adm-f"><span>${t('admParamSub')}</span><input value="${ink(q.sub||'')}" oninput="adm.proto.parameters[${i}].sub=this.value||undefined"></label>
+      <label class="adm-f"><span>${t('admParamSubTh')}</span><input value="${ink(q.subTh||'')}" oninput="adm.proto.parameters[${i}].subTh=this.value||undefined"></label>
       <label class="adm-f"><span>${t('admXlsxSub')}</span><input value="${ink(q.xlsxSub||'')}" oninput="adm.proto.parameters[${i}].xlsxSub=this.value"></label></div>
     <div class="adm-row"><b>${t('admOutputs')}:</b>
       <label class="adm-chk"><input type="checkbox" ${q.outputs.observation?'checked':''} onchange="adm.proto.parameters[${i}].outputs.observation=this.checked">${t('rowObservation')}</label>
@@ -3566,7 +3664,7 @@ function admMonitoringHtml(){
   const m=adm.mon; const seen={}; allProtocols().forEach(pr=>pr.parameters.forEach(p=>{ if(!seen[p.key]) seen[p.key]=p; }));
   const cps=BUILTIN_PROTOCOL.checkpoints; const allCp={}; allProtocols().forEach(pr=>pr.checkpoints.forEach(c=>{ if(!allCp[c.key]) allCp[c.key]=c; })); const allCond={}; allProtocols().forEach(pr=>pr.conditions.forEach(c=>{ if(!allCond[c.key]) allCond[c.key]=c; }));
   const rows=Object.values(seen).map(p=>{ const r=m.rules[p.key]||ruleFor(p);
-    return `<tr><td><b>${escapeHtml(p.label)}</b></td><td><select onchange="admRule('${p.key}','mode',this.value)">${[['off',t('admRuleOff')],['score',t('admRuleScore')],['abs',t('admRuleAbs')],['pct',t('admRulePct')]].map(([k,l])=>`<option value="${k}" ${r.mode===k?'selected':''}>${l}</option>`).join('')}</select></td>
+    return `<tr><td><b>${escapeHtml(pLabel(p))}</b></td><td><select onchange="admRule('${p.key}','mode',this.value)">${[['off',t('admRuleOff')],['score',t('admRuleScore')],['abs',t('admRuleAbs')],['pct',t('admRulePct')]].map(([k,l])=>`<option value="${k}" ${r.mode===k?'selected':''}>${l}</option>`).join('')}</select></td>
       <td><input type="number" step="any" style="width:90px" value="${r.threshold}" oninput="admRule('${p.key}','threshold',Number(this.value))"></td></tr>`; }).join('');
   return `<div class="helptext">${t('admMonHelp')}</div>
    <div class="adm-grid"><label class="adm-f"><span>${t('admBaseCp')}</span><select onchange="adm.mon.baseline.checkpoint=this.value">${Object.values(allCp).map(c=>`<option value="${c.key}" ${m.baseline.checkpoint===c.key?'selected':''}>${escapeHtml(c.label)}</option>`).join('')}</select></label>
@@ -3579,7 +3677,18 @@ function admRule(key,field,val){ adm.mon.rules[key]=Object.assign({mode:'off',th
 
 /* ── General (PIN, audit) ── */
 function admGeneralHtml(){
-  return `<div class="helptext">${t('admGenHelp')}</div>
+  return `<div class="adm-h">${t('admMailTitle')}</div><div class="helptext">${t('admMailHelp')}</div>
+   <label class="adm-chk"><input type="checkbox" ${adm.gen.emailOnTested!==false?'checked':''} onchange="adm.gen.emailOnTested=this.checked">${t('admMailEnable')}</label>
+   <div class="adm-grid">${field(t('admMailCc'),'gen','emailCc',{wide:true,ph:'a@company.com, b@company.com'})}${field(t('admAppUrl'),'gen','appUrl',{wide:true,ph:'https://…'})}</div>
+   <div class="helptext">${t('admMailJunkHelp')}</div>
+   <div class="adm-row"><input id="admMailTestTo" type="email" placeholder="you@suntorywellness.co.th" style="min-width:260px"><button class="btn btn-ghost btn-xs" onclick="admTestMail()">✉ ${t('admMailTest')}</button></div>
+   <div class="modal-actions"><button class="btn btn-brand" onclick="admSaveConfig('general')">${t('btnSave')}</button></div>
+   <div class="adm-h">${t('admDigestTitle')}</div><div class="helptext">${t('admDigestHelp')}</div>
+   <label class="adm-chk"><input type="checkbox" ${adm.gen.ownerDigestEnabled!==false?'checked':''} onchange="adm.gen.ownerDigestEnabled=this.checked">${t('admDigestEnable')}</label>
+   <label class="adm-chk"><input type="checkbox" ${adm.gen.ownerDigestOverdue!==false?'checked':''} onchange="adm.gen.ownerDigestOverdue=this.checked">${t('admDigestOverdue')}</label>
+   <div class="adm-grid"><label class="adm-f"><span>${t('admDigestHour')}</span><select onchange="adm.gen.ownerDigestHour=Number(this.value)">${Array.from({length:24},(_,h)=>`<option value="${h}" ${(adm.gen.ownerDigestHour??9)===h?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}</select></label></div>
+   <div class="modal-actions"><button class="btn btn-ghost" onclick="admDigestNow()">✉ ${t('admDigestNow')}</button><button class="btn btn-ghost" onclick="admDigestRemove()">${t('admDigestRemove')}</button><button class="btn btn-brand" onclick="admDigestInstall()">⏰ ${t('admDigestInstall')}</button></div>
+   <div class="adm-h">PIN</div><div class="helptext">${t('admGenHelp')}</div>
    <div class="adm-grid"><label class="adm-f"><span>${t('admNewPin')}</span><input type="password" id="admPinNew" autocomplete="new-password"></label><div class="adm-f" style="justify-content:flex-end"><button class="btn btn-brand" onclick="admSetPin()">${serverHasPin?t('admChangePin'):t('admSetPin')}</button>${serverHasPin?`<button class="btn btn-ghost" onclick="admClearPin()">${t('admClearPin')}</button>`:''}</div></div>
    <div class="adm-h">Audit log</div><button class="btn btn-ghost btn-xs" onclick="admLoadAudit()">${t('btnRefresh')}</button><div id="admAudit">${adm.audit?admAuditHtml():''}</div>`;
 }
@@ -3587,6 +3696,22 @@ async function admSetPin(){ const v=document.getElementById('admPinNew').value; 
 async function admClearPin(){ const r=await apiPost({action:'setPin',newPin:''}); if(r){ adminPin=''; serverHasPin=false; showToast(t('savedToast')); renderAdmin(); } }
 async function admLoadAudit(){ const r=await apiPost({action:'getAudit',limit:200}); if(r){ adm.audit=r.rows; document.getElementById('admAudit').innerHTML=admAuditHtml(); } }
 function admAuditHtml(){ return `<div class="matrix-wrap" style="max-height:300px;overflow:auto"><table class="entry-table adm-tbl"><thead><tr><th>Time</th><th>Action</th><th>Target</th><th>By</th><th>Detail</th></tr></thead><tbody>${adm.audit.map(a=>`<tr><td>${escapeHtml(new Date(a.at).toLocaleString('en-GB'))}</td><td>${escapeHtml(a.action)}</td><td>${escapeHtml(a.target)}</td><td>${escapeHtml(a.by)}</td><td style="font-size:10px">${escapeHtml(a.detail)}</td></tr>`).join('')}</tbody></table></div>`; }
+
+async function admTestMail(){
+  const to=document.getElementById('admMailTestTo').value.trim(); if(!to){ showToast(t('admMailTestNeed')); return; }
+  showToast(t('admMailTesting'),20000); const r=await apiPost({action:'testEmail',to}); if(!r) return;
+  showToast(`✅ ${t('admMailTestOk')} ${r.from}`,7000);
+}
+
+async function admDigestInstall(){
+  await admSaveConfig('general'); const r=await apiPost({action:'installOwnerDigest',hour:adm.gen.ownerDigestHour??9}); if(!r) return;
+  showToast(`${t('admDigestInstalled')} ${String(r.hour).padStart(2,'0')}:00 (${r.tz})`,7000);
+}
+async function admDigestRemove(){ const r=await apiPost({action:'removeOwnerDigest'}); if(r) showToast(t('admDigestRemoved'),5000); }
+async function admDigestNow(){
+  await admSaveConfig('general'); showToast(t('admMailTesting'),20000); const r=await apiPost({action:'sendOwnerDigestNow'}); if(!r) return;
+  const sk=(r.skippedNoEmail||[]); showToast(`${t('admDigestSent')} ${r.sent} ${t('admDigestPeople')}`+(sk.length?` · ${t('admDigestSkipped')}: ${sk.join(', ')}`:'')+(r.itemsWithoutOwner?` · ${r.itemsWithoutOwner} ${t('admDigestNoOwner')}`:''),12000);
+}
 
 /* ───────────────────────── Final result / Sign-off (ISO) ───────────────────────── */
 let finalEntryId = null, finalChoice = null;
