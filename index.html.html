@@ -432,6 +432,7 @@ body{
         <div class="cal-nav">
           <button class="btn btn-ghost btn-xs" data-i18n="prevMonth" onclick="calShift(-1)">‹ เดือนก่อนหน้า</button>
           <button class="btn btn-ghost btn-xs" data-i18n="calToday" onclick="calToday()">วันนี้</button>
+          <label class="adm-chk" style="margin:0 10px"><input type="checkbox" id="calShowPastBox" onchange="calShowPastChanged(this.checked)"><span data-i18n="calShowPast">แสดงรายการที่ผ่านมา</span></label>
           <button class="btn btn-ghost btn-xs" data-i18n="nextMonth" onclick="calShift(1)">เดือนถัดไป ›</button>
         </div>
       </div>
@@ -704,7 +705,7 @@ XL.build = function(files, model){
   const blockRows = {}; // blockIdx -> first row
   const helperList = []; // {row, formulaDays}
   let day0Row = null;
-  const mapRight = tc => tc>=8 ? last-(11-tc) : tc;
+  const mapRight = tc => last<11 ? (tc>=8 ? last-(11-tc) : tc) : (tc===11 ? last : tc);   // คอลัมน์ I-J คงที่เดิม · มีแต่ขอบขวา (K) ที่ย้ายไปสุดตาราง
 
   function rowOpen(n, tplRow){ return `<row r="${n}"${tplRow.attrs?' '+tplRow.attrs:''}>`; }
   // generic row from template with column mapping mode: 'right' (header/footer rows) | 'result' (table rows)
@@ -712,7 +713,7 @@ XL.build = function(files, model){
     const tr = T[tn]; const cells = {};
     Object.keys(tr.cells).forEach(k=>{ k=+k; const c=tr.cells[k];
       if(k>=12 && k!==13) return; if(k===13) return;
-      if(mode==='right'){ const oc=mapRight(k); if(oc<=last) cells[oc]={s:c.s,t:c.t,inner:c.inner,keepVal:true}; }
+      if(mode==='right'||mode==='info'){ const oc=(mode==='info'&&last>=11)?k:mapRight(k); if(oc<=last) cells[oc]={s:c.s,t:c.t,inner:c.inner,keepVal:true}; }
       else if(k<=5){ cells[k]={s:c.s,t:null,inner:'',keepVal:false}; }
     });
     if(mode==='result'){ for(let j=0;j<m;j++){ const c=tr.cells[srcCol(j,m)]; if(c) cells[6+j]={s:c.s,t:null,inner:'',keepVal:false}; } }
@@ -740,9 +741,10 @@ XL.build = function(files, model){
     putRow(emit(r,tplStart+1,'right',{1:S(doc.title)})); merges.push(`A${r}:${colL(last)}${r}`); r++;
     putRow(emit(r,tplStart+2,'right')); r++;
     // 4: product / formulation
-    putRow(emit(r,tplStart+3,'right',{3:S(info.productName||''), [last-1]:S(info.formNo||'')})); r++;
+    const infoV = last>=11 ? 10 : last-1, infoE = last>=11 ? 11 : last;   // FORMULATION NO. / MIXING DATE ค้างตำแหน่งเดิม (I:K) ไม่ถูกบีบเมื่อมี parameter เพิ่ม
+    putRow(emit(r,tplStart+3,'info',{3:S(info.productName||''), [infoV]:S(info.formNo||'')})); r++;
     const mixOver = info.mixSerial!=null ? {xml:(ref,s)=>cNum(ref,s,info.mixSerial)} : {};
-    putRow(emit(r,tplStart+4,'right',{3:S(info.customer||''), [last-1]:mixOver})); merges.push(`${colL(last-1)}${r}:${colL(last)}${r}`); r++;
+    putRow(emit(r,tplStart+4,'info',{3:S(info.customer||''), [infoV]:mixOver})); merges.push(`${colL(infoV)}${r}:${colL(infoE)}${r}`); r++;
     putRow(emit(r,tplStart+5,'right')); r++;
     // 7 & 8 header
     const row7 = r, row8 = r+1;
@@ -810,10 +812,10 @@ XL.build = function(files, model){
     putRow(emit(r,58,'right',o58)); r++;
     anchors.signoff=r; // row (1-based) of "ผลการทดสอบ"
     const so=doc.signoff; const o59={1:S(so.resultLabel)};
-    if(so.formulatorLabel!=='ผู้พัฒนาสูตร') o59[last-3]=S(`${so.formulatorLabel}……………………...............................`);
+    if(so.formulatorLabel!=='ผู้พัฒนาสูตร') o59[Math.min(8,last-3)]=S(`${so.formulatorLabel}……………………...............................`);
     putRow(emit(r,59,'right',o59)); r++;
     const o60={2:S(model.signoffTitle)};
-    if(so.approverLabel!=='ผู้อนุมัติ') o60[last-3]=S(`${so.approverLabel}............................................................`);
+    if(so.approverLabel!=='ผู้อนุมัติ') o60[Math.min(8,last-3)]=S(`${so.approverLabel}............................................................`);
     putRow(emit(r,60,'right',o60)); r++;
     putRow(emit(r,61,'right')); r++; };
 
@@ -834,15 +836,23 @@ XL.build = function(files, model){
 
   /* sheet xml */
   const colsT = ['<col min="1" max="1" width="8" style="1" customWidth="1"/>','<col min="2" max="2" width="7.625" style="2" customWidth="1"/>','<col min="3" max="3" width="6.125" style="1" customWidth="1"/>','<col min="4" max="5" width="7.125" style="1" customWidth="1"/>'];
+  const widthList=[];
   const tw={6:22.25,7:21.625,8:15.25,9:14.25,10:7.625,11:25.375}, ts={6:4,7:4,8:1,9:1,10:1,11:1};
-  for(let j=0;j<m;j++){ const sc=srcCol(j,m); const w = params[j].width || (m===6? tw[sc] : (sc===10?9:15)); colsT.push(`<col min="${6+j}" max="${6+j}" width="${w}" style="${ts[sc]}" customWidth="1"/>`); }
+  for(let j=0;j<m;j++){ const sc=srcCol(j,m); const w = params[j].width || (m===6? tw[sc] : (sc===10?9:15)); widthList.push(w); colsT.push(`<col min="${6+j}" max="${6+j}" width="${w}" style="${ts[sc]}" customWidth="1"/>`); }
   colsT.push(`<col min="${last+1}" max="16384" width="9" style="1"/>`);
   let sx = sheetXml;
   sx = sx.replace(/<dimension ref="[^"]*"\/>/, `<dimension ref="A1:${colL(helperCol)}${lastRow+1}"/>`);
   sx = sx.replace(/<cols>[\s\S]*?<\/cols>/, `<cols>${colsT.join('')}</cols>`);
   sx = sx.replace(/<sheetData>[\s\S]*<\/sheetData>/, `<sheetData>${rowsOut.map(x=>x.xml).join('')}</sheetData>`);
   sx = sx.replace(/<mergeCells[\s\S]*?<\/mergeCells>/, `<mergeCells count="${merges.length}">${merges.map(x=>`<mergeCell ref="${x}"/>`).join('')}</mergeCells>`);
-  sx = sx.replace(/fitToHeight="\d+"/, `fitToHeight="${N}"`);
+  { // ไม่ใช้ Fit-to (Excel จะละเลยตัวคั่นหน้าที่กำหนดไว้) → คำนวณ scale เองจากความกว้าง/ความสูงหน้า เพื่อให้ตัดหน้า 1/2 อยู่ที่เดิมเสมอ
+    const dflt = +(/defaultRowHeight="([\d.]+)"/.exec(sheetXml)||[0,21.75])[1];
+    const htOf = {}; rowsOut.forEach(x=>{ const mm=/^<row [^>]*? ht="([\d.]+)"/.exec(x.xml); htOf[x.n]=mm?+mm[1]:dflt; });
+    let maxH = 0; anchors.pagesTop.forEach((top,pi)=>{ const end = pi<N-1 ? breaks[pi] : lastRow; let sum=0; for(let rr=top; rr<=end; rr++) sum += (htOf[rr]!=null?htOf[rr]:dflt); maxH=Math.max(maxH,sum); });
+    const px = w=>Math.trunc(w*8+5); let Wpx = [8,7.625,6.125,7.125,7.125].reduce((a,w)=>a+px(w),0); widthList.forEach(w=>{ Wpx += px(w); });
+    const scale = Math.max(40, Math.min(100, Math.floor(100*842/(Wpx*0.75)), Math.floor(100*595/Math.max(maxH,1))));
+    sx = sx.replace(/fitToHeight="\d+"/, '').replace(/<pageSetUpPr[^>]*\/>/, '<pageSetUpPr fitToPage="0"/>').replace(/ scale="\d+"/, ` scale="${scale}"`);
+  }
   sx = sx.replace(/<selection [^>]*\/>/, '<selection activeCell="A1" sqref="A1"/>');
   const footer = `&amp;L&amp;"Angsana New,Regular"&amp;14${esc(doc.effectiveLabel)} ${esc(doc.effective)}&amp;R&amp;"Angsana New,Regular"&amp;14${esc(doc.docNo)}  ${esc(doc.rev)}`;
   sx = sx.replace(/<oddFooter>[\s\S]*?<\/oddFooter>/, `<oddFooter>${footer}</oddFooter>`);
@@ -978,7 +988,7 @@ function makeBuiltinProtocol(){
     methods:{ brookfield: makeBrookfield() },
     parameters:[
       {key:'textureOut', label:'Texture & Performance (Post-Condition Storage)', group:'Texture & Performance', formGroup:'TEXTURE & PERFORMANCE', sub:'Post-Condition Storage', subTh:'หลังออกจากตู้', formLabel:'TEXTURE & PERFORMANCE', xlsxSub:'หลังออกจากตู้', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:22.25},
-      {key:'textureRoom', label:'Texture & Performance (After Resting at Room Temperature)', group:'Texture & Performance', formGroup:'TEXTURE & PERFORMANCE', sub:'After Resting at Room Temperature', subTh:'ตั้งทิ้งไว้อุณหภูมิห้อง', formLabel:'TEXTURE & PERFORMANCE', xlsxSub:'ตั้งทิ้งไว้อุณหภูมิห้อง', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:21.625},
+      {key:'textureRoom', label:'Texture & Performance (Resting at Room Temperature)', group:'Texture & Performance', formGroup:'TEXTURE & PERFORMANCE', sub:'Resting at Room Temperature', subTh:'ตั้งทิ้งไว้อุณหภูมิห้อง', formLabel:'TEXTURE & PERFORMANCE', xlsxSub:'ตั้งทิ้งไว้อุณหภูมิห้อง', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:21.625},
       {key:'color', label:'Color', formLabel:'COLOR', xlsxSub:'', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:15.25},
       {key:'odor', label:'Odor', formLabel:'ODOR', xlsxSub:'', outputs:{observation:true,analysis:true,value:false}, method:'', numeric:false, sheet:{mode:'grade'}, width:14.25},
       {key:'ph', label:'pH', formLabel:'pH', xlsxSub:'(25 oC)', outputs:{observation:false,analysis:false,value:true}, method:'', numeric:true, decimals:2, sheet:{mode:'raw'}, width:7.625},
@@ -1018,7 +1028,7 @@ const DEFAULT_CONFIG = {
             ph:{mode:'abs',threshold:0.2}, viscosity:{mode:'pct',threshold:10} },
     overRange:'change'   // ค่าเกินลิมิตเครื่อง (เช่น Brookfield แสดง EEE): 'change' = นับเป็นเปลี่ยนแปลง · 'ignore' = ไม่ตรวจ
   },
-  general:{ defaultProtocolId:BUILTIN_PROTOCOL_ID, emailOnTested:true, emailCc:'', appUrl:'', ownerDigestEnabled:true, ownerDigestHour:9, ownerDigestOverdue:true }
+  general:{ defaultProtocolId:BUILTIN_PROTOCOL_ID, emailOnTested:true, emailCc:'', appUrl:'', testedMailMode:'daily', testedMailHour:17, ownerDigestEnabled:true, ownerDigestHour:9, ownerDigestOverdue:true }
 };
 function deepMerge(base, over){
   if(Array.isArray(base) || typeof base!=='object' || base===null) return (over===undefined||over===null) ? base : over;
@@ -1039,8 +1049,8 @@ function protoInUseCount(id){ return products.filter(p=>(p.protocolId||BUILTIN_P
 function condDef(proto,key){ return (proto.conditions||[]).find(c=>c.key===key) || {key,label:key,formLabel:key}; }
 function condsOf(entry,cpKey){ const cp=protoOf(entry).checkpoints.find(c=>c.key===cpKey); return cp ? (cp.conditions||[]) : []; }
 function cpDef(entry,cpKey){ return protoOf(entry).checkpoints.find(c=>c.key===cpKey); }
-const SUB_TH={'Post-Condition Storage':'หลังออกจากตู้','After Resting at Room Temperature':'ตั้งทิ้งไว้อุณหภูมิห้อง'};
-function pSub(p){ const s=p.sub||''; return (currentLang==='th') ? (p.subTh||SUB_TH[s]||s) : s; }
+const SUB_TH={'Post-Condition Storage':'หลังออกจากตู้','Resting at Room Temperature':'ตั้งทิ้งไว้อุณหภูมิห้อง','After Resting at Room Temperature':'ตั้งทิ้งไว้อุณหภูมิห้อง'};
+function pSub(p){ const s=(p.sub||'').replace(/^After Resting at/,'Resting at'); return (currentLang==='th') ? (p.subTh||SUB_TH[s]||s) : s; }
 function pGroup(p){ return p.group==='TEXTURE & PERFORMANCE' ? 'Texture & Performance' : (p.group||''); }
 function pGroupForm(p){ return p.formGroup||p.group||''; }
 function pLabel(p){ return p.group ? `${pGroup(p)} (${pSub(p)})` : p.label; }
@@ -1605,7 +1615,16 @@ Object.assign(STRINGS,{
   admDigestPeople:{th:"คน", en:"people"},
   admDigestSkipped:{th:"ข้าม (ไม่มีอีเมล)", en:"skipped (no email)"},
   admDigestNoOwner:{th:"รายการไม่มีเจ้าของสูตร", en:"items without owner"},
-  admParamSubTh:{th:"หัวย่อย (ภาษาไทย)", en:"Sub header (Thai)"}
+  admParamSubTh:{th:"หัวย่อย (ภาษาไทย)", en:"Sub header (Thai)"},
+  calShowPast:{th:"แสดงรายการที่ผ่านมา (ตรวจแล้ว)", en:"Show past (done) items"},
+  finNotReady:{th:"ยังไม่ได้กด \"ตรวจแล้ว\" ที่ checkpoint สุดท้าย — กดก่อนจึงจะบันทึกผลสรุปได้ (ดู/พิมพ์เอกสารได้ตามปกติ)", en:"The last checkpoint is not marked tested yet — mark it first to record the final result (you can still preview/print)."},
+  emailQueuedToast:{th:"บันทึกแล้ว — จะส่งอีเมลรวมถึง {name} ตอน {hour}", en:"Saved — one combined email to {name} will be sent at {hour}"},
+  admTestedMode:{th:"อีเมล \"ตรวจเสร็จแล้ว\"", en:"\"Tested\" email"},admTestedDaily:{th:"รวมเป็นอีเมลเดียวต่อเจ้าของสูตร (ส่งตามเวลาที่ตั้ง)", en:"One combined email per owner (at the set time)"},admTestedInstant:{th:"ส่งทันทีทีละ checkpoint", en:"Send immediately, one per checkpoint"},
+  admTestedHour:{th:"เวลาส่งอีเมลรวม", en:"Combined email time"},admTestedHelp:{th:"โหมดรวม: กด \"ตรวจแล้ว\" ระบบเก็บเข้าคิว แล้วส่งรอบเดียวต่อเจ้าของสูตร ตามเวลาที่ตั้ง (ต้องกด \"ติดตั้งเวลาส่ง\" ด้านล่าง ถ้ายังไม่ติดตั้ง ระบบส่งทันทีให้แทน)", en:"Combined mode queues each \"tested\" and sends one email per owner at the set time (press \"Install schedule\" below; without it mail is sent immediately)."},
+  admTestedInstalled:{th:"อีเมลรวมตรวจเสร็จแล้ว ทุกวันเวลา", en:"combined tested email daily at"},admTestedNow:{th:"ส่งอีเมลรวมที่ค้างตอนนี้", en:"Send queued combined email now"},admTestedItems:{th:"รายการ", en:"items"},
+  admDeleteProtoInUse:{th:"ลบไม่ได้ — มี {n} สูตรใช้ Protocol นี้อยู่ (ใช้ 'เก็บเข้าคลัง' แทนได้)", en:"Cannot delete — {n} formulas use this protocol (use Archive instead)"},
+  admDeleteProtoConfirm:{th:"ลบ Protocol \"{name}\" ถาวร? (ลบได้เฉพาะที่ยังไม่มีสูตรใช้)", en:"Permanently delete protocol \"{name}\"? (only allowed when no formula uses it)"},
+  admDeleteProtoDone:{th:"ลบ Protocol แล้ว", en:"Protocol deleted"}
 });
 
 /* ═════ core (i18n, state, API, calendar, list, product) ═════ */
@@ -1673,7 +1692,8 @@ async function apiList(){
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || 'unknown error');
     setSync('ok', t('syncLoaded') + new Date().toLocaleTimeString(currentLang==='en'?'en-GB':'th-TH'));
-    serverHasPin = !!data.hasPin; serverVer = data.ver || 0; protocols = (data.protocols || []).filter(p=>p && p.checkpoints); config = deepMerge(DEFAULT_CONFIG, data.config || {});
+    serverHasPin = !!data.hasPin; serverVer = data.ver || 0; protocols = (data.protocols || []).filter(p=>p && p.checkpoints);
+    protocols.forEach(pr=>(pr.parameters||[]).forEach(q=>{ if(q.label) q.label=q.label.replace('After Resting at Room Temperature','Resting at Room Temperature'); if(q.sub) q.sub=q.sub.replace('After Resting at Room Temperature','Resting at Room Temperature'); })); config = deepMerge(DEFAULT_CONFIG, data.config || {});
     return {products: data.products || [], people: data.people || []};
   }catch(e){
     setSync('err', t('syncLoadFail'));
@@ -1802,7 +1822,10 @@ function switchTab(tab){
 function calShift(delta){ calDate = new Date(calDate.getFullYear(), calDate.getMonth()+delta, 1); renderCalendar(); }
 function calToday(){ calDate = new Date(); renderCalendar(); }
 
+let calShowPast = (function(){ try{ return localStorage.getItem('stb.calShowPast')==='1'; }catch(e){ return false; } })();
+function calShowPastChanged(v){ calShowPast=!!v; try{ localStorage.setItem('stb.calShowPast', v?'1':'0'); }catch(e){} renderCalendar(); if(document.getElementById('dayModal').classList.contains('open')) renderDayModalBody(); }
 function renderCalendar(){
+  const _cb=document.getElementById('calShowPastBox'); if(_cb) _cb.checked=calShowPast;
   const year = calDate.getFullYear(), month = calDate.getMonth();
   document.getElementById('calTitle').textContent = calDate.toLocaleDateString('th-TH-u-ca-gregory', {year:'numeric', month:'long'});
 
@@ -1813,7 +1836,7 @@ function renderCalendar(){
     if(p.archived) return;
     computeSchedule(p).forEach(cp=>{
       // ตรวจแล้วและเลยกำหนดไปแล้ว — ซ่อนออกจากปฏิทิน แต่ถ้าเพิ่งกดทำเครื่องหมายวันนี้ ให้ยังคงโชว์ต่อจนกว่าจะข้ามวัน
-      if(cp.tested && cp.diff < 0 && cp.testedDate !== todayISO) return;
+      if(cp.tested && cp.diff < 0 && cp.testedDate !== todayISO && !calShowPast) return;
       const key = ymd(cp.date);
       (dayMap[key] = dayMap[key] || []).push({entry:p, cp});
     });
@@ -1863,7 +1886,7 @@ function getDueItemsForDate(date){
   products.forEach(p=>{
     if(p.archived) return;
     computeSchedule(p).forEach(cp=>{
-      if(cp.tested && cp.diff < 0 && cp.testedDate !== todayISO) return; // เลยกำหนดและตรวจไปแล้วในวันก่อนหน้า — ไม่ต้องโชว์ค้าง
+      if(cp.tested && cp.diff < 0 && cp.testedDate !== todayISO && !calShowPast) return; // เลยกำหนดและตรวจไปแล้วในวันก่อนหน้า — ไม่ต้องโชว์ค้าง
       if(ymd(cp.date) === key) items.push({entry:p, cp});
     });
   });
@@ -1962,7 +1985,7 @@ function renderList(){
       <td style="white-space:nowrap;">
         <button class="btn btn-brand btn-xs" onclick="openResultModal('${p.id}')">${t('btnRecordResult')}</button>
         <button class="btn btn-ghost btn-xs" onclick="openReportModal('${p.id}')">${t('btnReport')}</button>
-        ${(canSignoff(p)||isFinalLocked(p))?`<button class="btn btn-ghost btn-xs" onclick="openFinalModal('${p.id}')">${t('btnSignoff')}</button>`:''}
+        <button class="btn btn-ghost btn-xs" onclick="openFinalModal('${p.id}')">${t('btnSignoff')}</button>
         <button class="btn btn-ghost btn-xs" onclick="openProductModal('${p.id}')">${t('btnEdit')}</button>
         ${archiveBtn}
         <button class="btn btn-danger btn-xs" onclick="deleteEntry('${p.id}')">${t('btnDelete')}</button>
@@ -2116,9 +2139,11 @@ async function confirmDeleteEntry(){
   if(!id) return;
   closeModal('deleteConfirmModal');
   setSync('busy', t('syncDeleting'));
+  const delIdx = products.findIndex(p=>p.id===id); const delRemoved = delIdx>=0 ? products[delIdx] : null;
+  if(delIdx>=0){ products.splice(delIdx,1); renderAll(); }   // หายจากหน้าจอทันที แล้วค่อยยืนยันกับ backend
   const res = await apiPost({action:'delete', id});
-  if(res){ showToast(t('deletedToast')); await refreshAll(); }
-  else setSync('err', t('syncDeleteFail'));
+  if(res){ showToast(t('deletedToast')); setSync('ok', t('savedToast')); }
+  else { if(delRemoved){ products.splice(delIdx,0,delRemoved); renderAll(); } setSync('err', t('syncDeleteFail')); }
   pendingDeleteId = null;
 }
 
@@ -2312,6 +2337,7 @@ function buildReviewNotice(entry,cpKey){
 function emailStatusToast(r){
   if(!r) return; const n=r.name||'';
   if(r.status==='sent'){ showToast(t('emailSentToast').replace('{name}',n)); }
+  else if(r.status==='queued') showToast(t('emailQueuedToast').replace('{name}',n).replace('{hour}',String(r.hour==null?17:r.hour).padStart(2,'0')+':00'),6000);
   else if(r.status==='no-email') showToast(t('emailNoEmailToast').replace('{name}',n),6000);
   else if(r.status==='no-recipient') showToast(t('emailNoRecipientToast'),6000);
   else if(r.status==='error') showToast(t('emailErrorToast')+' '+(r.error||''),8000);
@@ -2644,48 +2670,60 @@ function sheetModel(entry,fields){
   const term={}; conds.forEach(c=>{ const l=cps.filter(cp=>(cp.conditions||[]).includes(c.key)).pop(); term[c.key]=l?sheetTermText(l):'-'; });
   return {proto,cps,conds,params,init,others,term};
 }
+function sheetLayout(g,sh,nRows,dc){
+  // ประมาณความสูง (มม.) ของแต่ละส่วน แล้วบีบความสูงแถวให้พอดี — remark ไม่มีทางไปเบียดช่องเซ็น · ถ้ายังไม่พอให้แบ่งหน้า
+  const f=g.font, padTop=g.padY+3, signH=26, bottomSpace=g.padY+(dc?10:4)+signH+4;
+  const head=17.6, info=24.4, thead=6.5, remarkH=4.6+(sh.remarks.length)*5.4+3;
+  const avail=(g.h-padTop-head-info-thead-remarkH-bottomSpace)*0.95; const natural=f*0.62, minRow=3.8;
+  const rowMm=Math.max(minRow,Math.min(natural,avail/Math.max(nRows,1)));
+  return {rowMm,maxRows:Math.floor(avail/minRow),avail};
+}
 function sheetPages(entry,fields){
   const sh=sheetFor(entry); const g=pdfGeo('sheet'); const M=sheetModel(entry,fields); const info=sheetInfo(entry); const fin=entry.final||{};
-  const PER=12; const chunks=[]; for(let i=0;i<M.others.length;i+=PER) chunks.push(M.others.slice(i,i+PER)); if(!chunks.length) chunks.push([]);
-  return chunks.map((cps,ci)=>({kind:'sheet',build:()=>{
+  const nC=Math.max(M.conds.length,1); const ft=docCtlFooter(sh.docControl); const lay0=sheetLayout(g,sh,1,!!ft);
+  const PER=12; const colChunks=[]; for(let i=0;i<M.others.length;i+=PER) colChunks.push(M.others.slice(i,i+PER)); if(!colChunks.length) colChunks.push([]);
+  const perPage=Math.max(1,Math.floor(lay0.maxRows/nC));                         // กี่ parameter ต่อหน้า (ถ้าเยอะมากถึงแบ่งหน้า)
+  const parChunks=[]; for(let i=0;i<M.params.length;i+=perPage) parChunks.push(M.params.slice(i,i+perPage)); if(!parChunks.length) parChunks.push([]);
+  const list=[]; colChunks.forEach(cps=>parChunks.forEach(ps=>list.push({cps,ps})));
+  return list.map((pg,idx)=>({kind:'sheet',build:()=>{
+    const cps=pg.cps, last=idx===list.length-1; const lay=sheetLayout(g,sh,pg.ps.length*nC,!!ft);
     const head=`<tr><th>${escapeHtml(sh.thItem)}</th><th>${escapeHtml(sh.thCondition)}</th><th>${escapeHtml(sh.thTerm)}</th><th>${escapeHtml(sh.thInitial)}</th>${cps.map(cp=>`<th>${escapeHtml(sheetColLabel(cp))}</th>`).join('')}</tr>`;
-    const nC=Math.max(M.conds.length,1);
-    const body=M.params.map(p=>M.conds.map((c,ci2)=>{
+    const body=pg.ps.map(p=>M.conds.map((c,ci2)=>{
       const first=ci2===0?`<td class="it" rowspan="${nC}">${sheetItemHtml(entry,p)}</td>`:'';
       const ini=M.init?sheetCellText(entry,p,M.init,c.key,true):'';
       const cells=cps.map(cp=>`<td>${escapeHtml(sheetCellText(entry,p,cp,c.key,false))}</td>`).join('');
       return `<tr class="${ci2===0?'gs':''}${ci2===nC-1?' ge':''}">${first}<td class="cd">${escapeHtml(degLabel(c.formLabel||c.label))}</td><td>${escapeHtml(M.term[c.key])}</td><td>${escapeHtml(ini)}</td>${cells}</tr>`; }).join('')).join('');
     const box=(label,role,name)=>`<td class="sb"><div class="sb-l">${escapeHtml(label)}</div><div class="sb-n">${escapeHtml(name||'')}</div><div class="sb-r">${escapeHtml(role)}</div><div class="sb-d">${escapeHtml(sh.dateLabel)} ....../....../......</div></td>`;
-    const ft=docCtlFooter(sh.docControl);
-    return `<section class="page sheet ${ft?'dc':''}" style="height:${g.h}mm">${sheetLogoHtml(sh)}<div class="sh-co">${escapeHtml(sh.company)}</div><div class="sh-title">${escapeHtml(sh.title)}</div>
+    return `<section class="page sheet ${ft?'dc':''}" style="height:${g.h}mm;--rh:${lay.rowMm.toFixed(2)}mm">${sheetLogoHtml(sh)}<div class="sh-co">${escapeHtml(sh.company)}</div><div class="sh-title">${escapeHtml(sh.title)}</div>
       <table class="sh-info"><tr><td class="lb">${escapeHtml(sh.lbProduct)}</td><td>: ${escapeHtml(entry.productName)}</td><td class="lb">${escapeHtml(sh.lbCode)}</td><td>: ${escapeHtml(info.code)}</td></tr>
       <tr><td class="lb">${escapeHtml(sh.lbCustomer)}</td><td>: ${escapeHtml(entry.customer||'-')}</td><td class="lb">${escapeHtml(sh.lbSubmission)}</td><td>: ${escapeHtml(info.submission)}</td></tr>
       <tr><td class="lb">${escapeHtml(sh.lbStart)}</td><td>: ${escapeHtml(info.start)}</td><td class="lb">${escapeHtml(sh.lbEnd)}</td><td>: ${escapeHtml(info.end)}</td></tr></table>
       <table class="sh-t"><colgroup><col style="width:14.5%"><col style="width:9.5%"><col style="width:8.5%"><col style="width:10%">${cps.map(()=>`<col>`).join('')}</colgroup><thead>${head}</thead><tbody>${body}</tbody></table>
-      <div class="sh-rm"><b>${escapeHtml(sh.remarkLabel)}</b>${sh.remarks.map(x=>`<div>${escapeHtml(x)}</div>`).join('')}</div>
-      <table class="sh-sign"><tr>${box(sh.preparedLabel,sh.preparedRole,fin.formulator)}${box(sh.approvedLabel,sh.approvedRole,fin.approver)}</tr></table>${ft?`<div class="sh-foot"><span>${escapeHtml(ft.left)}</span><span>${escapeHtml(ft.right)}</span></div>`:''}</section>`; }}));
+      ${last?`<div class="sh-rm"><b>${escapeHtml(sh.remarkLabel)}</b>${sh.remarks.map(x=>`<div>${escapeHtml(x)}</div>`).join('')}</div>
+      <table class="sh-sign"><tr>${box(sh.preparedLabel,sh.preparedRole,fin.formulator)}${box(sh.approvedLabel,sh.approvedRole,fin.approver)}</tr></table>`:''}${ft?`<div class="sh-foot"><span>${escapeHtml(ft.left)}</span><span>${escapeHtml(ft.right)}</span></div>`:''}</section>`; }}));
 }
 function sheetCss(g){
   const f=g.font;
   return `<style>
-  .page.sheet{font-family:'Noto Sans Thai Looped','Cordia New',serif;padding:${g.padY+8}mm ${g.padX+2}mm}
-  .sh-logo{position:absolute;left:${g.padX+2}mm;top:${g.padY+4}mm;height:11mm}
-  .sh-co{text-align:center;font-size:${f+3}pt;margin-top:8mm}.sh-title{text-align:center;font-size:${f+3}pt;margin:1mm 0 8mm}
-  table.sh-info{width:100%;border-collapse:collapse;font-size:${f+1}pt;margin-bottom:7mm}table.sh-info td{border:none;padding:1.2mm 0}table.sh-info td.lb{width:17%;white-space:nowrap}
+  .page.sheet{font-family:'Noto Sans Thai Looped','Cordia New',serif;padding:${g.padY+3}mm ${g.padX+2}mm ${g.padY}mm}
+  .sh-logo{position:absolute;left:${g.padX+2}mm;top:${g.padY}mm;height:11mm}
+  .sh-co{text-align:center;font-size:${f+3}pt;margin-top:2mm}.sh-title{text-align:center;font-size:${f+3}pt;margin:1mm 0 4mm}
+  table.sh-info{width:100%;border-collapse:collapse;font-size:${f+1}pt;margin-bottom:4mm}table.sh-info td{border:none;padding:1.2mm 0}table.sh-info td.lb{width:17%;white-space:nowrap}
   table.sh-t{width:100%;border-collapse:collapse;table-layout:fixed;font-size:${f}pt;border:2px solid #000}
-  table.sh-t th,table.sh-t td{border:1px solid #999;text-align:center;vertical-align:middle;padding:0 1px;height:${f*0.62}mm;overflow:hidden;line-height:1.1}
+  table.sh-t th,table.sh-t td{border:1px solid #999;text-align:center;vertical-align:middle;padding:0 1px;height:var(--rh,${f*0.62}mm);overflow:hidden;line-height:1.1}
   table.sh-t td{white-space:nowrap;font-size:${f-0.5}pt}
   table.sh-t th{font-size:${f-2.2}pt;letter-spacing:-0.2px;word-break:keep-all;font-weight:700;height:${f*0.7}mm;border:1px solid #000;border-bottom:2px solid #000;background:#fff}
   table.sh-t td.it{border-right:1px solid #000;background:#fff;font-size:${f-1.2}pt;line-height:1.2;white-space:normal}table.sh-t td.cd{text-align:left;font-size:${f-1.5}pt;padding-left:1mm}
   table.sh-t tr.ge td{border-bottom:2px solid #000}.sh-sub{font-weight:400;font-size:${f-1.5}pt}
   .sh-rm{margin-top:3mm;font-size:${f-0.8}pt;line-height:1.45}.sh-rm b{font-size:${f+0.5}pt}.sh-rm div{margin-top:1.5mm}
   table.sh-sign{position:absolute;left:${g.padX+2}mm;right:${g.padX+2}mm;bottom:${g.padY+4}mm;width:calc(100% - ${(g.padX+2)*2}mm);border-collapse:collapse;font-size:${f+1}pt;border:2px solid #000}
-  table.sh-sign td.sb{width:50%;height:34mm;border:1px solid #000;vertical-align:top;padding:1mm 1.5mm;position:relative}
+  table.sh-sign td.sb{width:50%;height:26mm;border:1px solid #000;vertical-align:top;padding:1mm 1.5mm;position:relative}
   .page.sheet.dc table.sh-sign{bottom:${g.padY+11}mm}.sh-foot{position:absolute;left:${g.padX+2}mm;right:${g.padX+2}mm;bottom:${g.padY}mm;display:flex;justify-content:space-between;font-size:${f+1}pt;border-top:1px solid #bbb;padding-top:1mm}
   .sg-raw{font-size:11px;color:#475569}
-  .sb-l{text-align:left}.sb-n{position:absolute;left:0;right:0;top:15mm;text-align:center;font-size:${f}pt}.sb-r{position:absolute;left:0;right:0;top:21mm;text-align:center}.sb-d{position:absolute;right:3mm;bottom:2mm}
+  .sb-l{text-align:left}.sb-n{position:absolute;left:0;right:0;top:8mm;text-align:center;font-size:${f}pt}.sb-r{position:absolute;left:0;right:0;top:13.5mm;text-align:center}.sb-d{position:absolute;right:3mm;bottom:1.5mm}
   </style>`;
 }
+
 async function ensureSheetMeta(entry,codeVal,subVal){
   let code=(codeVal!==undefined?codeVal:entry.code||'').trim(); let sub=(subVal!==undefined?subVal:(entry.submissionDate?isoToDMY(entry.submissionDate):'')).trim();
   if(codeVal===undefined && !code){ code=(prompt(t('shPromptCode'))||'').trim(); }
@@ -3042,6 +3080,7 @@ function renderResultModalBody(entryId){
           <span class="cp-section-title">${cp.label}</span><span class="cp-section-date">${fmt(cp.date)}</span>
           <span class="status-pill ${cp.status}">${statusLabel(cp.status)}</span>
           <button class="mark-btn ${cp.tested?'marked':''}" onclick="toggleTested('${entryId}','${cp.key}','record')">${cp.tested?t('markBtnDone'):t('markBtnMark')}</button>
+          ${cp.key===lastCheckpoint(entry).key?`<button type="button" class="btn btn-brand btn-xs signoff-btn" onclick="openFinalModal('${entryId}')">${t('btnSignoff')}</button>`:''}
           <div class="cp-people-fields">
             <div class="cp-people-field"><label>${t('thTester')}</label><select data-cpkey="${cp.key}" id="tester_${cp.key}">${peopleOptionsHtml(meta.tester||defaults.tester||'')}</select></div>
             <div class="cp-people-field"><label>${t('thReviewer')}</label><select data-cpkey="${cp.key}" id="reviewer_${cp.key}">${peopleOptionsHtml(meta.reviewer||'')}</select></div>
@@ -3170,11 +3209,16 @@ async function saveCheckpointResults(entryId, checkpointKey, silent){
 
   // ส่งขึ้น backend เบื้องหลัง (ไม่บล็อก UI ที่อัปเดตไปแล้ว) — ผู้บันทึก/ผู้ตรวจสอบเก็บผ่าน condition พิเศษ '_meta'
   // (ใช้ action 'saveResult' เดิมที่รองรับ condition เป็นสตริงใดก็ได้อยู่แล้ว ไม่ต้องแก้ backend)
-  for(const p of payloads){
-    await apiPost({action:'saveResult', id: entryId, checkpointKey, condition: p.condKey, data: p.rows});
+  if(serverVer >= 12){ // ส่งครั้งเดียว (เดิมส่งทีละ condition + meta + remark = 6+ ครั้ง ช้ามาก)
+    const condsObj = {}; payloads.forEach(p=>{ condsObj[p.condKey] = p.rows; });
+    await apiPost({action:'saveCheckpoint', id: entryId, checkpointKey, conds: condsObj, meta, remark});
+  } else {
+    for(const p of payloads){
+      await apiPost({action:'saveResult', id: entryId, checkpointKey, condition: p.condKey, data: p.rows});
+    }
+    await apiPost({action:'saveResult', id: entryId, checkpointKey, condition:'_meta', data: meta});
+    await apiPost({action:'saveRemark', id: entryId, checkpointKey, remark});
   }
-  await apiPost({action:'saveResult', id: entryId, checkpointKey, condition:'_meta', data: meta});
-  await apiPost({action:'saveRemark', id: entryId, checkpointKey, remark});
 
   if(!silent) showToast(`${t('savedResultToast')}${cpDef(entry,checkpointKey).label}${t('savedResultToastSuffix')}`);
 }
@@ -3341,8 +3385,8 @@ function reportCss(g){
   .foot{position:absolute;left:${g.padX}mm;right:${g.padX}mm;bottom:${g.padY}mm;display:flex;justify-content:space-between;align-items:flex-end;font-size:${g.font+1}pt;border-top:1px solid #bbb;padding-top:1mm}
   .foot .mid{font-size:${g.font-2}pt;color:#777}
   .photo-grid td{height:${Math.max(26,Math.min(34,(g.usableH-70)/4.4))}mm;padding:1mm}
-  .pgrid{display:flex;flex-wrap:wrap;gap:1mm;justify-content:center;align-items:center;height:100%}
-  .pgrid img{object-fit:cover;border-radius:1mm;border:1px solid #bbb}
+  .pgrid{display:flex;flex-wrap:wrap;gap:1mm;justify-content:center;align-items:center;overflow:hidden}
+  .pgrid img{object-fit:contain;border-radius:1mm;border:1px solid #bbb;display:block}
   .cmpwrap h2{font-size:${g.font+1}pt;margin:3mm 0 1mm}.cmpwrap table{margin-bottom:2mm}
   .cmpwrap img{width:10mm;height:10mm;object-fit:cover}
   </style>${sheetCss(g)}${compareCss(g)}`;
@@ -3402,7 +3446,7 @@ function formTableHtml(entry,params,blocks,idxs){
 }
 function formPages(entry,fields){
   const g=pdfGeo(); const doc=docFor(entry); const params=activeParams(entry,fields); const blocks=reportBlocks(entry,fields,params); const pg=paginateBlocks(blocks,g);
-  return pg.map((idxs,pi)=>({kind:'form',build:()=>pageShell(entry,doc,'Form Report',formTableHtml(entry,params,blocks,idxs)+(pi===pg.length-1?signoffHtml(entry,doc,blocks):legendHtml(doc)))}));
+  return pg.map((idxs,pi)=>({kind:'form',build:()=>pageShell(entry,doc,'',formTableHtml(entry,params,blocks,idxs)+(pi===pg.length-1?signoffHtml(entry,doc,blocks):legendHtml(doc)))}));
 }
 function photoPageData(entry){ // [{cols:[{label,dateText,cp}],rows:[{label,cells:[null|[{fileId,url}]]}]}] ตามกลุ่มหน้าของ Protocol
   const proto=protoOf(entry); const sched=computeSchedule(entry); const groups=pageGroups(sched.map(cp=>({cp})));
@@ -3414,10 +3458,15 @@ function photoPageData(entry){ // [{cols:[{label,dateText,cp}],rows:[{label,cell
 function photoPages(entry){
   const doc=docFor(entry); const data=photoPageData(entry);
   if(!data.some(pg=>pg.rows.some(r=>r.cells.some(c=>c&&c.length)))) return [];
-  return data.map(pg=>({kind:'photo',build:()=>pageShell(entry,doc,'Photo Comparison',`<table class="rt photo-grid"><thead><tr><th style="width:9%">CONDITION</th>${pg.cols.map(c=>`<th>${escapeHtml(c.label)}<br><span style="font-weight:400">${c.dateText}</span></th>`).join('')}</tr></thead><tbody>${pg.rows.map(r=>`<tr><td><b>${escapeHtml(degLabel(r.label))}</b></td>${r.cells.map(c=>{
-        if(c===null) return '<td class="dis">—</td>'; if(!c.length) return '<td></td>';
-        const n=Math.min(c.length,4), w=n===1?'100%':'48%'; const imgW=n===1?'auto':'100%';
-        return `<td><div class="pgrid">${c.slice(0,n).map(p=>`<img src="${escapeHtml(p.url)}" style="max-width:${w};max-height:${n<=2?'100%':'48%'}">`).join('')}</div></td>`; }).join('')}</tr>`).join('')}</tbody></table>`)}));
+  const g=pdfGeo(); const avail=g.usableH-60; const maxRows=Math.max(1,Math.floor(avail/18));   // แถวรูปสูงอย่างน้อย 18 มม. — เกินนี้แบ่งหน้า
+  const out=[];
+  data.forEach(pg=>{ for(let i=0;i<pg.rows.length;i+=maxRows){ const rows=pg.rows.slice(i,i+maxRows);
+    const rowMm=Math.max(18,Math.min(40,Math.floor(avail/Math.max(rows.length,1)))); const inner=rowMm-2;
+    out.push({kind:'photo',build:()=>pageShell(entry,doc,'Photo Comparison',`<table class="rt photo-grid"><thead><tr><th style="width:9%">CONDITION</th>${pg.cols.map(c=>`<th>${escapeHtml(c.label)}<br><span style="font-weight:400">${c.dateText}</span></th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr style="height:${rowMm}mm"><td style="height:${rowMm}mm"><b>${escapeHtml(degLabel(r.label))}</b></td>${r.cells.map(c=>{
+        if(c===null) return `<td class="dis" style="height:${rowMm}mm">—</td>`; if(!c.length) return `<td style="height:${rowMm}mm"></td>`;
+        const n=Math.min(c.length,4); const mw=n===1?'100%':'48%'; const mh=n<=2?`${inner}mm`:`${(inner/2-1).toFixed(1)}mm`;
+        return `<td style="height:${rowMm}mm;padding:0"><div class="pgrid" style="height:${inner}mm">${c.slice(0,n).map(p=>`<img src="${escapeHtml(p.url)}" style="max-width:${mw};max-height:${mh}">`).join('')}</div></td>`; }).join('')}</tr>`).join('')}</tbody></table>`)}); } });
+  return out;
 }
 function assemblePages(pages){ const N=pages.length; return pages.map((p,i)=>p.build().replace(/\{\{PN\}\}/g,i+1).replace(/\{\{PT\}\}/g,N)).join(''); }
 function openReportWindow(entry,title,pagesHtml,g){
@@ -3573,12 +3622,24 @@ function admProtocolHtml(){
       <td>${p.checkpoints.length} cp · ${p.parameters.length} param · ${p.conditions.length} cond</td><td>${n} ${t('admFormulas')}</td>
       <td style="white-space:nowrap"><button class="btn btn-ghost btn-xs" onclick="admEditProto('${p.id}')">${p.builtin?t('admDuplicate'):t('btnEdit')}</button>
       ${p.status!=='archived'&&!isDef?`<button class="btn btn-ghost btn-xs" onclick="admSetDefaultProto('${p.id}')">★</button>`:''}
-      ${!p.builtin?`<button class="btn btn-ghost btn-xs" onclick="admArchiveProto('${p.id}','${p.status==='archived'?'active':'archived'}')">${p.status==='archived'?t('btnUnarchive'):t('btnArchive')}</button>`:''}</td></tr>`; }).join('');
+      ${!p.builtin?`<button class="btn btn-danger btn-xs" onclick="admDeleteProto('${p.id}')">${t('btnDelete')}</button>`:''}${!p.builtin?`<button class="btn btn-ghost btn-xs" onclick="admArchiveProto('${p.id}','${p.status==='archived'?'active':'archived'}')">${p.status==='archived'?t('btnUnarchive'):t('btnArchive')}</button>`:''}</td></tr>`; }).join('');
   return `<div class="helptext">${t('admProtoHelp')}</div><table class="entry-table"><thead><tr><th>Protocol</th><th>${t('admStructure')}</th><th>${t('admUsedBy')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     <div class="modal-actions"><button class="btn btn-brand" onclick="admNewProto()">+ ${t('admNewProtocol')}</button></div>`;
 }
 async function admSetDefaultProto(id){ adm.gen.defaultProtocolId=id; await admSaveConfig('general'); renderAdmin(); }
-async function admArchiveProto(id,status){ const r=await apiPost({action:'setProtocolStatus',id,status,by:actorName()}); if(r){ await refreshAll(); renderAdmin(); } }
+async function admArchiveProto(id,status){
+  const p=protocols.find(x=>x.id===id); const prev=p?p.status:null; if(p) p.status=status; renderAdmin();    // เปลี่ยนบนหน้าจอทันที
+  const r=await apiPost({action:'setProtocolStatus',id,status,by:actorName()}); if(!r && p){ p.status=prev; renderAdmin(); }
+}
+async function admDeleteProto(id){
+  const p=protoById(id); const n=protoInUseCount(id);
+  if(n>0){ showToast(t('admDeleteProtoInUse').replace('{n}',n),7000); return; }
+  if(!confirm(t('admDeleteProtoConfirm').replace('{name}',protoLabel(p)))) return;
+  const di=protocols.findIndex(x=>x.id===id); const removed=di>=0?protocols[di]:null; if(di>=0) protocols.splice(di,1); renderAdmin();   // หายจากรายการทันที
+  const r=await apiPost({action:'deleteProtocol',id,by:actorName()}); if(!r){ if(removed) protocols.splice(di,0,removed); renderAdmin(); return; }
+  if(config.general.defaultProtocolId===id){ config.general.defaultProtocolId=BUILTIN_PROTOCOL_ID; adm.gen.defaultProtocolId=BUILTIN_PROTOCOL_ID; }
+  showToast(t('admDeleteProtoDone'));
+}
 function admNewProto(){ const b=JSON.parse(JSON.stringify(BUILTIN_PROTOCOL)); b.name=''; b.note=''; delete b.builtin; delete b.id; b.family=''; b.version=1; adm.proto=b; adm.protoMode='new'; adm.protoSrc=null; renderAdmin(); }
 function admEditProto(id){
   const src=protoById(id); const c=JSON.parse(JSON.stringify(src)); adm.protoSrc=src;
@@ -3656,7 +3717,11 @@ async function admSaveProto(mode){
   const p=adm.proto; const err=admValidate(p); if(err){ showToast(err); return; }
   p.parameters.forEach(q=>{ if(!q.group){ delete q.group; delete q.sub; } q.formLabel=q.group||q.formLabel||q.label; if(q.group) q.label=`${q.group} (${q.sub||''})`; });
   const body=JSON.parse(JSON.stringify(p)); const r=await apiPost({action:'saveProtocol',protocol:body,mode,by:actorName()}); if(!r) return;
-  showToast(t('savedToast')); adm.proto=null; await refreshAll(); renderAdmin();
+  { // ใส่ Protocol ที่เพิ่งบันทึกลงรายการในเครื่องเลย ไม่ต้องดึงข้อมูลทั้งชีทใหม่
+    const np={...body, id:r.id||body.id, family:r.family||body.family||'', version:r.version||body.version||1, status:'active', createdAt:new Date().toISOString()};
+    if(mode==='overwrite'){ const i=protocols.findIndex(x=>x.id===body.id); if(i>=0) protocols[i]={...np,id:body.id,family:protocols[i].family,version:protocols[i].version,status:protocols[i].status}; else protocols.push(np); }
+    else protocols.push(np);
+    showToast(t('savedToast')); adm.proto=null; renderAdmin(); renderAll(); }
 }
 
 /* ── Monitoring mode ── */
@@ -3679,6 +3744,9 @@ function admRule(key,field,val){ adm.mon.rules[key]=Object.assign({mode:'off',th
 function admGeneralHtml(){
   return `<div class="adm-h">${t('admMailTitle')}</div><div class="helptext">${t('admMailHelp')}</div>
    <label class="adm-chk"><input type="checkbox" ${adm.gen.emailOnTested!==false?'checked':''} onchange="adm.gen.emailOnTested=this.checked">${t('admMailEnable')}</label>
+   <div class="adm-grid"><label class="adm-f"><span>${t('admTestedMode')}</span><select onchange="adm.gen.testedMailMode=this.value"><option value="daily" ${adm.gen.testedMailMode!=='instant'?'selected':''}>${t('admTestedDaily')}</option><option value="instant" ${adm.gen.testedMailMode==='instant'?'selected':''}>${t('admTestedInstant')}</option></select></label>
+   <label class="adm-f"><span>${t('admTestedHour')}</span><select onchange="adm.gen.testedMailHour=Number(this.value)">${Array.from({length:24},(_,hh)=>`<option value="${hh}" ${(adm.gen.testedMailHour??17)===hh?'selected':''}>${String(hh).padStart(2,'0')}:00</option>`).join('')}</select></label></div>
+   <div class="helptext">${t('admTestedHelp')}</div>
    <div class="adm-grid">${field(t('admMailCc'),'gen','emailCc',{wide:true,ph:'a@company.com, b@company.com'})}${field(t('admAppUrl'),'gen','appUrl',{wide:true,ph:'https://…'})}</div>
    <div class="helptext">${t('admMailJunkHelp')}</div>
    <div class="adm-row"><input id="admMailTestTo" type="email" placeholder="you@suntorywellness.co.th" style="min-width:260px"><button class="btn btn-ghost btn-xs" onclick="admTestMail()">✉ ${t('admMailTest')}</button></div>
@@ -3687,7 +3755,7 @@ function admGeneralHtml(){
    <label class="adm-chk"><input type="checkbox" ${adm.gen.ownerDigestEnabled!==false?'checked':''} onchange="adm.gen.ownerDigestEnabled=this.checked">${t('admDigestEnable')}</label>
    <label class="adm-chk"><input type="checkbox" ${adm.gen.ownerDigestOverdue!==false?'checked':''} onchange="adm.gen.ownerDigestOverdue=this.checked">${t('admDigestOverdue')}</label>
    <div class="adm-grid"><label class="adm-f"><span>${t('admDigestHour')}</span><select onchange="adm.gen.ownerDigestHour=Number(this.value)">${Array.from({length:24},(_,h)=>`<option value="${h}" ${(adm.gen.ownerDigestHour??9)===h?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}</select></label></div>
-   <div class="modal-actions"><button class="btn btn-ghost" onclick="admDigestNow()">✉ ${t('admDigestNow')}</button><button class="btn btn-ghost" onclick="admDigestRemove()">${t('admDigestRemove')}</button><button class="btn btn-brand" onclick="admDigestInstall()">⏰ ${t('admDigestInstall')}</button></div>
+   <div class="modal-actions"><button class="btn btn-ghost" onclick="admTestedNow()">✉ ${t('admTestedNow')}</button><button class="btn btn-ghost" onclick="admDigestNow()">✉ ${t('admDigestNow')}</button><button class="btn btn-ghost" onclick="admDigestRemove()">${t('admDigestRemove')}</button><button class="btn btn-brand" onclick="admDigestInstall()">⏰ ${t('admDigestInstall')}</button></div>
    <div class="adm-h">PIN</div><div class="helptext">${t('admGenHelp')}</div>
    <div class="adm-grid"><label class="adm-f"><span>${t('admNewPin')}</span><input type="password" id="admPinNew" autocomplete="new-password"></label><div class="adm-f" style="justify-content:flex-end"><button class="btn btn-brand" onclick="admSetPin()">${serverHasPin?t('admChangePin'):t('admSetPin')}</button>${serverHasPin?`<button class="btn btn-ghost" onclick="admClearPin()">${t('admClearPin')}</button>`:''}</div></div>
    <div class="adm-h">Audit log</div><button class="btn btn-ghost btn-xs" onclick="admLoadAudit()">${t('btnRefresh')}</button><div id="admAudit">${adm.audit?admAuditHtml():''}</div>`;
@@ -3704,10 +3772,11 @@ async function admTestMail(){
 }
 
 async function admDigestInstall(){
-  await admSaveConfig('general'); const r=await apiPost({action:'installOwnerDigest',hour:adm.gen.ownerDigestHour??9}); if(!r) return;
-  showToast(`${t('admDigestInstalled')} ${String(r.hour).padStart(2,'0')}:00 (${r.tz})`,7000);
+  await admSaveConfig('general'); const r=await apiPost({action:'installOwnerDigest',hour:adm.gen.ownerDigestHour??9,testedHour:adm.gen.testedMailHour??17}); if(!r) return;
+  showToast(`${t('admDigestInstalled')} ${String(r.hour).padStart(2,'0')}:00 (${r.tz})`+(r.testedInstalled?` · ${t('admTestedInstalled')} ${String(r.testedHour).padStart(2,'0')}:00`:''),9000);
 }
 async function admDigestRemove(){ const r=await apiPost({action:'removeOwnerDigest'}); if(r) showToast(t('admDigestRemoved'),5000); }
+async function admTestedNow(){ showToast(t('admMailTesting'),20000); const r=await apiPost({action:'sendTestedDigestNow'}); if(r) showToast(`${t('admDigestSent')} ${r.sent} ${t('admDigestPeople')} · ${r.items} ${t('admTestedItems')}`,9000); }
 async function admDigestNow(){
   await admSaveConfig('general'); showToast(t('admMailTesting'),20000); const r=await apiPost({action:'sendOwnerDigestNow'}); if(!r) return;
   const sk=(r.skippedNoEmail||[]); showToast(`${t('admDigestSent')} ${r.sent} ${t('admDigestPeople')}`+(sk.length?` · ${t('admDigestSkipped')}: ${sk.join(', ')}`:'')+(r.itemsWithoutOwner?` · ${r.itemsWithoutOwner} ${t('admDigestNoOwner')}`:''),12000);
@@ -3721,13 +3790,14 @@ function openFinalModal(id){
 }
 function peopleDatalist(){ return `<datalist id="dlPeople">${people.map(p=>`<option value="${escapeHtml(p.name)}">`).join('')}</datalist>`; }
 function renderFinalModal(){
-  const e=products.find(p=>p.id===finalEntryId); const proto=protoOf(e); const fin=e.final||{}; const locked=!!fin.result; const curIdx=findCurrentCheckpointIndex(e);
+  const e=products.find(p=>p.id===finalEntryId); const ready=canSignoff(e)||isFinalLocked(e); const proto=protoOf(e); const fin=e.final||{}; const locked=!!fin.result; const curIdx=findCurrentCheckpointIndex(e);
   const status=usedConditions(proto).map(c=>{ const s=computeConditionStatus(e,c.key,curIdx); return `<span class="status-pill ${s==='changed'?'overdue':s==='stable'?'done':'upcoming'}">${escapeHtml(c.label)}: ${s==='changed'?t('cmpStatusChanged'):s==='stable'?t('cmpStatusStable'):t('cmpStatusNA')}</span>`; }).join(' ');
   const missing=proto.checkpoints.filter(cp=>!(e.tested&&e.tested[cp.key])).map(cp=>cp.label);
   const hist=(fin.history||[]).slice().reverse().map(h=>`<div class="fin-hist">${escapeHtml(new Date(h.at).toLocaleString('en-GB'))} · <b>${escapeHtml(h.action)}</b>${h.result?' · '+escapeHtml(h.result):''} · ${escapeHtml(h.by||'-')}${h.note?' · '+escapeHtml(h.note):''}</div>`).join('');
   const lastMeta=(()=>{ const l=lastCheckpoint(e); const m=(e.results&&e.results[l.key]&&e.results[l.key]._meta)||{}; return m; })();
   document.getElementById('finalBody').innerHTML=`<div class="helptext"><b>${escapeHtml(e.productName)}</b> · ${escapeHtml(e.formNo||'-')} · ${escapeHtml(protoLabel(proto))}</div>
     <div style="margin:8px 0">${status}</div>
+    ${ready?'':`<div class="fin-warn" style="background:#fee2e2;border-color:#ef4444">⛔ ${t('finNotReady')}</div>`}
     ${missing.length?`<div class="fin-warn">⚠ ${t('finMissing')}: ${escapeHtml(missing.join(', '))}</div>`:''}
     ${locked?`<div class="fin-lock">🔒 ${t('finLocked')} <b>${fin.result==='pass'?t('finPass'):t('finFail')}</b> · ${escapeHtml(fin.decidedBy||'-')} · ${escapeHtml(new Date(fin.decidedAt).toLocaleString('en-GB'))}</div>`:''}
     <div class="fin-choice"><button class="fin-btn pass ${finalChoice==='pass'?'on':''}" ${locked?'disabled':''} onclick="finalChoice='pass';renderFinalModal()">✔ ${t('finPass')}</button><button class="fin-btn fail ${finalChoice==='fail'?'on':''}" ${locked?'disabled':''} onclick="finalChoice='fail';renderFinalModal()">✘ ${t('finFail')}</button></div>
@@ -3737,7 +3807,7 @@ function renderFinalModal(){
       <label class="adm-f wide"><span>${t('finNote')}</span><input id="fin_note" value="${escapeHtml(fin.note||'')}" ${locked?'disabled':''}></label></div>${peopleDatalist()}
     <div class="helptext">${t('finHelp')}</div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('finalModal')">${t('btnCancel')}</button>
-      ${locked?`<button class="btn btn-ghost" onclick="reopenFinal()">↺ ${t('finReopen')}</button>`:`<button class="btn btn-brand" onclick="saveFinal()">💾 ${t('finSave')}</button>`}
+      ${locked?`<button class="btn btn-ghost" onclick="reopenFinal()">↺ ${t('finReopen')}</button>`:`<button class="btn btn-brand" ${ready?'':'disabled title="'+t('finNotReady')+'"'} onclick="saveFinal()">💾 ${t('finSave')}</button>`}
     </div>
     <div class="adm-h">${t('finDocs')}</div>
     <div class="fin-docs"><div><b>Stability Test Report</b><br><button class="btn btn-brand btn-xs" onclick="printSignoff()">🖨 PDF</button> <button class="btn btn-ghost btn-xs" onclick="exportSignoffExcel()">📊 Excel</button></div>
@@ -3745,7 +3815,7 @@ function renderFinalModal(){
     ${hist?`<div class="adm-h">${t('finHistory')}</div>${hist}`:''}`;
 }
 async function saveFinal(){
-  const e=products.find(p=>p.id===finalEntryId); if(!finalChoice){ showToast(t('finNeedChoice')); return; }
+  const e=products.find(p=>p.id===finalEntryId); if(!canSignoff(e)){ showToast(t('finNotReady'),6000); return; } if(!finalChoice){ showToast(t('finNeedChoice')); return; }
   const by=document.getElementById('fin_by').value.trim(); if(!by){ showToast(t('finNeedBy')); return; }
   const proto=protoOf(e); const curIdx=findCurrentCheckpointIndex(e); const st={}; usedConditions(proto).forEach(c=>{ st[c.key]=computeConditionStatus(e,c.key,curIdx); });
   const d=config.document;
