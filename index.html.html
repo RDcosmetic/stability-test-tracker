@@ -388,6 +388,58 @@ body{
 .rpt-doc{border:1px solid var(--line,#d9dee7);border-radius:10px;padding:10px 12px;margin:10px 0}.rpt-doc-title{font-weight:700;margin-bottom:2px}.rpt-btns{display:flex;gap:8px;margin-top:8px}.fin-docs{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px}
 .matrix-col-date,.matrix-table th,.cmp-trend-table th{text-transform:none}
 .chip-final{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;color:#fff;margin-left:4px}.chip-final.pass{background:#16a34a}.chip-final.fail{background:#dc2626}
+
+/* ═════ มือถือ / หน้าจอเล็ก ═════ */
+@media (max-width: 760px){
+  html,body{-webkit-text-size-adjust:100%}
+  .topbar{padding:12px 14px;align-items:stretch;gap:10px}
+  .brand h1{font-size:20px;line-height:1.2}
+  .topbar-actions{width:100%;gap:6px}
+  .topbar-actions .btn{flex:1 1 calc(50% - 6px);min-width:0;padding:9px 8px;font-size:12.5px;justify-content:center}
+  .main{padding:12px 12px 40px}
+  .tabs{overflow-x:auto;white-space:nowrap}.tab{padding:10px 12px;font-size:13px}
+  .banner{padding:12px 14px;flex-wrap:wrap}
+  .toolbar{gap:8px}.search-input{min-width:0;width:100%;flex:1 1 100%}
+  .cal-head{flex-wrap:wrap;gap:8px}.cal-head>*{max-width:100%}.cal-nav{width:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  .cal-nav .cal-past{flex:1 1 100%;order:9;margin:2px 0 0!important}
+  .cal-cell{height:58px;padding:3px 3px}.cal-dow{padding:6px 0;font-size:10.5px}.cal-chip{font-size:8.5px;padding:1px 3px}
+  /* รายการสูตร → การ์ด */
+  .entry-table,.entry-table tbody{display:block;border:none;box-shadow:none;background:transparent}
+  .entry-table thead{display:none}
+  .entry-table tr{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
+  .entry-table td{display:block;border:none!important;padding:0!important;font-size:13px}
+  .entry-table td:nth-child(1){grid-column:1}.entry-table td:nth-child(2){grid-column:2;font-weight:700;font-size:14.5px}
+  .entry-table td:nth-child(n+3){grid-column:1 / -1}
+  .entry-table td[data-label]::before{content:attr(data-label) ": ";color:var(--muted);font-size:11.5px}
+  .entry-table td.row-actions{white-space:normal!important;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .entry-table td.row-actions .btn{flex:1 1 auto;padding:8px 10px}
+  /* ป๊อปอัพเต็มจอ */
+  .modal-backdrop{padding:0!important;align-items:flex-end!important}
+  .modal,#adminModal .modal,#finalModal .modal,#reportModal .modal{max-width:100%!important;width:100%!important;max-height:96vh!important;border-radius:16px 16px 0 0!important;padding:16px 14px!important}
+  .modal-actions{flex-wrap:wrap;gap:8px}.modal-actions .btn{flex:1 1 auto;padding:10px 12px}
+  .field-row{grid-template-columns:1fr!important}.adm-grid{grid-template-columns:1fr!important}.fin-docs{grid-template-columns:1fr!important}
+  .cp-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px}.cp-tab{white-space:nowrap;flex:0 0 auto}
+  .result-header-actions{flex-wrap:wrap;margin-left:0}
+  .cp-people-fields{width:100%;display:flex;flex-direction:column;gap:6px}.cp-people-fields select{width:100%}
+  input,select,textarea{font-size:16px!important}   /* กัน iOS ซูมเองตอนแตะช่อง */
+  .btn{min-height:38px}.btn-xs{min-height:34px}
+  .adm-tbl,.entry-table.adm-tbl{display:block;overflow-x:auto}
+  .adm-row{gap:6px}
+  /* ตารางบันทึกผล → ฟอร์มแนวตั้ง (ไม่ต้องเลื่อนซ้าย-ขวา) */
+  #resultModalBody .matrix-wrap{overflow-x:visible}
+  #resultModalBody .cond-record-table{display:block!important;min-width:0!important;width:100%!important;table-layout:auto!important;border:none}
+  #resultModalBody .cond-record-table thead{display:none}
+  #resultModalBody .cond-record-table tbody{display:block}
+  #resultModalBody .cond-record-table tr{display:flex;flex-wrap:wrap;gap:8px;padding:6px 0;border:none}
+  #resultModalBody .cond-record-table td{display:block;flex:1 1 150px;border:none!important;padding:0!important;min-width:0}
+  #resultModalBody .cond-record-table td::before{content:attr(data-label);display:block;font-size:11px;color:var(--muted);margin-bottom:2px;font-weight:600}
+  #resultModalBody .cond-record-table td.param-label,#resultModalBody .cond-record-table td.cell-disabled{display:none}
+  #resultModalBody .cond-record-table td input{height:40px}
+  #resultModalBody .photo-matrix-cell{flex:1 1 100%}
+  /* Compare / รายงานในมือถือ */
+  .cmp-status-bar{flex-direction:column;align-items:flex-start;gap:8px}
+  .cmp-range-row{flex-direction:column;align-items:stretch}
+}
 </style>
 </head>
 <body>
@@ -432,8 +484,8 @@ body{
         <div class="cal-nav">
           <button class="btn btn-ghost btn-xs" data-i18n="prevMonth" onclick="calShift(-1)">‹ เดือนก่อนหน้า</button>
           <button class="btn btn-ghost btn-xs" data-i18n="calToday" onclick="calToday()">วันนี้</button>
-          <label class="adm-chk" style="margin:0 10px"><input type="checkbox" id="calShowPastBox" onchange="calShowPastChanged(this.checked)"><span data-i18n="calShowPast">แสดงรายการที่ผ่านมา</span></label>
           <button class="btn btn-ghost btn-xs" data-i18n="nextMonth" onclick="calShift(1)">เดือนถัดไป ›</button>
+          <label class="adm-chk cal-past" style="margin:0 0 0 12px"><input type="checkbox" id="calShowPastBox" onchange="calShowPastChanged(this.checked)"><span data-i18n="calShowPast">แสดงรายการที่ผ่านมา (ตรวจแล้ว)</span></label>
         </div>
       </div>
       <div class="cal-grid" id="calGrid"></div>
@@ -1028,7 +1080,7 @@ const DEFAULT_CONFIG = {
             ph:{mode:'abs',threshold:0.2}, viscosity:{mode:'pct',threshold:10} },
     overRange:'change'   // ค่าเกินลิมิตเครื่อง (เช่น Brookfield แสดง EEE): 'change' = นับเป็นเปลี่ยนแปลง · 'ignore' = ไม่ตรวจ
   },
-  general:{ defaultProtocolId:BUILTIN_PROTOCOL_ID, emailOnTested:true, emailCc:'', appUrl:'', testedMailMode:'daily', testedMailHour:17, ownerDigestEnabled:true, ownerDigestHour:9, ownerDigestOverdue:true }
+  general:{ defaultProtocolId:BUILTIN_PROTOCOL_ID, emailOnTested:true, emailCc:'', appUrl:'', testedMailMode:'daily', testedMailHour:17, msClientId:'', msTenant:'suntorywellness.co.th', ownerDigestEnabled:true, ownerDigestHour:9, ownerDigestOverdue:true }
 };
 function deepMerge(base, over){
   if(Array.isArray(base) || typeof base!=='object' || base===null) return (over===undefined||over===null) ? base : over;
@@ -1038,7 +1090,7 @@ function deepMerge(base, over){
 }
 let protocols = [];                       // จาก backend (ไม่รวม builtin)
 let config = deepMerge(DEFAULT_CONFIG, {});
-let serverHasPin = false;
+let serverHasPin = false; let serverMsAccount = '';
 let adminPin = '';
 
 function allProtocols(){ return [BUILTIN_PROTOCOL, ...protocols]; }
@@ -1616,6 +1668,14 @@ Object.assign(STRINGS,{
   admDigestSkipped:{th:"ข้าม (ไม่มีอีเมล)", en:"skipped (no email)"},
   admDigestNoOwner:{th:"รายการไม่มีเจ้าของสูตร", en:"items without owner"},
   admParamSubTh:{th:"หัวย่อย (ภาษาไทย)", en:"Sub header (Thai)"},
+  admMsTitle:{th:"เชื่อมต่อ Outlook (Microsoft 365) เป็นผู้ส่ง", en:"Connect Outlook (Microsoft 365) as sender"},
+  admMsConnected:{th:"เชื่อมต่อแล้ว ส่งจาก", en:"Connected — sending as"},admMsNot:{th:"ยังไม่ได้เชื่อมต่อ (ตอนนี้ส่งผ่าน Gmail)", en:"Not connected (currently sending via Gmail)"},
+  admMsHelp:{th:"ตั้งค่าครั้งเดียว (ทำเองได้ ไม่ต้องให้ IT ถ้าองค์กรอนุญาตให้ผู้ใช้สร้างแอปเอง): ① เข้า https://entra.microsoft.com ด้วยบัญชี Outlook ที่จะใช้ส่ง → App registrations → New registration ตั้งชื่อ Stability Test Tracker (ประเภท: บัญชีในองค์กรนี้เท่านั้น) → Register ② คัดลอก Application (client) ID มาใส่ช่องด้านล่าง ③ เมนู Authentication → เปิด \"Allow public client flows\" = Yes → Save ④ เมนู API permissions → Add → Microsoft Graph → Delegated → เลือก Mail.Send (+ User.Read) → Add ⑤ กลับมากด \"เชื่อมต่อ\" ด้านล่าง ถ้าองค์กรบล็อกการสร้างแอป/ให้สิทธิ์ ระบบจะแจ้งตอนเชื่อมต่อ (ต้องให้แอดมินองค์กรช่วย) — ระหว่างนั้นยังส่งผ่าน Gmail ได้ตามเดิม", en:"One-time setup (you can do it yourself if your tenant lets users register apps): 1) entra.microsoft.com with the sending mailbox → App registrations → New registration \"Stability Test Tracker\" (this org only). 2) Paste the Application (client) ID below. 3) Authentication → Allow public client flows = Yes. 4) API permissions → Microsoft Graph → Delegated → Mail.Send (+ User.Read). 5) Press Connect below. If your tenant blocks it, an admin must help — Gmail keeps working meanwhile."},
+  admMsClientId:{th:"Application (client) ID", en:"Application (client) ID"},admMsTenant:{th:"Tenant (ต้องใส่ — โดเมนองค์กร เช่น suntorywellness.co.th หรือ Directory (tenant) ID)", en:"Tenant (required — your domain e.g. suntorywellness.co.th, or the Directory (tenant) ID)"},
+  admMsStart:{th:"เชื่อมต่อ", en:"Connect"},admMsFinish:{th:"ยืนยันการเชื่อมต่อ", en:"Confirm connection"},admMsDisconnect:{th:"ตัดการเชื่อมต่อ", en:"Disconnect"},
+  admMsStep1:{th:"① เปิดลิงก์:", en:"1) Open:"},admMsStep2:{th:"② ใส่รหัส:", en:"2) Enter code:"},admMsStep3:{th:"③ ล็อกอินด้วยบัญชี Outlook ที่จะใช้ส่ง กดอนุญาต แล้วกลับมากด \"ยืนยันการเชื่อมต่อ\"", en:"3) Sign in with the sending Outlook account, accept, then press \"Confirm connection\"."},
+  admMsPending:{th:"ยังไม่ได้ล็อกอินที่หน้า Microsoft — ทำตามขั้นตอนแล้วกดยืนยันอีกครั้ง", en:"Not signed in on the Microsoft page yet — finish it and press Confirm again."},
+  admMsDisconnectConfirm:{th:"ตัดการเชื่อมต่อ Outlook? (จะส่งผ่าน Gmail แทน)", en:"Disconnect Outlook? (mail goes via Gmail instead)"},admMsDisconnected:{th:"ตัดการเชื่อมต่อแล้ว", en:"Disconnected"},
   calShowPast:{th:"แสดงรายการที่ผ่านมา (ตรวจแล้ว)", en:"Show past (done) items"},
   finNotReady:{th:"ยังไม่ได้กด \"ตรวจแล้ว\" ที่ checkpoint สุดท้าย — กดก่อนจึงจะบันทึกผลสรุปได้ (ดู/พิมพ์เอกสารได้ตามปกติ)", en:"The last checkpoint is not marked tested yet — mark it first to record the final result (you can still preview/print)."},
   emailQueuedToast:{th:"บันทึกแล้ว — จะส่งอีเมลรวมถึง {name} ตอน {hour}", en:"Saved — one combined email to {name} will be sent at {hour}"},
@@ -1692,7 +1752,7 @@ async function apiList(){
     const data = await res.json();
     if(!data.ok) throw new Error(data.error || 'unknown error');
     setSync('ok', t('syncLoaded') + new Date().toLocaleTimeString(currentLang==='en'?'en-GB':'th-TH'));
-    serverHasPin = !!data.hasPin; serverVer = data.ver || 0; protocols = (data.protocols || []).filter(p=>p && p.checkpoints);
+    serverHasPin = !!data.hasPin; serverVer = data.ver || 0; serverMsAccount = data.msAccount || ''; protocols = (data.protocols || []).filter(p=>p && p.checkpoints);
     protocols.forEach(pr=>(pr.parameters||[]).forEach(q=>{ if(q.label) q.label=q.label.replace('After Resting at Room Temperature','Resting at Room Temperature'); if(q.sub) q.sub=q.sub.replace('After Resting at Room Temperature','Resting at Room Temperature'); })); config = deepMerge(DEFAULT_CONFIG, data.config || {});
     return {products: data.products || [], people: data.people || []};
   }catch(e){
@@ -1978,11 +2038,11 @@ function renderList(){
     row.innerHTML = `
       <td><span class="seq-badge">#${escapeHtml(p.seq||'-')}</span></td>
       <td>${escapeHtml(p.productName)} ${isFinalLocked(p)?`<span class="chip-final ${p.final.result}">${p.final.result==='pass'?t('finPass'):t('finFail')}</span>`:''}${p.archived ? `<span style="color:var(--muted);font-size:10.5px">${t('archivedTag')}</span>` : (allDone ? `<span style="color:var(--done);font-size:10.5px">${t('allDoneTag')}</span>` : '')}</td>
-      <td>${escapeHtml(p.formNo||'-')}</td>
-      <td>${escapeHtml(p.customer||'-')}</td>
-      <td style="font-family:var(--mono)">${p.day0 ? fmt(toDate(p.day0)) : '-'}</td>
-      <td><span class="status-pill ${next.status}">${statusLabel(next.status)} · ${next.label}</span></td>
-      <td style="white-space:nowrap;">
+      <td data-label="${t('thFormula')}">${escapeHtml(p.formNo||'-')}</td>
+      <td data-label="${t('thCustomer')}">${escapeHtml(p.customer||'-')}</td>
+      <td data-label="${t('thDay0')}" style="font-family:var(--mono)">${p.day0 ? fmt(toDate(p.day0)) : '-'}</td>
+      <td data-label="${t('thNextStatus')}"><span class="status-pill ${next.status}">${statusLabel(next.status)} · ${next.label}</span></td>
+      <td class="row-actions" style="white-space:nowrap;">
         <button class="btn btn-brand btn-xs" onclick="openResultModal('${p.id}')">${t('btnRecordResult')}</button>
         <button class="btn btn-ghost btn-xs" onclick="openReportModal('${p.id}')">${t('btnReport')}</button>
         <button class="btn btn-ghost btn-xs" onclick="openFinalModal('${p.id}')">${t('btnSignoff')}</button>
@@ -2445,6 +2505,12 @@ function recordHeaderHtml(col){
   const p=col.param; return p.group ? `${escapeHtml(pGroup(p))}<br><span class="matrix-col-date">(${escapeHtml(pSub(p))})</span>` : escapeHtml(p.label);
 }
 function recordCellHtml(col,rowType,pfx,d,defaults,cpKey,condKey,ridx){
+  const html=recordCellHtml0(col,rowType,pfx,d,defaults,cpKey,condKey,ridx); let lab='';
+  if(col.kind==='photo') lab=t('thPhoto'); else if(col.kind==='method') lab=`${col.field.label} (${col.param.label})`;
+  else { const p=col.param; let out=null; ['observation','analysis','value'].forEach(o=>{ if(p.outputs[o] && slotRow(p,o)===rowType) out=o; }); lab=out?`${pLabel(p)} · ${out==='observation'?t('rowObservation'):out==='analysis'?t('rowAnalysis'):t('rowValue')}`:''; }
+  return lab ? html.replace(/^<td/, `<td data-label="${escapeHtml(lab)}"`) : html;
+}
+function recordCellHtml0(col,rowType,pfx,d,defaults,cpKey,condKey,ridx){
   const attrs=`data-pfx="${pfx}" data-cpkey="${cpKey}" data-condkey="${condKey}" data-ridx="${ridx}"`;
   const dis=`<td class="cell-disabled">–</td>`;
   if(col.kind==='photo'){
@@ -3751,6 +3817,12 @@ function admGeneralHtml(){
    <div class="helptext">${t('admMailJunkHelp')}</div>
    <div class="adm-row"><input id="admMailTestTo" type="email" placeholder="you@suntorywellness.co.th" style="min-width:260px"><button class="btn btn-ghost btn-xs" onclick="admTestMail()">✉ ${t('admMailTest')}</button></div>
    <div class="modal-actions"><button class="btn btn-brand" onclick="admSaveConfig('general')">${t('btnSave')}</button></div>
+   <div class="adm-h">${t('admMsTitle')}</div>
+   <div class="helptext" style="font-weight:600">${serverMsAccount?`✅ ${t('admMsConnected')}: ${escapeHtml(serverMsAccount)}`:`⚪ ${t('admMsNot')}`}</div>
+   <div class="helptext">${t('admMsHelp')}</div>
+   <div class="adm-grid">${field(t('admMsClientId'),'gen','msClientId',{wide:true,ph:'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'})}${field(t('admMsTenant'),'gen','msTenant',{wide:true,ph:'suntorywellness.co.th'})}</div>
+   <div id="admMsBox" class="helptext"></div>
+   <div class="modal-actions"><button class="btn btn-ghost" onclick="admMsDisconnect()">${t('admMsDisconnect')}</button><button class="btn btn-ghost" onclick="admMsFinish()">${t('admMsFinish')}</button><button class="btn btn-brand" onclick="admMsStart()">🔗 ${t('admMsStart')}</button></div>
    <div class="adm-h">${t('admDigestTitle')}</div><div class="helptext">${t('admDigestHelp')}</div>
    <label class="adm-chk"><input type="checkbox" ${adm.gen.ownerDigestEnabled!==false?'checked':''} onchange="adm.gen.ownerDigestEnabled=this.checked">${t('admDigestEnable')}</label>
    <label class="adm-chk"><input type="checkbox" ${adm.gen.ownerDigestOverdue!==false?'checked':''} onchange="adm.gen.ownerDigestOverdue=this.checked">${t('admDigestOverdue')}</label>
@@ -3768,7 +3840,7 @@ function admAuditHtml(){ return `<div class="matrix-wrap" style="max-height:300p
 async function admTestMail(){
   const to=document.getElementById('admMailTestTo').value.trim(); if(!to){ showToast(t('admMailTestNeed')); return; }
   showToast(t('admMailTesting'),20000); const r=await apiPost({action:'testEmail',to}); if(!r) return;
-  showToast(`✅ ${t('admMailTestOk')} ${r.from}`,7000);
+  if(r.via==='outlook') showToast(`✅ ${t('admMailTestOk')} Outlook: ${r.from}`,7000); else showToast(`✅ ${t('admMailTestOk')} ${r.from}`+(r.graphError?` — ⚠ Outlook: ${r.graphError}`:''),r.graphError?14000:7000);
 }
 
 async function admDigestInstall(){
@@ -3776,6 +3848,16 @@ async function admDigestInstall(){
   showToast(`${t('admDigestInstalled')} ${String(r.hour).padStart(2,'0')}:00 (${r.tz})`+(r.testedInstalled?` · ${t('admTestedInstalled')} ${String(r.testedHour).padStart(2,'0')}:00`:''),9000);
 }
 async function admDigestRemove(){ const r=await apiPost({action:'removeOwnerDigest'}); if(r) showToast(t('admDigestRemoved'),5000); }
+async function admMsStart(){
+  await admSaveConfig('general'); const r=await apiPost({action:'msConnectStart'}); if(!r) return;
+  document.getElementById('admMsBox').innerHTML=`<b>${t('admMsStep1')}</b> <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.url)}</a><br><b>${t('admMsStep2')}</b> <span style="font-size:20px;font-weight:800;letter-spacing:2px">${escapeHtml(r.userCode)}</span><br>${t('admMsStep3')}`;
+}
+async function admMsFinish(){
+  const r=await apiPost({action:'msConnectFinish'}); if(!r) return;
+  if(r.pending){ showToast(t('admMsPending'),6000); return; }
+  serverMsAccount=r.account||'Outlook'; showToast(`✅ ${t('admMsConnected')}: ${serverMsAccount}`,7000); renderAdmin();
+}
+async function admMsDisconnect(){ if(!confirm(t('admMsDisconnectConfirm'))) return; const r=await apiPost({action:'msDisconnect'}); if(r){ serverMsAccount=''; showToast(t('admMsDisconnected')); renderAdmin(); } }
 async function admTestedNow(){ showToast(t('admMailTesting'),20000); const r=await apiPost({action:'sendTestedDigestNow'}); if(r) showToast(`${t('admDigestSent')} ${r.sent} ${t('admDigestPeople')} · ${r.items} ${t('admTestedItems')}`,9000); }
 async function admDigestNow(){
   await admSaveConfig('general'); showToast(t('admMailTesting'),20000); const r=await apiPost({action:'sendOwnerDigestNow'}); if(!r) return;
